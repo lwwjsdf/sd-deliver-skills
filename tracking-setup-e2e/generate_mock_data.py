@@ -5,7 +5,8 @@ Outputs JSON files ready for Sensors Data HTTP Track API or batch import.
 
 Usage:
     python3 generate_mock_data.py --input "Tracking Plan.xlsx" --output ./mock_data
-    python3 generate_mock_data.py --input "Tracking Plan.xlsx" --output ./mock_data --count 100
+    python3 generate_mock_data.py --input "Tracking Plan.xlsx" --output ./mock_data --count 100 --project myproject
+    python3 generate_mock_data.py --input "Tracking Plan.xlsx" --output ./mock_data --host 10.1.2.3 --port 9755 --send
 """
 
 import argparse
@@ -15,6 +16,7 @@ import os
 import random
 import string
 import time
+import urllib.request
 import uuid
 from datetime import datetime, timedelta
 
@@ -149,14 +151,23 @@ def generate_value(prop: dict) -> object:
 
 
 def generate_user_id() -> str:
-    return f"user_{uuid.uuid4().hex[:12]}"
+    return f"uid_{random.randint(1, 1000000):07d}"
+
+
+def generate_identities(uid: str, idx: int) -> dict:
+    return {
+        "$identity_login_id": uid,
+        "$identity_mobile": str(13600000000 + idx),
+        "$identity_email": f"email_{idx:05d}@gmail.com",
+    }
 
 
 # ---------------------------------------------------------------------------
 # Sensors Data event record builder
 # ---------------------------------------------------------------------------
 
-def build_track_record(event: dict, distinct_id: str, event_time_ms: int) -> dict:
+def build_track_record(event: dict, distinct_id: str, event_time_ms: int,
+                       user_idx: int, project: str) -> dict:
     properties = {
         "$app_version": "1.0.0",
         "$lib": "python",
@@ -167,21 +178,32 @@ def build_track_record(event: dict, distinct_id: str, event_time_ms: int) -> dic
 
     return {
         "distinct_id": distinct_id,
+        "login_id": distinct_id,
         "type": "track",
         "event": event["name"],
         "time": event_time_ms,
+        "time_free": True,
+        "$is_login_id": True,
+        "project": project,
+        "identities": generate_identities(distinct_id, user_idx),
         "properties": properties,
     }
 
 
-def build_profile_record(user_attrs: list, distinct_id: str) -> dict:
+def build_profile_record(user_attrs: list, distinct_id: str,
+                         user_idx: int, project: str) -> dict:
     properties = {}
     for attr in user_attrs:
         properties[attr["name"]] = generate_value(attr)
     return {
         "distinct_id": distinct_id,
+        "login_id": distinct_id,
         "type": "profile_set",
         "time": int(time.time() * 1000),
+        "time_free": True,
+        "$is_login_id": True,
+        "project": project,
+        "identities": generate_identities(distinct_id, user_idx),
         "properties": properties,
     }
 
@@ -192,8 +214,26 @@ def build_profile_record(user_attrs: list, distinct_id: str) -> dict:
 
 def to_batch_payload(records: list) -> str:
     """Encode records as base64 for Sensors Data batch HTTP API."""
-    data = json.dumps(records, ensure_ascii=False)
+    data = json.dumps(records, ensure_ascii=False, cls=_JSONEncoder)
     return base64.b64encode(data.encode("utf-8")).decode("utf-8")
+
+
+def send_to_sa(records: list, host: str, port: int, project: str,
+               batch_size: int = 100):
+    """POST records to Sensors Data HTTP API in batches."""
+    url = f"http://{host}:{port}/sa?project={project}"
+    total = len(records)
+    sent = 0
+    for i in range(0, total, batch_size):
+        batch = records[i:i + batch_size]
+        payload = ("data=" + to_batch_payload(batch)).encode("utf-8")
+        req = urllib.request.Request(url, data=payload, method="POST")
+        req.add_header("Content-Type", "application/x-www-form-urlencoded")
+        with urllib.request.urlopen(req, timeout=10) as resp:
+            status = resp.getcode()
+        sent += len(batch)
+        print(f"  Sent {sent}/{total} records (HTTP {status})")
+    return sent
 
 
 class _JSONEncoder(json.JSONEncoder):
@@ -235,6 +275,10 @@ def main():
     parser.add_argument("--output", default="./mock_data", help="Output directory")
     parser.add_argument("--count", type=int, default=50, help="Records per event (default: 50)")
     parser.add_argument("--users", type=int, default=20, help="Number of simulated users (default: 20)")
+    parser.add_argument("--project", default="default", help="Sensors Data project name (default: default)")
+    parser.add_argument("--host", default=None, help="SA host for direct HTTP upload")
+    parser.add_argument("--port", type=int, default=9755, help="SA port (default: 9755)")
+    parser.add_argument("--send", action="store_true", help="Send directly to SA via HTTP (requires --host)")
     args = parser.parse_args()
 
     print(f"Parsing tracking plan: {args.input}")
@@ -242,27 +286,25 @@ def main():
 
     events = plan["events"]
     user_attrs = plan["users"]
-
     print(f"Found {len(events)} events, {len(user_attrs)} user attributes")
 
-    # Generate a pool of user IDs
-    user_ids = [generate_user_id() for _ in range(args.users)]
+    # Generate a pool of user IDs with stable indices for identity generation
+    users = [(generate_user_id(), i + 1) for i in range(args.users)]
 
     all_records = []
 
     # User profile records
     if user_attrs:
-        for uid in user_ids:
-            all_records.append(build_profile_record(user_attrs, uid))
+        for uid, idx in users:
+            all_records.append(build_profile_record(user_attrs, uid, idx, args.project))
 
     # Event records
     for event in events:
         for _ in range(args.count):
-            uid = random.choice(user_ids)
+            uid, idx = random.choice(users)
             ts = _random_timestamp_ms()
-            all_records.append(build_track_record(event, uid, ts))
+            all_records.append(build_track_record(event, uid, ts, idx, args.project))
 
-    # Shuffle to simulate realistic interleaving
     random.shuffle(all_records)
 
     jsonl_path, batch_path = write_outputs(all_records, args.output, "mock_events")
@@ -270,9 +312,20 @@ def main():
     print(f"\nGenerated {len(all_records)} records")
     print(f"  JSONL:       {jsonl_path}")
     print(f"  Batch (b64): {batch_path}")
-    print(f"\nTo import via HTTP API:")
-    print(f"  curl -X POST 'https://<your-sa-host>/sa?token=<token>' \\")
-    print(f"       -d 'data='$(cat {batch_path})")
+
+    if args.send:
+        if not args.host:
+            print("\nError: --send requires --host")
+            return
+        print(f"\nSending to http://{args.host}:{args.port}/sa?project={args.project}")
+        send_to_sa(all_records, args.host, args.port, args.project)
+        print("Done.")
+    else:
+        print(f"\nTo import via HTTP API:")
+        print(f"  python3 generate_mock_data.py --input ... --host <sa-host> --port {args.port} --project {args.project} --send")
+        print(f"  # or manually:")
+        print(f"  curl -X POST 'http://<sa-host>:{args.port}/sa?project={args.project}' \\")
+        print(f"       --data-urlencode 'data@{batch_path}'")
 
 
 if __name__ == "__main__":
