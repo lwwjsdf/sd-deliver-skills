@@ -218,10 +218,8 @@ def to_batch_payload(records: list) -> str:
     return base64.b64encode(data.encode("utf-8")).decode("utf-8")
 
 
-def send_to_sa(records: list, host: str, port: int, project: str,
-               batch_size: int = 100):
+def send_to_sa(records: list, url: str, batch_size: int = 100):
     """POST records to Sensors Data HTTP API in batches."""
-    url = f"http://{host}:{port}/sa?project={project}"
     total = len(records)
     sent = 0
     for i in range(0, total, batch_size):
@@ -229,7 +227,9 @@ def send_to_sa(records: list, host: str, port: int, project: str,
         payload = ("data=" + to_batch_payload(batch)).encode("utf-8")
         req = urllib.request.Request(url, data=payload, method="POST")
         req.add_header("Content-Type", "application/x-www-form-urlencoded")
-        with urllib.request.urlopen(req, timeout=10) as resp:
+        import ssl
+        ctx = ssl.create_default_context()
+        with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
             status = resp.getcode()
         sent += len(batch)
         print(f"  Sent {sent}/{total} records (HTTP {status})")
@@ -276,9 +276,10 @@ def main():
     parser.add_argument("--count", type=int, default=50, help="Records per event (default: 50)")
     parser.add_argument("--users", type=int, default=20, help="Number of simulated users (default: 20)")
     parser.add_argument("--project", default="default", help="Sensors Data project name (default: default)")
-    parser.add_argument("--host", default=None, help="SA host for direct HTTP upload")
+    parser.add_argument("--url", default=None, help="Full SA endpoint URL, e.g. https://xxx.sensorsdata.cn/sa?project=myproject")
+    parser.add_argument("--host", default=None, help="SA host (used with --port to build URL)")
     parser.add_argument("--port", type=int, default=9755, help="SA port (default: 9755)")
-    parser.add_argument("--send", action="store_true", help="Send directly to SA via HTTP (requires --host)")
+    parser.add_argument("--send", action="store_true", help="Send directly to SA (requires --url or --host)")
     args = parser.parse_args()
 
     print(f"Parsing tracking plan: {args.input}")
@@ -314,17 +315,21 @@ def main():
     print(f"  Batch (b64): {batch_path}")
 
     if args.send:
-        if not args.host:
-            print("\nError: --send requires --host")
+        if args.url:
+            sa_url = args.url
+        elif args.host:
+            sa_url = f"http://{args.host}:{args.port}/sa?project={args.project}"
+        else:
+            print("\nError: --send requires --url or --host")
             return
-        print(f"\nSending to http://{args.host}:{args.port}/sa?project={args.project}")
-        send_to_sa(all_records, args.host, args.port, args.project)
+        print(f"\nSending to {sa_url}")
+        send_to_sa(all_records, sa_url)
         print("Done.")
     else:
         print(f"\nTo import via HTTP API:")
-        print(f"  python3 generate_mock_data.py --input ... --host <sa-host> --port {args.port} --project {args.project} --send")
+        print(f"  python3 generate_mock_data.py --input ... --url 'https://<sa-host>/sa?project={args.project}' --send")
         print(f"  # or manually:")
-        print(f"  curl -X POST 'http://<sa-host>:{args.port}/sa?project={args.project}' \\")
+        print(f"  curl -X POST 'https://<sa-host>/sa?project={args.project}' \\")
         print(f"       --data-urlencode 'data@{batch_path}'")
 
 
