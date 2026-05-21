@@ -68,11 +68,15 @@ cp .env.example .env
 
 ### Phase 3：模拟数据生成 🤖
 
+在运行脚本前，先询问用户：
+- 每个事件生成多少条记录？（建议 50，压测场景可用 500）
+- 模拟多少个用户？（建议 20）
+
 ```bash
-python3 tracking-setup-e2e/scripts/generate_mock_data.py
+python3 tracking-setup-e2e/scripts/generate_mock_data.py --count <N> --users <M>
 ```
 
-脚本自动读取 `.env` 中的 `TRACKING_PLAN_PATH`，生成：
+脚本自动读取 `.env` 中的 `TRACKING_PLAN_PATH` 和 `SA_PROJECT`，生成：
 - `tracking-setup-e2e/mock_data/mock_events.jsonl` — 每行一条记录
 - `tracking-setup-e2e/mock_data/mock_events_batch.txt` — base64 编码，可直接 POST
 

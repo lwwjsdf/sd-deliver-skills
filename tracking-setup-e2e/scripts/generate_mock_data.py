@@ -1,12 +1,17 @@
 #!/usr/bin/env python3
 """
-Generate mock event data from a Sensors Data tracking plan Excel file.
-Outputs JSON files ready for Sensors Data HTTP Track API or batch import.
+generate_mock_data.py — 从埋点方案 Excel 生成模拟数据
 
-Usage:
-    python3 generate_mock_data.py --input "Tracking Plan.xlsx" --output ./mock_data
-    python3 generate_mock_data.py --input "Tracking Plan.xlsx" --output ./mock_data --count 100 --project myproject
-    python3 generate_mock_data.py --input "Tracking Plan.xlsx" --output ./mock_data --host 10.1.2.3 --port 9755 --send
+用法：
+    python3 tracking-setup-e2e/scripts/generate_mock_data.py
+    python3 tracking-setup-e2e/scripts/generate_mock_data.py --count 100 --users 30
+
+前置条件（在项目根目录的 .env 中配置）：
+    SA_PROJECT          项目 ID
+    TRACKING_PLAN_PATH  埋点方案 Excel 路径
+
+依赖：
+    pip install openpyxl python-dotenv
 """
 
 import argparse
@@ -15,12 +20,26 @@ import json
 import os
 import random
 import string
+import sys
 import time
-import urllib.request
-import uuid
 from datetime import datetime, timedelta
+from pathlib import Path
 
-import openpyxl
+try:
+    import openpyxl
+    from dotenv import load_dotenv
+except ImportError:
+    print("缺少依赖，请先运行: pip install openpyxl python-dotenv")
+    sys.exit(1)
+
+# .env 查找顺序：当前目录 → 父目录 → 祖父目录
+for _p in [Path.cwd(), Path.cwd().parent, Path.cwd().parent.parent]:
+    if (_p / ".env").exists():
+        load_dotenv(_p / ".env")
+        break
+
+SA_PROJECT = os.getenv("SA_PROJECT", "default")
+TRACKING_PLAN_PATH = os.getenv("TRACKING_PLAN_PATH", "")
 
 
 # ---------------------------------------------------------------------------
@@ -218,24 +237,6 @@ def to_batch_payload(records: list) -> str:
     return base64.b64encode(data.encode("utf-8")).decode("utf-8")
 
 
-def send_to_sa(records: list, url: str, batch_size: int = 100):
-    """POST records to Sensors Data HTTP API in batches."""
-    total = len(records)
-    sent = 0
-    for i in range(0, total, batch_size):
-        batch = records[i:i + batch_size]
-        payload = ("data=" + to_batch_payload(batch)).encode("utf-8")
-        req = urllib.request.Request(url, data=payload, method="POST")
-        req.add_header("Content-Type", "application/x-www-form-urlencoded")
-        import ssl
-        ctx = ssl.create_default_context()
-        with urllib.request.urlopen(req, timeout=10, context=ctx) as resp:
-            status = resp.getcode()
-        sent += len(batch)
-        print(f"  Sent {sent}/{total} records (HTTP {status})")
-    return sent
-
-
 class _JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime):
@@ -270,67 +271,69 @@ def write_outputs(records: list, output_dir: str, prefix: str):
 # ---------------------------------------------------------------------------
 
 def main():
-    parser = argparse.ArgumentParser(description="Generate mock data from Sensors Data tracking plan")
-    parser.add_argument("--input", required=True, help="Path to tracking plan Excel file")
-    parser.add_argument("--output", default="./mock_data", help="Output directory")
-    parser.add_argument("--count", type=int, default=50, help="Records per event (default: 50)")
-    parser.add_argument("--users", type=int, default=20, help="Number of simulated users (default: 20)")
-    parser.add_argument("--project", default="default", help="Sensors Data project name (default: default)")
-    parser.add_argument("--url", default=None, help="Full SA endpoint URL, e.g. https://xxx.sensorsdata.cn/sa?project=myproject")
-    parser.add_argument("--host", default=None, help="SA host (used with --port to build URL)")
-    parser.add_argument("--port", type=int, default=9755, help="SA port (default: 9755)")
-    parser.add_argument("--send", action="store_true", help="Send directly to SA (requires --url or --host)")
+    parser = argparse.ArgumentParser(description="从埋点方案 Excel 生成模拟数据")
+    parser.add_argument("--count", type=int, default=None, help="每个事件生成的记录数")
+    parser.add_argument("--users", type=int, default=None, help="模拟用户数量")
+    parser.add_argument("--output", default=None, help="输出目录（默认：脚本所在目录的 ../mock_data）")
     args = parser.parse_args()
 
-    print(f"Parsing tracking plan: {args.input}")
-    plan = parse_tracking_plan(args.input)
+    # 验证必要配置
+    if not TRACKING_PLAN_PATH:
+        print("错误：缺少必要配置，请在 .env 中设置 TRACKING_PLAN_PATH")
+        sys.exit(1)
+
+    excel_path = Path(TRACKING_PLAN_PATH)
+    if not excel_path.exists():
+        print(f"错误：找不到埋点方案文件：{excel_path}")
+        sys.exit(1)
+
+    # 数据量参数：优先用 CLI 参数，否则用默认值
+    count = args.count if args.count is not None else 50
+    users_n = args.users if args.users is not None else 20
+
+    # 输出目录：默认放在脚本同级的 mock_data/
+    if args.output:
+        output_dir = args.output
+    else:
+        output_dir = str(Path(__file__).parent.parent / "mock_data")
+
+    print(f"=== 模拟数据生成 ===")
+    print(f"文件: {excel_path.name}")
+    print(f"项目: {SA_PROJECT}  每事件记录数: {count}  模拟用户数: {users_n}\n")
+
+    plan = parse_tracking_plan(str(excel_path))
 
     events = plan["events"]
     user_attrs = plan["users"]
-    print(f"Found {len(events)} events, {len(user_attrs)} user attributes")
+    print(f"发现 {len(events)} 个事件，{len(user_attrs)} 个用户属性")
 
     # Generate a pool of user IDs with stable indices for identity generation
-    users = [(generate_user_id(), i + 1) for i in range(args.users)]
+    users = [(generate_user_id(), i + 1) for i in range(users_n)]
 
     all_records = []
 
     # User profile records
     if user_attrs:
         for uid, idx in users:
-            all_records.append(build_profile_record(user_attrs, uid, idx, args.project))
+            all_records.append(build_profile_record(user_attrs, uid, idx, SA_PROJECT))
 
     # Event records
     for event in events:
-        for _ in range(args.count):
+        for _ in range(count):
             uid, idx = random.choice(users)
             ts = _random_timestamp_ms()
-            all_records.append(build_track_record(event, uid, ts, idx, args.project))
+            all_records.append(build_track_record(event, uid, ts, idx, SA_PROJECT))
 
     random.shuffle(all_records)
 
-    jsonl_path, batch_path = write_outputs(all_records, args.output, "mock_events")
+    jsonl_path, batch_path = write_outputs(all_records, output_dir, "mock_events")
 
-    print(f"\nGenerated {len(all_records)} records")
+    print(f"\n生成 {len(all_records)} 条记录")
     print(f"  JSONL:       {jsonl_path}")
     print(f"  Batch (b64): {batch_path}")
-
-    if args.send:
-        if args.url:
-            sa_url = args.url
-        elif args.host:
-            sa_url = f"http://{args.host}:{args.port}/sa?project={args.project}"
-        else:
-            print("\nError: --send requires --url or --host")
-            return
-        print(f"\nSending to {sa_url}")
-        send_to_sa(all_records, sa_url)
-        print("Done.")
-    else:
-        print(f"\nTo import via HTTP API:")
-        print(f"  python3 generate_mock_data.py --input ... --url 'https://<sa-host>/sa?project={args.project}' --send")
-        print(f"  # or manually:")
-        print(f"  curl -X POST 'https://<sa-host>/sa?project={args.project}' \\")
-        print(f"       --data-urlencode 'data@{batch_path}'")
+    print(f"\n导入命令（需要 SA_TOKEN）：")
+    print(f"  curl -X POST \"$SA_HOST/sa?token=$SA_TOKEN\" \\")
+    print(f"       -d 'data='$(cat {batch_path})")
 
 
 if __name__ == "__main__":
