@@ -49,7 +49,32 @@ TRACKING_PLAN_PATH = os.getenv("TRACKING_PLAN_PATH", "")
 def parse_tracking_plan(xlsx_path: str) -> dict:
     """Parse a Sensors Data tracking plan Excel into a structured dict."""
     wb = openpyxl.load_workbook(xlsx_path, data_only=True)
-    plan = {"events": [], "users": []}
+    plan = {"events": [], "users": [], "identities": []}
+
+    # --- Events sheet: Identity config + Events ---
+    if "Events" in wb.sheetnames:
+        ws = wb["Events"]
+        rows = list(ws.iter_rows(values_only=True))
+
+        # Find header row (contains 'Event Variable Name')
+        header_row_idx = None
+        for i, row in enumerate(rows):
+            if any(cell == "Event Variable Name" for cell in row if cell):
+                header_row_idx = i
+                break
+
+        # Parse Identity config rows (before the Events Table header)
+        # Format: (None, priority_int, '$identity_xxx', display_name, ...)
+        if header_row_idx is not None:
+            for row in rows[:header_row_idx]:
+                if isinstance(row[1], int) and row[2] and str(row[2]).startswith("$identity_"):
+                    plan["identities"].append({
+                        "name": str(row[2]).strip(),
+                        "display": str(row[3] or row[2]).strip(),
+                        "priority": row[1],
+                    })
+            # Sort by priority ascending (1 = highest)
+            plan["identities"].sort(key=lambda x: x["priority"])
 
     # --- Events sheet ---
     if "Events" in wb.sheetnames:
@@ -225,12 +250,37 @@ def generate_user_id() -> str:
     return f"uid_{random.randint(1, 1000000):07d}"
 
 
-def generate_identities(uid: str, idx: int) -> dict:
-    return {
-        "$identity_login_id": uid,
-        "$identity_mobile": str(13600000000 + idx),
-        "$identity_email": f"email_{idx:05d}@gmail.com",
-    }
+def generate_identities(identity_defs: list[dict], uid: str, idx: int) -> dict:
+    """根据埋点方案中定义的 identity 列表生成 ID-Mapping 字段。
+
+    $identity_login_id  → uid（最高优先级，作为 distinct_id）
+    $identity_email     → 模拟邮箱
+    $identity_mobile    → 模拟手机号
+    $identity_anonymous_id → 模拟匿名 ID
+    其他自定义 identity → 随机字符串
+    """
+    if not identity_defs:
+        # 无定义时用默认值
+        return {
+            "$identity_login_id": uid,
+            "$identity_mobile": str(13600000000 + idx),
+            "$identity_email": f"user_{idx:05d}@example.com",
+        }
+
+    result = {}
+    for idef in identity_defs:
+        name = idef["name"]
+        if name == "$identity_login_id":
+            result[name] = uid
+        elif name == "$identity_email":
+            result[name] = f"user_{idx:05d}@example.com"
+        elif name == "$identity_mobile":
+            result[name] = str(13600000000 + idx)
+        elif name == "$identity_anonymous_id":
+            result[name] = f"anon_{uid}_{idx}"
+        else:
+            result[name] = f"{name.lstrip('$')}_{idx:05d}"
+    return result
 
 
 # ---------------------------------------------------------------------------
@@ -238,7 +288,7 @@ def generate_identities(uid: str, idx: int) -> dict:
 # ---------------------------------------------------------------------------
 
 def build_track_record(event: dict, distinct_id: str, event_time_ms: int,
-                       user_idx: int, project: str) -> dict:
+                       user_idx: int, project: str, identity_defs: list) -> dict:
     properties = {
         "$app_version": "1.0.0",
         "$lib": "python",
@@ -256,13 +306,13 @@ def build_track_record(event: dict, distinct_id: str, event_time_ms: int,
         "time_free": True,
         "$is_login_id": True,
         "project": project,
-        "identities": generate_identities(distinct_id, user_idx),
+        "identities": generate_identities(identity_defs, distinct_id, user_idx),
         "properties": properties,
     }
 
 
 def build_profile_record(user_attrs: list, distinct_id: str,
-                         user_idx: int, project: str) -> dict:
+                         user_idx: int, project: str, identity_defs: list) -> dict:
     properties = {}
     for attr in user_attrs:
         properties[attr["name"]] = generate_value(attr)
@@ -274,7 +324,7 @@ def build_profile_record(user_attrs: list, distinct_id: str,
         "time_free": True,
         "$is_login_id": True,
         "project": project,
-        "identities": generate_identities(distinct_id, user_idx),
+        "identities": generate_identities(identity_defs, distinct_id, user_idx),
         "properties": properties,
     }
 
@@ -348,6 +398,10 @@ def main():
     plan = parse_tracking_plan(str(excel_path))
     events = plan["events"]
     user_attrs = plan["users"]
+    identity_defs = plan["identities"]
+
+    if identity_defs:
+        print(f"Identity 定义: {[d['name'] for d in identity_defs]}")
 
     # 用户池
     users_n = args.users if args.users is not None else 20
@@ -358,7 +412,7 @@ def main():
     # User profile records
     if user_attrs:
         for uid, idx in users:
-            all_records.append(build_profile_record(user_attrs, uid, idx, SA_PROJECT))
+            all_records.append(build_profile_record(user_attrs, uid, idx, SA_PROJECT, identity_defs))
 
     use_time_series = args.days is not None or args.daily_users is not None
 
@@ -379,7 +433,7 @@ def main():
                 for uid, idx in daily_active:
                     for _ in range(daily_count):
                         ts = _timestamp_for_day(day_offset)
-                        all_records.append(build_track_record(event, uid, ts, idx, SA_PROJECT))
+                        all_records.append(build_track_record(event, uid, ts, idx, SA_PROJECT, identity_defs))
     else:
         # 简单模式：每事件生成 count 条，随机时间
         count = args.count if args.count is not None else 50
@@ -393,7 +447,7 @@ def main():
             for _ in range(count):
                 uid, idx = random.choice(users)
                 ts = _random_timestamp_ms()
-                all_records.append(build_track_record(event, uid, ts, idx, SA_PROJECT))
+                all_records.append(build_track_record(event, uid, ts, idx, SA_PROJECT, identity_defs))
 
     random.shuffle(all_records)
 
