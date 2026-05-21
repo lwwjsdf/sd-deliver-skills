@@ -37,7 +37,20 @@ for _p in [Path.cwd(), Path.cwd().parent, Path.cwd().parent.parent]:
 SA_HOST = os.getenv("SA_HOST", "").rstrip("/")
 SA_PROJECT = os.getenv("SA_PROJECT", "")
 TRACKING_PLAN_PATH = os.getenv("TRACKING_PLAN_PATH", "")
-BROWSE_BIN = Path.home() / ".claude/skills/gstack/browse/dist/browse"
+def _find_browse() -> Path:
+    candidates = [
+        Path.home() / ".claude/skills/gstack/browse/dist/browse",
+        Path.home() / ".hermes/skills/gstack/browse/dist/browse",
+        Path.home() / ".agents/skills/gstack/browse/dist/browse",
+    ]
+    # Also check if installed alongside this script (skill-local copy)
+    candidates.append(Path(__file__).parent.parent.parent / "gstack/browse/dist/browse")
+    for p in candidates:
+        if p.exists():
+            return p
+    return candidates[0]  # return default path so error message is useful
+
+BROWSE_BIN = _find_browse()
 
 
 def validate_env(required: list[str]):
@@ -55,7 +68,9 @@ def _browse(cmd: list[str]) -> str:
 def ensure_session():
     """通过 gstack/browse cookie picker 自动导入 Chrome 登录态"""
     if not BROWSE_BIN.exists():
-        print("错误：未找到 gstack/browse，请确认已安装")
+        print("错误：未找到 gstack/browse")
+        print("安装方式：npx skills add gstack/browse -g")
+        print(f"查找路径：{BROWSE_BIN}")
         sys.exit(1)
     proc = subprocess.Popen(
         [str(BROWSE_BIN), "cookie-import-browser", "Chrome"],

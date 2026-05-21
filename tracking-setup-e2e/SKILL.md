@@ -40,8 +40,14 @@ cp .env.example .env
 
 ### 浏览器登录态
 
-脚本启动时自动通过 gstack/browse 导入 Chrome 的登录 cookie，**无需手动操作**。
-前提：Chrome 中已登录目标神策环境。
+Phase 4a 脚本通过 gstack/browse 自动导入 Chrome 登录 cookie，**无需手动操作**。
+
+前提：
+1. Chrome 中已登录目标神策环境
+2. 已安装 gstack/browse（一次性）：
+   ```bash
+   npx skills add gstack/browse -g
+   ```
 
 ## 执行阶段
 
