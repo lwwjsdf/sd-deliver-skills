@@ -66,7 +66,11 @@ def _browse(cmd: list[str]) -> str:
 
 
 def ensure_session():
-    """通过 gstack/browse cookie picker 自动导入 Chrome 登录态"""
+    """确保 browse 有有效的神策登录态。
+
+    策略：先用一个轻量 API 探测 session 是否已有效，有效则直接跳过 cookie 导入。
+    无效时尝试 --domain 直接导入，失败再走 picker UI 流程。
+    """
     if not BROWSE_BIN.exists():
         print("错误：未找到 gstack/browse")
         print("安装方式：npx skills add gstack/browse -g")
@@ -75,34 +79,50 @@ def ensure_session():
 
     hostname = SA_HOST.replace("https://", "").replace("http://", "").split("/")[0]
 
-    # 尝试带 --domain 参数直接导入（跳过 UI 选择器）
-    result = subprocess.run(
-        [str(BROWSE_BIN), "cookie-import-browser", "Chrome", "--domain", hostname],
-        capture_output=True, text=True, timeout=15,
-    )
-    if result.returncode == 0:
-        print(f"  ✓ 登录态导入成功（{hostname}）")
-        _browse(["goto", f"{SA_HOST}/report/?project={SA_PROJECT}"])
-        time.sleep(2)
+    # Step 1: 探测 session 是否已有效（避免重复导入 cookie）
+    probe = fetch(f"/api/v2/horizon/v1/web/project/list", method="GET")
+    if probe.get("code") == "SUCCESS" or isinstance(probe.get("data"), (list, dict)):
+        print(f"  ✓ 已有有效登录态（{hostname}）")
         return
 
-    # 回退：通过 cookie picker UI 自动操作
-    proc = subprocess.Popen(
-        [str(BROWSE_BIN), "cookie-import-browser", "Chrome"],
-        stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
-    )
-    picker_url = None
+    # Step 2: 尝试 --domain 直接导入（无 UI，最快）
     try:
-        for line in proc.stdout:
-            if "cookie-picker" in line:
-                picker_url = line.strip().split()[-1]
-                break
-    except Exception:
+        result = subprocess.run(
+            [str(BROWSE_BIN), "cookie-import-browser", "Chrome", "--domain", hostname],
+            capture_output=True, text=True, timeout=15,
+        )
+        if result.returncode == 0:
+            print(f"  ✓ Cookie 导入成功（{hostname}）")
+            _browse(["goto", f"{SA_HOST}/report/?project={SA_PROJECT}"])
+            time.sleep(2)
+            return
+    except (subprocess.TimeoutExpired, Exception):
         pass
+
+    # Step 3: picker UI 自动化（带超时保护）
+    try:
+        proc = subprocess.Popen(
+            [str(BROWSE_BIN), "cookie-import-browser", "Chrome"],
+            stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+        )
+        picker_url = None
+        import select
+        deadline = time.time() + 10
+        while time.time() < deadline:
+            ready, _, _ = select.select([proc.stdout], [], [], 1.0)
+            if ready:
+                line = proc.stdout.readline()
+                if "cookie-picker" in line:
+                    picker_url = line.strip().split()[-1]
+                    break
+        proc.terminate()
+    except Exception:
+        picker_url = None
+
     if not picker_url:
-        print("  ⚠ 无法获取 cookie picker URL，跳过登录态导入")
-        return
-    time.sleep(0.5)
+        print("  ⚠ 无法自动导入登录态，请确认 Chrome 中已登录目标神策环境后重试")
+        sys.exit(1)
+
     _browse(["goto", picker_url])
     time.sleep(0.5)
     _browse(["fill", "[placeholder='Search domains...']", hostname])
