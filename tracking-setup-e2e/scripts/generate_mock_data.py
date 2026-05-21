@@ -74,6 +74,7 @@ def parse_tracking_plan(xlsx_path: str) -> dict:
                 attr_display = row[col.get("Event  Attribute Variable Display Name", 4)] if col.get("Event  Attribute Variable Display Name") is not None else None
                 data_type = row[col.get("Date Type", 5)] if col.get("Date Type") is not None else None
                 sample = row[col.get("Sample Data", 11)] if col.get("Sample Data") is not None else None
+                remark = row[col.get("Remark", 12)] if col.get("Remark") is not None else None
 
                 if event_name:
                     current_event = {
@@ -84,11 +85,13 @@ def parse_tracking_plan(xlsx_path: str) -> dict:
                     plan["events"].append(current_event)
 
                 if current_event and attr_name:
+                    options = _parse_options(remark) or _parse_options(sample)
                     current_event["properties"].append({
-                        "name": attr_name,
-                        "display_name": attr_display or attr_name,
-                        "type": data_type or "String",
+                        "name": str(attr_name).strip(),
+                        "display_name": str(attr_display or attr_name).strip(),
+                        "type": str(data_type or "String").strip(),
                         "sample": sample,
+                        "options": options,
                     })
 
     # --- Users sheet ---
@@ -109,11 +112,15 @@ def parse_tracking_plan(xlsx_path: str) -> dict:
             for row in rows[header_row_idx + 1:]:
                 attr_name = row[col.get("Attribute variable name", 1)] if col.get("Attribute variable name") is not None else None
                 if attr_name:
+                    sample = row[col.get("Sample Data", 9)] if col.get("Sample Data") is not None else None
+                    remark = row[col.get("Remark", 10)] if col.get("Remark") is not None else None
+                    options = _parse_options(remark) or _parse_options(sample)
                     plan["users"].append({
-                        "name": attr_name,
-                        "display_name": row[col.get("Attribute display name", 2)] if col.get("Attribute display name") is not None else attr_name,
-                        "type": row[col.get("Data Type", 3)] if col.get("Data Type") is not None else "String",
-                        "sample": row[col.get("Sample Data", 9)] if col.get("Sample Data") is not None else None,
+                        "name": str(attr_name).strip(),
+                        "display_name": str(row[col.get("Attribute display name", 2)] or attr_name).strip() if col.get("Attribute display name") is not None else str(attr_name).strip(),
+                        "type": str(row[col.get("Data Type", 3)] or "String").strip() if col.get("Data Type") is not None else "String",
+                        "sample": sample,
+                        "options": options,
                     })
 
     return plan
@@ -122,6 +129,42 @@ def parse_tracking_plan(xlsx_path: str) -> dict:
 # ---------------------------------------------------------------------------
 # Mock value generation
 # ---------------------------------------------------------------------------
+
+def _parse_options(text: str) -> list[str]:
+    """从 Remark/Sample 文本中提取值域列表（支持分号和换行分隔）。"""
+    if not text:
+        return []
+    text = str(text).strip()
+    # 换行分隔优先（Remark 列常见格式）
+    if "\n" in text:
+        opts = [s.strip() for s in text.splitlines() if s.strip()]
+    else:
+        opts = [s.strip() for s in text.split(";") if s.strip()]
+    return opts if len(opts) > 1 else []
+
+
+def _extract_prop(row: tuple, col: dict, name_key: str, display_key: str,
+                  type_key: str, sample_key: str, remark_key: str) -> dict:
+    """从一行 Excel 数据提取属性定义，包含值域信息。"""
+    name = row[col.get(name_key, 1)] if col.get(name_key) is not None else None
+    if not name:
+        return {}
+    display = row[col.get(display_key)] if col.get(display_key) is not None else None
+    dtype = row[col.get(type_key)] if col.get(type_key) is not None else None
+    sample = row[col.get(sample_key)] if col.get(sample_key) is not None else None
+    remark = row[col.get(remark_key)] if col.get(remark_key) is not None else None
+
+    # 值域：优先从 Remark 提取，其次从 Sample 提取（分号分隔的多值）
+    options = _parse_options(remark) or _parse_options(sample)
+
+    return {
+        "name": str(name).strip(),
+        "display_name": str(display or name).strip(),
+        "type": str(dtype or "String").strip(),
+        "sample": sample,
+        "options": options,
+    }
+
 
 def _random_string(length=8):
     return "".join(random.choices(string.ascii_letters + string.digits, k=length))
@@ -146,20 +189,22 @@ def _timestamp_for_day(day_offset: int) -> int:
 
 
 def generate_value(prop: dict) -> object:
-    """Generate a realistic mock value for a property based on its type and sample."""
+    """根据属性定义生成模拟值，优先使用值域列表，其次 sample，最后按类型 fallback。"""
     dtype = (prop.get("type") or "String").strip().lower()
     sample = prop.get("sample")
+    options = prop.get("options") or []
 
-    # Use sample value directly when it's simple and concrete
+    # 有值域列表时直接随机选（最真实）
+    if options:
+        return random.choice(options)
+
+    # sample 是单个具体值时直接用
     if sample is not None and not isinstance(sample, bool):
         sample_str = str(sample).strip()
-        # If sample contains semicolons, it's a picklist — pick one
-        if ";" in sample_str:
-            return random.choice([s.strip() for s in sample_str.split(";") if s.strip()])
-        # Use sample as-is for short concrete values
-        if len(sample_str) < 60 and "\n" not in sample_str:
+        if sample_str and len(sample_str) < 80 and "\n" not in sample_str:
             return sample
 
+    # 按类型 fallback
     if dtype in ("bool", "boolean", "checkbox"):
         return random.choice([True, False])
 
@@ -170,8 +215,7 @@ def generate_value(prop: dict) -> object:
         return round(random.uniform(1, 10000), 2)
 
     if dtype in ("list", "picklist", "picklist (multi-select)", "set"):
-        options = ["Option_A", "Option_B", "Option_C", "Option_D"]
-        return random.choice(options)
+        return f"Option_{random.choice('ABCD')}"
 
     # Default: String
     return _random_string(12)
