@@ -137,6 +137,14 @@ def _random_timestamp_ms(days_back=90):
     return int((datetime.now() - delta).timestamp() * 1000)
 
 
+def _timestamp_for_day(day_offset: int) -> int:
+    """day_offset=0 是今天，day_offset=29 是 30 天前。当天随机时刻。"""
+    base = datetime.now().replace(hour=0, minute=0, second=0, microsecond=0)
+    base -= timedelta(days=day_offset)
+    base += timedelta(seconds=random.randint(0, 86399))
+    return int(base.timestamp() * 1000)
+
+
 def generate_value(prop: dict) -> object:
     """Generate a realistic mock value for a property based on its type and sample."""
     dtype = (prop.get("type") or "String").strip().lower()
@@ -272,8 +280,11 @@ def write_outputs(records: list, output_dir: str, prefix: str):
 
 def main():
     parser = argparse.ArgumentParser(description="从埋点方案 Excel 生成模拟数据")
-    parser.add_argument("--count", type=int, default=None, help="每个事件生成的记录数")
-    parser.add_argument("--users", type=int, default=None, help="模拟用户数量")
+    parser.add_argument("--count", type=int, default=None, help="每个事件生成的记录数（简单模式）")
+    parser.add_argument("--users", type=int, default=None, help="模拟用户总数")
+    parser.add_argument("--days", type=int, default=None, help="覆盖天数（时序模式）")
+    parser.add_argument("--daily-users", type=int, default=None, help="每天活跃用户数（时序模式，需配合 --days）")
+    parser.add_argument("--daily-count", type=int, default=None, help="每用户每天每事件记录数（时序模式，默认 100）")
     parser.add_argument("--output", default=None, help="输出目录（默认：脚本所在目录的 ../mock_data）")
     args = parser.parse_args()
 
@@ -287,27 +298,15 @@ def main():
         print(f"错误：找不到埋点方案文件：{excel_path}")
         sys.exit(1)
 
-    # 数据量参数：优先用 CLI 参数，否则用默认值
-    count = args.count if args.count is not None else 50
-    users_n = args.users if args.users is not None else 20
-
-    # 输出目录：默认放在脚本同级的 mock_data/
-    if args.output:
-        output_dir = args.output
-    else:
-        output_dir = str(Path(__file__).parent.parent / "mock_data")
-
-    print(f"=== 模拟数据生成 ===")
-    print(f"文件: {excel_path.name}")
-    print(f"项目: {SA_PROJECT}  每事件记录数: {count}  模拟用户数: {users_n}\n")
+    # 输出目录
+    output_dir = args.output or str(Path(__file__).parent.parent / "mock_data")
 
     plan = parse_tracking_plan(str(excel_path))
-
     events = plan["events"]
     user_attrs = plan["users"]
-    print(f"发现 {len(events)} 个事件，{len(user_attrs)} 个用户属性")
 
-    # Generate a pool of user IDs with stable indices for identity generation
+    # 用户池
+    users_n = args.users if args.users is not None else 20
     users = [(generate_user_id(), i + 1) for i in range(users_n)]
 
     all_records = []
@@ -317,12 +316,40 @@ def main():
         for uid, idx in users:
             all_records.append(build_profile_record(user_attrs, uid, idx, SA_PROJECT))
 
-    # Event records
-    for event in events:
-        for _ in range(count):
-            uid, idx = random.choice(users)
-            ts = _random_timestamp_ms()
-            all_records.append(build_track_record(event, uid, ts, idx, SA_PROJECT))
+    use_time_series = args.days is not None or args.daily_users is not None
+
+    if use_time_series:
+        # 时序模式：每天选 daily_users 个活跃用户，每人每事件生成 daily_count 条
+        days = args.days if args.days is not None else 30
+        daily_users_n = args.daily_users if args.daily_users is not None else min(20, users_n)
+        daily_count = args.daily_count if args.daily_count is not None else 100
+
+        print(f"=== 模拟数据生成（时序模式）===")
+        print(f"文件: {excel_path.name}")
+        print(f"项目: {SA_PROJECT}  用户池: {users_n}  每日活跃: {daily_users_n}  天数: {days}  每用户每事件: {daily_count}\n")
+        print(f"发现 {len(events)} 个事件，{len(user_attrs)} 个用户属性")
+
+        for day_offset in range(days):
+            daily_active = random.sample(users, min(daily_users_n, len(users)))
+            for event in events:
+                for uid, idx in daily_active:
+                    for _ in range(daily_count):
+                        ts = _timestamp_for_day(day_offset)
+                        all_records.append(build_track_record(event, uid, ts, idx, SA_PROJECT))
+    else:
+        # 简单模式：每事件生成 count 条，随机时间
+        count = args.count if args.count is not None else 50
+
+        print(f"=== 模拟数据生成 ===")
+        print(f"文件: {excel_path.name}")
+        print(f"项目: {SA_PROJECT}  每事件记录数: {count}  模拟用户数: {users_n}\n")
+        print(f"发现 {len(events)} 个事件，{len(user_attrs)} 个用户属性")
+
+        for event in events:
+            for _ in range(count):
+                uid, idx = random.choice(users)
+                ts = _random_timestamp_ms()
+                all_records.append(build_track_record(event, uid, ts, idx, SA_PROJECT))
 
     random.shuffle(all_records)
 

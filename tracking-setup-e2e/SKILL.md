@@ -85,12 +85,25 @@ Phase 4a 脚本通过 gstack/browse 自动导入 Chrome 登录 cookie，**无需
 
 ### Phase 3：模拟数据生成 🤖
 
-在运行脚本前，先询问用户：
-- 每个事件生成多少条记录？（建议 50，压测场景可用 500）
+在运行脚本前，先询问用户数据分布需求：
+
+**简单模式**（随机时间分布）：
+- 每个事件生成多少条记录？（建议 50）
 - 模拟多少个用户？（建议 20）
 
 ```bash
 python3 tracking-setup-e2e/scripts/generate_mock_data.py --count <N> --users <M>
+```
+
+**时序模式**（按天分布，更真实）：
+- 用户总数？（如 100）
+- 每天活跃多少用户？（如 20）
+- 每用户每天每事件多少条？（如 100）
+- 覆盖多少天？（如 30）
+
+```bash
+python3 tracking-setup-e2e/scripts/generate_mock_data.py \
+  --users 100 --days 30 --daily-users 20 --daily-count 100
 ```
 
 脚本自动读取 `.env` 中的 `TRACKING_PLAN_PATH` 和 `SA_PROJECT`，生成：
