@@ -1,0 +1,17 @@
+# 环境变量（含敏感信息，不提交）
+.env
+
+# 客户文件（不提交到仓库）
+*.xlsx
+*.xls
+*.jsonl
+*.jmx
+mock_data/
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# gstack browse 日志
+.gstack/

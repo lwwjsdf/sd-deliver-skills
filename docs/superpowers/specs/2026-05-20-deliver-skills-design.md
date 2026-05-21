@@ -3,40 +3,101 @@
 **日期：** 2026-05-20
 **阶段：** v1 Startup
 
+---
+
 ## 背景与目标
 
 沉淀神策数据在客户项目交付过程中的常见 skill，帮助内部交付工程师/实施顾问将重复性工作标准化，从 copilot 模式进化到 end-to-end 自动完成交付任务。
 
 Skill 遵循标准 skill 协议，可运行在 Claude Code、OpenCode、Cursor 等常见工具中，并可通过 agent-teams 中集成的 opencode 作为执行层实现自动化操作。
 
-## 范围
+---
 
-v1 包含 6 个核心 skill，聚焦交付侧高频场景。运维工单类（问题诊断、方案恢复）列入 v2 规划。
-
-## 目录结构
+## 目录结构规范
 
 ```
 deliver-skills/
-  tracking-setup-e2e/
-    SKILL.md
-  event-validation/
-    SKILL.md
-  cdp-operations/
-    SKILL.md
-  server-sizing/
-    SKILL.md
-  sit-uat/
-    SKILL.md
-  tech-design/
-    SKILL.md
-  README.md
+  README.md                        # Skill 索引
+  .env.example                     # 环境变量模板（不提交真实值）
+  shared/                          # 跨 skill 共用工具
+    cdp_client.py                  # 神策 CDP API 封装（认证、fetch）
+    browse_auth.py                 # gstack/browse cookie 导入封装
+    excel_parser.py                # 埋点方案 Excel 解析工具
+  <skill-name>/
+    SKILL.md                       # Skill 定义（AI 读取的核心文件）
+    scripts/                       # 自动化脚本
+      <action>.py
+    templates/                     # 输出模板（报告、SOP 等）
+      <template>.md
+    examples/                      # 示例输入文件
+      sample_tracking_plan.xlsx
   docs/
     superpowers/
-      specs/
-        2026-05-20-deliver-skills-design.md
+      specs/                       # 设计文档
+      plans/                       # 计划文档
 ```
 
-## Skill 规范
+**约定：**
+- 每个 skill 目录只放该 skill 专属的内容
+- 客户文件（Excel、JSON 等）不提交到仓库，放在 skill 目录外或 `.gitignore`
+- 共用逻辑统一放 `shared/`，不在各 skill 里重复实现
+
+---
+
+## 环境变量规范
+
+所有需要用户输入的连接信息统一通过 `.env` 文件管理，**不通过命令行参数传递**。
+
+### `.env.example`（模板，提交到仓库）
+
+```bash
+# 神策 CDP 连接信息
+SA_HOST=https://demo.sensorsdata.cn     # CDP 地址，不带末尾斜杠
+SA_PROJECT=mpdev                        # 项目 ID
+SA_TOKEN=                               # HTTP API token（用于数据导入）
+
+# 客户项目信息
+CLIENT_NAME=                            # 客户名称（用于输出文件命名）
+TRACKING_PLAN_PATH=                     # 埋点方案 Excel 路径（绝对路径或相对路径）
+```
+
+### 变量输入时机
+
+| 变量 | 输入时机 | 由谁输入 |
+|------|----------|----------|
+| `SA_HOST` | 项目启动时，一次性配置 | 交付工程师 |
+| `SA_PROJECT` | 项目启动时，一次性配置 | 交付工程师 |
+| `SA_TOKEN` | 需要数据导入时配置 | 交付工程师（从神策后台获取） |
+| `CLIENT_NAME` | 项目启动时，一次性配置 | 交付工程师 |
+| `TRACKING_PLAN_PATH` | 客户确认埋点方案后配置 | 交付工程师 |
+
+**原则：变量只在项目开始时配置一次，后续所有 skill 自动读取，不再重复询问。**
+
+### 脚本读取方式
+
+```python
+# shared/config.py
+from pathlib import Path
+from dotenv import load_dotenv
+import os
+
+load_dotenv()  # 自动读取当前目录或父目录的 .env
+
+SA_HOST = os.getenv("SA_HOST", "").rstrip("/")
+SA_PROJECT = os.getenv("SA_PROJECT", "")
+SA_TOKEN = os.getenv("SA_TOKEN", "")
+TRACKING_PLAN_PATH = os.getenv("TRACKING_PLAN_PATH", "")
+
+def validate(required: list[str]):
+    missing = [k for k in required if not os.getenv(k)]
+    if missing:
+        print(f"错误：缺少必要配置，请在 .env 中设置：{', '.join(missing)}")
+        raise SystemExit(1)
+```
+
+---
+
+## SKILL.md 规范
 
 每个 SKILL.md 遵循统一结构：
 
@@ -50,17 +111,52 @@ description: <一句话，说明何时触发这个 skill>
 
 ## 适用场景（When to Use）
 ## 核心原则（Iron Law）
+## 前置条件（Prerequisites）   ← 列出需要哪些 .env 变量已配置
 ## 执行阶段（Phases）
 ## 输出模板（Output Template）
 ## 常见问题（Common Pitfalls）
 ```
 
-**设计约定：**
-- 触发条件用中文写，贴近工程师实际用语
-- Iron Law 每个 skill 至少一条，防止 AI 跳过关键步骤
-- Phases 强制顺序执行
-- 输出模板标准化交付物格式，保证不同工程师产出一致
-- 涉及 browser automation 的 skill 当前阶段输出操作 SOP，待神策系统 API 可用后升级为自动化
+### 前置条件（Prerequisites）节规范
+
+每个涉及自动化的 skill 必须声明所需的环境变量：
+
+```markdown
+## 前置条件
+
+运行本 skill 前，确认 `.env` 中已配置：
+
+| 变量 | 说明 | 获取方式 |
+|------|------|----------|
+| `SA_HOST` | 神策 CDP 地址 | 客户环境 URL |
+| `SA_PROJECT` | 项目 ID | URL 中的 `project=` 参数 |
+| `TRACKING_PLAN_PATH` | 埋点方案 Excel 路径 | 客户确认后的方案文件 |
+
+浏览器登录态：脚本启动时自动通过 gstack/browse 导入，无需手动操作。
+```
+
+### 执行阶段中的自动化标注
+
+Phase 中区分人工步骤和自动化步骤：
+
+```markdown
+### Phase 3：模拟数据生成 🤖
+
+> 自动化执行，运行脚本即可。
+
+\```bash
+python3 tracking-setup-e2e/scripts/generate_mock_data.py
+\```
+
+### Phase 2：采集方案设计 👤
+
+> 需要人工参与，AI 辅助输出，客户确认后才能继续。
+```
+
+- 🤖 = 全自动，脚本执行
+- 👤 = 需要人工参与或确认
+
+---
 
 ## v1 Skill 清单
 
@@ -68,20 +164,21 @@ description: <一句话，说明何时触发这个 skill>
 
 **触发：** 客户新项目启动、新业务场景需要完整的数据采集和分析能力
 
-**Iron Law：** 必须先完成采集方案设计并经客户确认，再进行后续任何步骤。不允许在方案未确认的情况下造数或创建看板。
+**Iron Law：** 必须先完成采集方案设计并经客户确认，再进行后续任何步骤。
 
 **Phases：**
-1. 业务目标确认 — 理解分析需求，确定关键指标
-2. 采集方案设计 — 输出标准埋点方案表，人工确认
-3. 模拟数据生成 — 根据方案造数，覆盖主要业务场景
-4. 环境导入与看板创建 — 导入数据，输出看板创建操作 SOP（待 API 可用后升级为自动化）
-5. 资产迁移 — 使用神策资产项工具将配置元数据迁移到客户生产环境
 
-**输出：**
-- 埋点方案文档（事件名、触发时机、属性列表、示例值）
-- 模拟数据文件
-- 看板创建操作 SOP
-- 资产迁移记录
+| Phase | 内容 | 类型 |
+|-------|------|------|
+| 1 | 业务目标确认 | 👤 |
+| 2 | 采集方案设计，输出埋点方案表，客户确认 | 👤 |
+| 3 | 模拟数据生成 | 🤖 |
+| 4a | 元事件 + 用户属性导入 CDP | 🤖 |
+| 4b | 模拟数据导入 | 🤖 |
+| 4c | 看板创建 | 👤（待 API 支持后升级为 🤖）|
+| 5 | 资产迁移 | 🤖 |
+
+**所需 .env 变量：** `SA_HOST`, `SA_PROJECT`, `SA_TOKEN`, `TRACKING_PLAN_PATH`
 
 ---
 
@@ -89,38 +186,28 @@ description: <一句话，说明何时触发这个 skill>
 
 **触发：** 埋点上线后验证数据是否正确、客户反馈数据异常
 
-**Iron Law：** 必须对比方案文档与实际数据，不允许仅凭肉眼判断数据是否正确。
+**Iron Law：** 必须对比方案文档与实际数据，不允许仅凭肉眼判断。
 
 **Phases：**
-1. 获取埋点方案
-2. 抓取实际数据
-3. 逐项比对
-4. 输出差异报告
 
-**输出：** 校验报告（通过/异常/缺失三类，附修复建议）
+| Phase | 内容 | 类型 |
+|-------|------|------|
+| 1 | 获取埋点方案 | 👤 |
+| 2 | 抓取实际数据 | 🤖 |
+| 3 | 逐项比对 | 🤖 |
+| 4 | 输出差异报告 | 🤖 |
+
+**所需 .env 变量：** `SA_HOST`, `SA_PROJECT`, `TRACKING_PLAN_PATH`
 
 ---
 
 ### 3. cdp-operations — CDP 系统操作
 
-**触发：** 需要在神策 CDP 中完成数据分析、数据同步任务、用户管理、事件创建、运营计划创建等操作
+**触发：** 需要在神策 CDP 中完成数据分析、数据同步、用户管理、事件创建、运营计划等操作
 
-**Iron Law：** 操作前必须确认客户的业务目标，不允许按模板照搬配置而不理解业务含义。
+**Iron Law：** 操作前必须确认客户的业务目标，不允许按模板照搬配置。
 
-**Phases：**
-1. 需求确认（明确操作类型和业务目标）
-2. 数据源/前置条件检查
-3. 通过 browser automation 执行操作
-4. 验证结果并截图存档
-
-**输出：** 操作完成确认单（操作项、截图验证结果、注意事项）
-
-**Browser Automation 覆盖范围：**
-- 数据分析配置
-- 数据同步任务创建
-- 用户管理
-- 事件创建
-- 运营计划创建
+**所需 .env 变量：** `SA_HOST`, `SA_PROJECT`
 
 ---
 
@@ -130,13 +217,7 @@ description: <一句话，说明何时触发这个 skill>
 
 **Iron Law：** 必须基于客户实际数据量和增长预期评估，不允许直接套用默认配置。
 
-**Phases：**
-1. 数据规模收集
-2. 增长预期确认
-3. 资源计算
-4. 方案输出
-
-**输出：** 资源评估报告（推荐配置、最低配置、扩容触发条件）
+**所需 .env 变量：** 无（纯计算，不连接系统）
 
 ---
 
@@ -144,18 +225,9 @@ description: <一句话，说明何时触发这个 skill>
 
 **触发：** 项目上线前需要完成系统集成测试或用户验收测试
 
-**Iron Law：** 必须先完成测试用例设计并确认覆盖范围，再开始执行。不允许跳过用例设计直接测试。
+**Iron Law：** 必须先完成测试用例设计并确认覆盖范围，再开始执行。
 
-**Phases：**
-1. 测试范围确认（业务场景、验收标准）
-2. 测试用例设计（用例编号、步骤、预期结果）
-3. 执行验证（browser automation 执行，截图记录）
-4. 报告输出（通过/失败/阻塞，附截图证据）
-
-**输出：**
-- 测试用例文档
-- 执行截图集
-- 测试报告（通过率、问题清单、上线建议）
+**所需 .env 变量：** `SA_HOST`, `SA_PROJECT`
 
 ---
 
@@ -163,41 +235,34 @@ description: <一句话，说明何时触发这个 skill>
 
 **触发：** 项目启动前需要输出技术方案、客户需要架构评审材料
 
-**Iron Law：** 必须先理解业务约束和技术现状，再输出方案。不允许在不了解客户环境的情况下直接套用标准架构。
+**Iron Law：** 必须先理解业务约束和技术现状，再输出方案。
 
-**Phases：**
-1. 需求与约束收集（业务规模、技术栈、集成要求）
-2. 方案设计（架构选型、数据流设计）
-3. Diagram 生成（架构图、数据流图，使用 Mermaid/Graphviz）
-4. 技术方案文档输出
-
-**输出：**
-- 架构图（Mermaid/Graphviz 格式，可渲染）
-- 数据流图
-- 技术方案文档（背景、方案说明、部署要求、风险点）
+**所需 .env 变量：** 无（纯文档输出）
 
 ---
 
-## Browser Automation 说明
+## 项目初始化流程
 
-`tracking-setup-e2e`、`cdp-operations`、`sit-uat` 三个 skill 涉及神策系统的 browser automation 操作，依赖 gstack/browse 能力。当前阶段（神策系统无 API）输出操作 SOP 作为兜底；待神策系统 API 可用后，可将 SOP 步骤升级为直接 API 调用，skill 流程结构不变。
+每个新客户项目开始时，执行一次：
 
-## v2 规划（运维工单侧）
+```bash
+# 1. 复制环境变量模板
+cp .env.example .env
 
-以下 skill 因偏运维工单场景，列入 v2：
-- `solution-recovery` — 常见技术方案恢复
-- `issue-diagnosis` — 问题诊断与根因分析
+# 2. 编辑 .env，填入客户环境信息
+#    SA_HOST, SA_PROJECT, CLIENT_NAME 是必填项
+
+# 3. 验证连接
+python3 shared/cdp_client.py --check
+```
+
+之后所有 skill 脚本直接读取 `.env`，无需再传参数。
+
+---
 
 ## 迭代机制
 
-- v1 Startup：6 个核心 skill，完成 SKILL.md 初稿
-- v2+：根据交付工程师实际使用反馈扩展 skill 数量和深度
+- v1 Startup：6 个核心 skill，完成 SKILL.md 和核心脚本
+- v2+：根据交付工程师实际使用反馈扩展
 - 每个 skill 独立迭代，不影响其他 skill
-- 新 skill 贡献：按统一规范新增目录和 SKILL.md 即可
-
-## 后续步骤
-
-1. 为每个 skill 编写完整的 SKILL.md
-2. 编写 README.md skill 索引
-3. 在 agent-teams 中部署验证至少一个 skill
-4. 收集工程师使用反馈，进入 v2 迭代
+- 新 skill 贡献：按统一规范新增目录，在 README 添加索引
