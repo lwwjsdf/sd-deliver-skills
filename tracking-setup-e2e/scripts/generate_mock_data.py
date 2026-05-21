@@ -350,6 +350,25 @@ class _JSONEncoder(json.JSONEncoder):
         return super().default(obj)
 
 
+def write_identity_map(users: list, identity_defs: list, output_dir: str) -> str:
+    """输出 user_identity_map.csv，每行一个用户，列出所有 identity 字段值。
+
+    用于校验 ID-Mapping：同一行的所有 identity 值应被神策合并为同一用户。
+    """
+    import csv
+    identity_names = [d["name"] for d in identity_defs] if identity_defs else [
+        "$identity_login_id", "$identity_email", "$identity_mobile"
+    ]
+    csv_path = os.path.join(output_dir, "user_identity_map.csv")
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["user_pool_id"] + identity_names)
+        for uid, idx in users:
+            identities = generate_identities(identity_defs, uid, idx)
+            writer.writerow([f"user_{idx:04d}"] + [identities.get(n, "") for n in identity_names])
+    return csv_path
+
+
 def write_outputs(records: list, output_dir: str, prefix: str):
     os.makedirs(output_dir, exist_ok=True)
 
@@ -452,10 +471,12 @@ def main():
     random.shuffle(all_records)
 
     jsonl_path, batch_path = write_outputs(all_records, output_dir, "mock_events")
+    identity_map_path = write_identity_map(users, identity_defs, output_dir)
 
     print(f"\n生成 {len(all_records)} 条记录")
-    print(f"  JSONL:       {jsonl_path}")
-    print(f"  Batch (b64): {batch_path}")
+    print(f"  JSONL:            {jsonl_path}")
+    print(f"  Batch (b64):      {batch_path}")
+    print(f"  Identity map CSV: {identity_map_path}  ← 用于校验 ID-Mapping 合并结果")
     print(f"\n导入命令（需要 SA_TOKEN）：")
     print(f"  curl -X POST \"$SA_HOST/sa?token=$SA_TOKEN\" \\")
     print(f"       -d 'data='$(cat {batch_path})")
