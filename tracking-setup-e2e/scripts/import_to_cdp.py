@@ -72,19 +72,37 @@ def ensure_session():
         print("安装方式：npx skills add gstack/browse -g")
         print(f"查找路径：{BROWSE_BIN}")
         sys.exit(1)
+
+    hostname = SA_HOST.replace("https://", "").replace("http://", "").split("/")[0]
+
+    # 尝试带 --domain 参数直接导入（跳过 UI 选择器）
+    result = subprocess.run(
+        [str(BROWSE_BIN), "cookie-import-browser", "Chrome", "--domain", hostname],
+        capture_output=True, text=True, timeout=15,
+    )
+    if result.returncode == 0:
+        print(f"  ✓ 登录态导入成功（{hostname}）")
+        _browse(["goto", f"{SA_HOST}/report/?project={SA_PROJECT}"])
+        time.sleep(2)
+        return
+
+    # 回退：通过 cookie picker UI 自动操作
     proc = subprocess.Popen(
         [str(BROWSE_BIN), "cookie-import-browser", "Chrome"],
         stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
     )
     picker_url = None
-    for line in proc.stdout:
-        if "cookie-picker" in line:
-            picker_url = line.strip().split()[-1]
-            break
+    try:
+        for line in proc.stdout:
+            if "cookie-picker" in line:
+                picker_url = line.strip().split()[-1]
+                break
+    except Exception:
+        pass
     if not picker_url:
+        print("  ⚠ 无法获取 cookie picker URL，跳过登录态导入")
         return
     time.sleep(0.5)
-    hostname = SA_HOST.replace("https://", "").replace("http://", "").split("/")[0]
     _browse(["goto", picker_url])
     time.sleep(0.5)
     _browse(["fill", "[placeholder='Search domains...']", hostname])
@@ -129,12 +147,30 @@ RESERVED_FIELD_NAMES = {"Id", "PersonEmail"}
 
 # ── Excel 解析 ────────────────────────────────────────────────
 def parse_events(wb: openpyxl.Workbook) -> list[dict]:
-    """从 Events sheet 解析元事件列表（第2列=事件名，第3列=显示名）"""
+    """从 Events sheet 解析元事件列表。
+
+    搜索 'Event Variable Name' 表头行作为起点，跳过前面的 Identity 配置区。
+    """
     if "Events" not in wb.sheetnames:
         return []
     ws = wb["Events"]
+    rows = list(ws.iter_rows(values_only=True))
+
+    # 找到列标题行（含 'Event Variable Name'）
+    header_row_idx = None
+    for i, row in enumerate(rows):
+        if any(str(c).strip() == "Event Variable Name" for c in row if c):
+            header_row_idx = i
+            break
+
+    if header_row_idx is None:
+        # 回退：从第2行开始，跳过非 int 序号行
+        data_rows = rows[1:]
+    else:
+        data_rows = rows[header_row_idx + 1:]
+
     events = []
-    for row in ws.iter_rows(min_row=2, values_only=True):
+    for row in data_rows:
         if not row[0] or not isinstance(row[0], int):
             continue
         original_name = row[1]
@@ -149,39 +185,88 @@ def parse_events(wb: openpyxl.Workbook) -> list[dict]:
 
 
 def parse_event_fields(wb: openpyxl.Workbook, event_name: str) -> list[dict]:
-    """从 Details（Event） sheet 解析指定事件的属性列表"""
-    sheet_name = "Details（Event） "
-    if sheet_name not in wb.sheetnames:
+    """从 Details（Event） sheet 解析事件属性列表。
+
+    支持两种结构：
+    1. 按事件分区：每个事件有独立标题行，cell0 == event_name 标记起点
+    2. 共享属性库：所有事件共用一套属性（无事件名标题行），直接读全部
+    """
+    sheet_name = next(
+        (s for s in wb.sheetnames if s.startswith("Details") and "Event" in s),
+        None,
+    )
+    if not sheet_name:
         return []
     ws = wb[sheet_name]
+    rows = list(ws.iter_rows(values_only=True))
+
+    # 找列标题行（含 'Attribute variable name' 或 'Event  Attribute Variable Name'）
+    header_keywords = {"attribute variable name", "event  attribute variable name"}
+    header_idx = None
+    for i, row in enumerate(rows):
+        if any(str(c).strip().lower() in header_keywords for c in row if c):
+            header_idx = i
+            break
+
+    if header_idx is None:
+        return []
+
+    # 检查是否有事件分区（event_name 出现在 col0）
+    has_event_sections = any(
+        str(row[0]).strip() == event_name
+        for row in rows[header_idx + 1:]
+        if row[0] and not isinstance(row[0], int)
+    )
+
     fields = []
-    in_event = False
-    for row in ws.iter_rows(values_only=True):
-        cell0 = str(row[0]).strip() if row[0] else ""
-        if cell0 == event_name:
-            in_event = True
-            continue
-        if not in_event:
-            continue
-        serial, name, display, dtype = row[0], row[1], row[2], row[3]
-        if not isinstance(serial, int):
-            if serial:
-                break  # 遇到下一个事件的标题行
-            continue
-        if not name:
-            continue
-        name = str(name).strip()
-        if name in RESERVED_FIELD_NAMES:
-            print(f"    跳过保留字段名: {name}")
-            continue
-        fields.append({
-            "display_name": str(display or name).strip(),
-            "name": name,
-            "data_type": TYPE_MAP.get(str(dtype), "STRING"),
-            "field_type": "BASIC",
-            "unit_remark": "",
-            "remark": "",
-        })
+    if has_event_sections:
+        # 按事件分区：找到 event_name 标题行后读属性
+        in_event = False
+        for row in rows[header_idx + 1:]:
+            cell0 = str(row[0]).strip() if row[0] else ""
+            if cell0 == event_name:
+                in_event = True
+                continue
+            if not in_event:
+                continue
+            serial, name, display, dtype = row[0], row[1], row[2], row[3]
+            if not isinstance(serial, int):
+                if serial:
+                    break  # 下一个事件的标题行
+                continue
+            if not name:
+                continue
+            name = str(name).strip()
+            if name in RESERVED_FIELD_NAMES:
+                print(f"    跳过保留字段名: {name}")
+                continue
+            fields.append({
+                "display_name": str(display or name).strip(),
+                "name": name,
+                "data_type": TYPE_MAP.get(str(dtype), "STRING"),
+                "field_type": "BASIC",
+                "unit_remark": "",
+                "remark": "",
+            })
+    else:
+        # 共享属性库：所有事件共用，直接读全部属性
+        for row in rows[header_idx + 1:]:
+            serial, name, display, dtype = row[0], row[1], row[2], row[3]
+            if not isinstance(serial, int) or not name:
+                continue
+            name = str(name).strip()
+            if name in RESERVED_FIELD_NAMES:
+                print(f"    跳过保留字段名: {name}")
+                continue
+            fields.append({
+                "display_name": str(display or name).strip(),
+                "name": name,
+                "data_type": TYPE_MAP.get(str(dtype), "STRING"),
+                "field_type": "BASIC",
+                "unit_remark": "",
+                "remark": "",
+            })
+
     return fields
 
 
