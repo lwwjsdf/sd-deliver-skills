@@ -16,6 +16,7 @@ generate_mock_data.py — 从埋点方案 Excel 生成模拟数据
 
 import argparse
 import base64
+import csv
 import json
 import os
 import random
@@ -31,6 +32,18 @@ try:
 except ImportError:
     print("缺少依赖，请先运行: pip install openpyxl python-dotenv")
     sys.exit(1)
+
+# 规则驱动模式依赖（可选）
+try:
+    from rule_engine import RuleEngine
+    from tracking_plan import TrackingPlan
+    from fixed_account_generator import FixedAccountGenerator, User
+    from event_sequencer import EventSequencer
+    from constraint_validator import ConstraintValidator
+    from report_generator import ReportGenerator
+    _RULES_MODE_AVAILABLE = True
+except ImportError:
+    _RULES_MODE_AVAILABLE = False
 
 # .env 查找顺序：当前目录 → 父目录 → 祖父目录
 for _p in [Path.cwd(), Path.cwd().parent, Path.cwd().parent.parent]:
@@ -388,6 +401,114 @@ def write_outputs(records: list, output_dir: str, prefix: str):
 
 
 # ---------------------------------------------------------------------------
+# Rules-driven mode
+# ---------------------------------------------------------------------------
+
+def run_rules_mode(args):
+    """规则驱动模式：从 YAML 规则文件 + 埋点方案 Excel 生成结构化测试数据。"""
+    if not _RULES_MODE_AVAILABLE:
+        print("错误：规则驱动模式依赖未安装，请确保 rule_engine.py 等模块在同目录")
+        sys.exit(1)
+
+    # 1. 加载规则
+    engine = RuleEngine(args.rules)
+    meta = engine.get_meta()
+    prefix = args.prefix or meta.get("project", "mock")
+
+    # 2. 确定 tracking plan 路径
+    xlsx_path = args.tracking_plan
+    if not xlsx_path:
+        # 交互式选择：扫描 refrences/ 目录下的 xlsx 文件
+        xlsx_files = list(Path("refrences").glob("*.xlsx")) if Path("refrences").exists() else []
+        # 优先选 Annex 6（Mini Program）
+        mp_files = [f for f in xlsx_files if "Mini Program" in f.name or "Annex 6" in f.name]
+        if mp_files:
+            xlsx_path = str(mp_files[0])
+            print(f"自动选择埋点方案: {xlsx_path}")
+        elif xlsx_files:
+            print("发现以下埋点方案文件，请选择：")
+            for i, f in enumerate(xlsx_files, 1):
+                print(f"  {i}. {f.name}")
+            choice = input("> ").strip()
+            try:
+                xlsx_path = str(xlsx_files[int(choice) - 1])
+            except (ValueError, IndexError):
+                print("无效选择，退出")
+                sys.exit(1)
+        else:
+            print("错误：未找到埋点方案 Excel，请用 --tracking-plan 指定")
+            sys.exit(1)
+
+    # 3. 加载 TrackingPlan
+    plan = TrackingPlan(xlsx_path)
+
+    # 4. 生成用户
+    mode = args.mode or "fixed-accounts"
+    if mode == "fixed-accounts":
+        gen = FixedAccountGenerator(engine)
+        users = gen.generate_accounts()
+    else:
+        print("batch 模式暂未实现")
+        sys.exit(1)
+
+    # 5. 生成事件
+    sequencer = EventSequencer(engine, plan)
+    start_ms = int(datetime(2026, 5, 1, 9, 0).timestamp() * 1000)
+    events_by_user = {}
+    all_records = []
+    identity_defs = engine.get_identity_priority()
+
+    for user in users:
+        events = sequencer.generate_all_events(user, start_ms)
+        events_by_user[user.user_id] = events
+        for event in events:
+            all_records.append(event.to_track_record(SA_PROJECT, identity_defs))
+
+    # 6. 验证
+    validator = ConstraintValidator()
+    violations_by_user = {
+        u.user_id: validator.validate_all(u, events_by_user[u.user_id]) for u in users
+    }
+    id_violations = ConstraintValidator.validate_id_mapping(users)
+    total_violations = sum(len(v) for v in violations_by_user.values()) + len(id_violations)
+
+    # 7. 输出
+    output_dir = args.output or str(Path(__file__).parent.parent / "mock_data")
+    os.makedirs(output_dir, exist_ok=True)
+
+    jsonl_path, batch_path = write_outputs(all_records, output_dir, prefix)
+
+    # ID Mapping CSV
+    identity_names = [idef.sa_key for idef in identity_defs]
+    csv_path = os.path.join(output_dir, f"{prefix}_identity_map.csv")
+    with open(csv_path, "w", newline="", encoding="utf-8") as f:
+        writer = csv.writer(f)
+        writer.writerow(["user_id", "account_id"] + identity_names)
+        for user in users:
+            row = [user.user_id, user.account_id or user.user_id]
+            for idef in identity_defs:
+                row.append(user.identities.get(idef.name, ""))
+            writer.writerow(row)
+
+    # 验证报告
+    reporter = ReportGenerator(engine, xlsx_path, output_dir)
+    report_path = reporter.generate(users, events_by_user, violations_by_user, id_violations)
+
+    # 8. 打印摘要
+    print(f"\n=== 规则驱动模式 ({mode}) ===")
+    print(f"规则文件: {args.rules}")
+    print(f"埋点方案: {xlsx_path}")
+    print(f"用户数: {len(users)}  事件数: {len(all_records)}  违规数: {total_violations}")
+    print(f"\n输出文件:")
+    print(f"  JSONL:         {jsonl_path}")
+    print(f"  Batch (b64):   {batch_path}")
+    print(f"  Identity map:  {csv_path}")
+    print(f"  验证报告:      {report_path}")
+    if total_violations > 0:
+        print(f"\n⚠️  发现 {total_violations} 个违规，请查看验证报告")
+
+
+# ---------------------------------------------------------------------------
 # Main
 # ---------------------------------------------------------------------------
 
@@ -399,7 +520,17 @@ def main():
     parser.add_argument("--daily-users", type=int, default=None, help="每天活跃用户数（时序模式，需配合 --days）")
     parser.add_argument("--daily-count", type=int, default=None, help="每用户每天每事件记录数（时序模式，默认 100）")
     parser.add_argument("--output", default=None, help="输出目录（默认：脚本所在目录的 ../mock_data）")
+    # 规则驱动模式参数
+    parser.add_argument("--rules", default=None, help="规则文件路径（规则驱动模式）")
+    parser.add_argument("--tracking-plan", default=None, dest="tracking_plan", help="埋点方案 Excel（规则模式下可选）")
+    parser.add_argument("--mode", default="fixed-accounts", choices=["fixed-accounts", "batch"],
+                        help="规则驱动模式：fixed-accounts | batch（默认 fixed-accounts）")
+    parser.add_argument("--prefix", default=None, help="输出文件名前缀（默认从规则文件 meta.project 提取）")
     args = parser.parse_args()
+
+    if args.rules:
+        run_rules_mode(args)
+        return
 
     # 验证必要配置
     if not TRACKING_PLAN_PATH:
