@@ -34,6 +34,7 @@ except ImportError:
     sys.exit(1)
 
 # 规则驱动模式依赖（可选）
+sys.path.insert(0, str(Path(__file__).parent))
 try:
     from rule_engine import RuleEngine
     from tracking_plan import TrackingPlan
