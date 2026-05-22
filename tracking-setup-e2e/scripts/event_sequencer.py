@@ -41,17 +41,17 @@ class Event:
             if val:
                 identities[idef.sa_key] = val
 
-        props: Dict[str, Any] = {
-            "$lib": "python",
-            "$lib_version": "1.0.0",
-            "platformType": self.platform,
-            "applicationName": "WeChat" if self.platform == "MP" else "Web",
-            "version": "1.0.0",
-            "isSuccess": self.is_success,
-        }
+        props: Dict[str, Any] = {}
+        props.update(self.properties)
+        # 公共属性固定值，覆盖 schema 随机生成的值
+        props["$lib"] = "python"
+        props["$lib_version"] = "1.0.0"
+        props["platformType"] = self.platform
+        props["applicationName"] = "WeChat" if self.platform == "MP" else "Web"
+        props["version"] = "1.0.0"
+        props["isSuccess"] = self.is_success
         if not self.is_success and self.failure_reason:
             props["failureReason"] = self.failure_reason
-        props.update(self.properties)
 
         # distinct_id: prefer crm_master_id, then first available identity
         distinct_id = (
