@@ -88,26 +88,103 @@ identity_priority:
 event_sequences:
 - name: user_lifecycle
   condition: null
-  events: []
+  events:
+  - event: $MPShow
+    required: true
+  - event: Registration_Result
+    required: true
+    time_after_prev: {min: 60, max: 600}
+    fields: {isSuccess: true, registrationMethod: WeChat}
+    profile_update: {registerTime: "{timestamp}"}
+  - event: Login_Result
+    required: true
+    time_after_prev: {min: 5, max: 30}
+    fields: {isSuccess: true, loginMethod: WeChat}
+
 - name: ticket_purchase
   condition: segment in [L2, L3, L4]
   terminal_states:
   - Ticket_Transfer
   - Ticket_Refund
   - Ticket_Admission
-  events: []
+  events:
+  - event: Product_Order_Payment
+    required: true
+    time_after_prev: {min: 300, max: 3600}
+    fields:
+      isSuccess: true
+      ticketsQuantity: 2
+      totalOrderAmount: 800.0
+      orderPaidAmount: 800.0
+      paymentMethod: WeChat Pay
+  - event: Product_Payment_Detail
+    required: true
+    repeat: "{Product_Order_Payment.ticketsQuantity}"
+    time_after_prev: {min: 1, max: 5}
+    fields:
+      ticketAmount: 400.0
+      ticketPaidAmount: 400.0
+      paymentMethod: WeChat Pay
+
 - name: membership_normal_activation
   condition: segment in [L3, L4]
   conversion_rate: 0.8
-  events: []
+  events:
+  - event: Membership_Purchase
+    required: true
+    time_after_prev: {min: 600, max: 7200}
+    fields:
+      isSuccess: true
+      purchaseType: 新购
+      paymentMethod: WeChat Pay
+      membershipType: M+会员
+      membershipPrice: 500.0
+      orderPaidAmount: 500.0
+  - event: Membership_Activation
+    required: true
+    time_after_prev: {min: 86400, max: 432000}
+    fields: {isSuccess: true}
+
 - name: membership_late_activation
   condition: segment in [L3, L4]
   conversion_rate: 0.1
-  events: []
+  events:
+  - event: Membership_Purchase
+    required: true
+    time_after_prev: {min: 600, max: 7200}
+    fields:
+      isSuccess: true
+      purchaseType: 新购
+      paymentMethod: WeChat Pay
+      membershipType: M+会员
+      membershipPrice: 500.0
+      orderPaidAmount: 500.0
+  - event: Membership_Activation
+    required: true
+    time_after_prev: {min: 518400, max: 604800}
+    fields: {isSuccess: true}
+
 - name: membership_expired
   condition: segment in [L3, L4]
   conversion_rate: 0.1
-  events: []
+  events:
+  - event: Membership_Purchase
+    required: true
+    time_after_prev: {min: 600, max: 7200}
+    fields:
+      isSuccess: true
+      purchaseType: 新购
+      paymentMethod: WeChat Pay
+      membershipType: M+会员
+      membershipPrice: 500.0
+      orderPaidAmount: 500.0
+  - event: Membership_Refund
+    required: true
+    time_after_prev: {min: 604800, max: 691200}
+    fields:
+      refundType: 系统作废
+      refundAmount: 500.0
+      refundGapAmount: 0.0
 constraints:
 - type: temporal_order
   description: Registration 在 Login 前
