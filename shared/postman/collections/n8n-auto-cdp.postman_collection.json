@@ -1,0 +1,131 @@
+{
+  "info": {
+    "_postman_id": "3d10edf4-0821-485f-9046-f909959a7efd",
+    "name": "n8n-auto-cdp",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "获取所有session",
+      "id": "3e97bbdd-87c8-4969-9cd3-4aebf35afa44",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/v1/sessions",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "sessions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "终止所有session",
+      "id": "2f5e9c6b-056a-4319-b2ea-770ef27f0630",
+      "request": {
+        "method": "DELETE",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/v1/sessions",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "sessions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "创建新的Session",
+      "id": "c7da450d-411d-4439-8ae7-1711fed91875",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/v1/sessions",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "sessions"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "提交任务",
+      "id": "43086c2a-b884-40c0-aa41-a4c1b00eb10b",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "content",
+              "value": "输入用户名和密码，点击登录，之后点击小程序开发项目",
+              "type": "text"
+            },
+            {
+              "key": "session_id",
+              "value": "88cb04b2-b932-4d14-8b8b-f9cc1e4074ec",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/task",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "task"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "跳转目标页面URL",
+      "id": "fad76999-3f41-4965-b277-dd9f4f57695a",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "url",
+              "value": "https://westkdemo.sensorsdata.cn/",
+              "type": "text"
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{base_url}}/v1/sessions/88cb04b2-b932-4d14-8b8b-f9cc1e4074ec/navigate",
+          "host": [
+            "{{base_url}}"
+          ],
+          "path": [
+            "v1",
+            "sessions",
+            "88cb04b2-b932-4d14-8b8b-f9cc1e4074ec",
+            "navigate"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

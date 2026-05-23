@@ -1,0 +1,2447 @@
+{
+  "info": {
+    "_postman_id": "5c888ad0-02f0-4aba-a2c6-689c529325de",
+    "name": "Sensors",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Potal",
+      "item": [
+        {
+          "name": "❌获取执行中的任务详情列表",
+          "id": "5d1de844-0d17-4afd-9699-365aafaf759e",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "sensorsdata-project",
+                "value": "{{project}}",
+                "type": "text"
+              },
+              {
+                "key": "Content-Type",
+                "value": "application/json",
+                "type": "text"
+              },
+              {
+                "key": "api-key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{porrtal-base-url}}/resource-management/query/task/executing",
+              "host": [
+                "{{host}}{{porrtal-base-url}}"
+              ],
+              "path": [
+                "resource-management",
+                "query",
+                "task",
+                "executing"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "❌  获取项目信息",
+          "id": "bee3e438-101c-4124-b31c-d1cae0a842d6",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "api-key",
+                "value": "{{api_key}}",
+                "type": "text"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{porrtal-base-url}}/identity-meta/schema-config/get",
+              "host": [
+                "{{host}}{{porrtal-base-url}}"
+              ],
+              "path": [
+                "identity-meta",
+                "schema-config",
+                "get"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "069f9ffe-a20e-4782-85c7-ff5ef2a0c4fc"
+    },
+    {
+      "name": "SDH",
+      "item": [
+        {
+          "name": "事件",
+          "item": [
+            {
+              "name": "获取事件属性列表",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [],
+                    "id": "a020d5c2-407e-4d54-ab66-1431ec5052b4"
+                  }
+                }
+              ],
+              "id": "c4add53a-c4c0-4b89-989e-f5ef22a6e172",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "User-Agent",
+                    "value": "insomnia/8.4.5"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{ _.project }}"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{ _.api_key }}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"project_id\": 1,\n  \"entity_name\": \"string\",\n  \"event_names\": [\n    \"string\"\n  ],\n  \"filter_by_extra_permissions\": [\n    \"FIELD_PERMISSION_UNSPECIFIED\"\n  ],\n  \"expand\": \"string\",\n  \"page\": 0,\n  \"page_size\": 0\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{ _.base_url }}/api/v3/horizon/v1/schema/field/update",
+                  "host": [
+                    "{{ _.base_url }}"
+                  ],
+                  "path": [
+                    "api",
+                    "v3",
+                    "horizon",
+                    "v1",
+                    "schema",
+                    "field",
+                    "update"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "修改属性",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [],
+                    "id": "ac700629-a622-47c5-8744-b1aee2532ac0"
+                  }
+                }
+              ],
+              "id": "739d7637-b198-4221-a7c9-9493e20a1dd7",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "User-Agent",
+                    "value": "insomnia/8.4.5"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{ _.project }}"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{ _.api_key }}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"project_id\": 1,\n  \"entity_name\": \"user\",\n \"schema_name\": \"users\",\n\t  \"field\": {\n \t\t\"visible\": false,\n\t\t\"has_dict\": false,\n\t\t\"builtin\": true,\n\t\t\"primary_identity\": false,\n\t\t\"object_fields\": [],\n\t\t\"display_name\": \"$is_deleted\",\n\t\t\"created_by\": \"sensorsdata.horizon.meta\",\n\t\t\"version\": 1,\n\t\t\"required\": false,\n\t\t\"field_display_type\": \"BASIC\",\n\t\t\"has_data\": false,\n\t\t\"data_version_form\": \"FIELD_VERSION_LEVEL_UNSPECIFIED\",\n\t\t\"custom_params\": {},\n\t\t\"data_versioned\": false,\n\t\t\"enable\": true,\n\t\t\"identity\": false,\n\t\t\"name\": \"$is_deleted\",\n\t\t\"data_type\": {\n\t\t\t\"type\": \"BOOL\",\n\t\t\t\"element_data_types\": \"DATA_TYPE_UNSPECIFIED\"\n\t\t},\n\t\t\"legacy_id\": 5,\n\t\t\"subscribable\": true\n  },\n\t\"update_mask\": \"enable\",\n  \"page\": 0,\n  \"page_size\": 0\n}\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{ _.base_url }}/api/v3/horizon/v1/schema/field/update",
+                  "host": [
+                    "{{ _.base_url }}"
+                  ],
+                  "path": [
+                    "api",
+                    "v3",
+                    "horizon",
+                    "v1",
+                    "schema",
+                    "field",
+                    "update"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "查询属性",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [],
+                    "id": "8aba8128-4c5c-400b-9f78-1edeac05fae1"
+                  }
+                }
+              ],
+              "id": "8bf2c68a-4448-47af-811b-ad45ae64e899",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "User-Agent",
+                    "value": "insomnia/8.4.5"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{ _.project }}"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{ _.api_key }}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"project_id\": 1,\n  \"schema_name\": \"users\",\n  \"field_name\": \"$is_deleted\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{ _.base_url }}/api/v3/horizon/v1/schema/field/get",
+                  "host": [
+                    "{{ _.base_url }}"
+                  ],
+                  "path": [
+                    "api",
+                    "v3",
+                    "horizon",
+                    "v1",
+                    "schema",
+                    "field",
+                    "get"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "ad766f47-8ac2-41ce-be21-ef15b07d7837"
+        },
+        {
+          "name": "标签管理",
+          "item": [
+            {
+              "name": "SDH标签--获取partition接口",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [],
+                    "id": "d33d73ea-9713-489e-a7bf-20393307bdb9"
+                  }
+                }
+              ],
+              "id": "a16b6e86-48c8-4fc9-9cbd-4aad2960c54d",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "User-Agent",
+                    "value": "insomnia/8.4.5"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "#K-q1tRfhP51bcN9cxKs7cHj0eyff5OAbT8",
+                    "disabled": true
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "default"
+                  },
+                  {
+                    "key": "",
+                    "value": ""
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"project_id\":1,\n    \"entity_name\":\"user\",\n    \"tag_name\":\"tag_csxzby\",\n    \"start_time\":\"2021-08-10T16:00:00.000Z\",\n    \"end_time\":\"2023-12-18T16:00:00.000Z\",\n    \"limit\": 10,\n\t\t\"sort\": \"desc\"\n}\n\n",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{ _.base_url }}/api/v3/horizon/v1/tag/tag_partition/get?token={{ _.api_secret }}",
+                  "host": [
+                    "{{ _.base_url }}"
+                  ],
+                  "path": [
+                    "api",
+                    "v3",
+                    "horizon",
+                    "v1",
+                    "tag",
+                    "tag_partition",
+                    "get"
+                  ],
+                  "query": [
+                    {
+                      "key": "token",
+                      "value": "{{ _.api_secret }}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "SDH标签--获取basetime最新的partition信息",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [],
+                    "id": "20d0f70c-cbb9-4543-9442-dc0d8cb518ba"
+                  }
+                }
+              ],
+              "id": "6789ad45-fd15-452e-8639-1fdc41397368",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "User-Agent",
+                    "value": "insomnia/8.4.5"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{ _.project }}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n\t\"project_id\": 1,\n\t\"entity_name\": \"user\",\n\t\"tag_names\": [\n\t\t\"tag_csxzby\"\n\t],\n\t\"status\": \"TAG_PARTITION_AVAILABLE\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{ _.base_url }}/api/v3/horizon/v1/tag/tag_partition/latest?token={{ _.api_secret }}",
+                  "host": [
+                    "{{ _.base_url }}"
+                  ],
+                  "path": [
+                    "api",
+                    "v3",
+                    "horizon",
+                    "v1",
+                    "tag",
+                    "tag_partition",
+                    "latest"
+                  ],
+                  "query": [
+                    {
+                      "key": "token",
+                      "value": "{{ _.api_secret }}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "SDH标签--检查执行状态接口",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "id": "734e3ca4-23a2-4ba4-9b3d-68756c25ac4b"
+                  }
+                }
+              ],
+              "id": "bae81afb-9176-46d0-958c-bb9e0f109fad",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "User-Agent",
+                    "value": "insomnia/8.4.5"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{ _.project }}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"project_id\":1,\n    \"entity_name\":\"user\",\n    \"tag_name\":\"tag_csxzby\",\n    \"start_time\":\"2023-07-07T16:00:00Z\",\n    \"end_time\":\"2023-07-07T16:00:00Z\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}api/v3/horizon/v1/tag/tag_task/get?token={{ _.api_secret }}?token={{ _.api_secret }}",
+                  "host": [
+                    "{{host}}api"
+                  ],
+                  "path": [
+                    "v3",
+                    "horizon",
+                    "v1",
+                    "tag",
+                    "tag_task",
+                    "get"
+                  ],
+                  "query": [
+                    {
+                      "key": "token",
+                      "value": "{{ _.api_secret }}?token={{ _.api_secret }}"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "SDH标签--列表查询接口",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "type": "text/javascript",
+                    "exec": [],
+                    "id": "994cccb7-8882-4b5e-bf86-89a8b2a7d6c4"
+                  }
+                }
+              ],
+              "id": "f3c102a7-1e19-4676-9579-4fff711c8871",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "User-Agent",
+                    "value": "insomnia/8.4.5"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{ _.project }}"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{ _.api_key }}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n \"project_id\": 1,\n \"entity_name\":\"user\",\n \"page\": 1,\n \"page_size\": 2\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{ _.base_url }}/api/v3/horizon/v1/tag/tag_definition/list",
+                  "host": [
+                    "{{ _.base_url }}"
+                  ],
+                  "path": [
+                    "api",
+                    "v3",
+                    "horizon",
+                    "v1",
+                    "tag",
+                    "tag_definition",
+                    "list"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "❌SDH标签--获取表名",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "id": "23170402-8ac4-49db-b374-b7e55f80296a"
+                  }
+                }
+              ],
+              "id": "e61e593e-245e-4c03-8dca-16be6042154f",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "BingoPlus"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"project_id\":3,\n    \"entity_name\":\"user\",\n    \"tag_definition_names\": ['user_tag_yhbdjcs']\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{horizon-base-url}}标签任务信息/tag/tag_definition/获取",
+                  "host": [
+                    "{{host}}{{horizon-base-url}}标签任务信息"
+                  ],
+                  "path": [
+                    "tag",
+                    "tag_definition",
+                    "获取"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "❌ 创建标签元数据",
+              "id": "c815c9c0-b907-479e-a1f5-e4a885d10496",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Sensorsdata-Project",
+                    "value": "{{project_fintech_summit}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"project_id\": 7,\n    \"definition\":{\n    \"comment\":\"标签创建测试\",\n    \"create_type\":\"TAG_EQL\",\n    \"source\":{\n        \"app\":\"SDH\",\n        \"category\":\"TAG\"\n    },\n    \"data_type\":\"STRING\",\n    \"display_name\":\"我是API创建的标签\",\n    \"entity_name\":\"user\",\n    \"expression\":{\n        \"eql_based_rule\":{\n            \"value_expression\":\"user.first_id\"\n        },\n        \"tag_type\":\"EQL_BASED\"\n    },\n    \"name\":\"user_tag_wsapicxdbq\",\n    \"status\":\"TAG_ACTIVE\",\n    \"storage_settings\":{\n        \"version_count\":1\n    },\n    \"trigger\":{\n        \"trigger_type\":\"MANUAL\"\n    },\n    \"visible\":true,\n    \"managed\":true,\n    \"custom_params\":{\n        \"front_type\":{\n            \"data_type\":\"STRING\",\n            \"string_value\":\"TAG_EQL\"\n        }\n    }\n\n    \n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://{{host}}/{{horizon_api_prefix}}/tag/tag_definition/create",
+                  "protocol": "http",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "{{horizon_api_prefix}}",
+                    "tag",
+                    "tag_definition",
+                    "create"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "✅查询标签列表",
+              "id": "3911e3ef-9220-43a1-ae2b-25285265ac35",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "api-key",
+                    "value": "#K-mZPDxbT7SjQNKp4jnsv3dSoeqKUAAxBw",
+                    "type": "text"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{project}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"page_size\": 0,\n  \"page\": 0,\n  \"project_id\": 3,\n  \"entity_name\": \"string\",\n  \"tag_names\": [\n    \"string\"\n  ],\n  \"show_deleted\": true,\n  \"show_invisible\": true,\n  \"field_mask\": \"string\",\n  \"only_brief\": true\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{horizon-base-url}}/tag/definition/list",
+                  "host": [
+                    "{{host}}{{horizon-base-url}}"
+                  ],
+                  "path": [
+                    "tag",
+                    "definition",
+                    "list"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "✅ 获取标签元数据",
+              "id": "4f892cfe-7fd8-4a09-93c8-905a46535578",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Sensorsdata-Project",
+                    "value": "{{project_fintech_summit}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"project_id\": 7,\n    \"definition\":{\n    \"comment\":\"标签创建测试\",\n    \"create_type\":\"TAG_EQL\",\n    \"source\":{\n        \"app\":\"SDH\",\n        \"category\":\"TAG\"\n    },\n    \"data_type\":\"STRING\",\n    \"display_name\":\"我是API创建的标签\",\n    \"entity_name\":\"user\",\n    \"expression\":{\n        \"eql_based_rule\":{\n            \"value_expression\":\"user.first_id\"\n        },\n        \"tag_type\":\"EQL_BASED\"\n    },\n    \"name\":\"user_tag_wsapicxdbq\",\n    \"status\":\"TAG_ACTIVE\",\n    \"storage_settings\":{\n        \"version_count\":1\n    },\n    \"trigger\":{\n        \"trigger_type\":\"MANUAL\"\n    },\n    \"visible\":true,\n    \"managed\":true,\n    \"custom_params\":{\n        \"front_type\":{\n            \"data_type\":\"STRING\",\n            \"string_value\":\"TAG_EQL\"\n        }\n    }\n\n    \n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://{{host}}/{{horizon_api_prefix}}/tag/tag_definition/create",
+                  "protocol": "http",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "{{horizon_api_prefix}}",
+                    "tag",
+                    "tag_definition",
+                    "create"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "295ccb16-4e0a-429a-a555-9641ea341f6b"
+        },
+        {
+          "name": "分群",
+          "item": [
+            {
+              "name": "✅获取分群列表",
+              "id": "5457cd22-c8d1-45fa-b2ec-cb186c2fc71f",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Sensorsdata-Project",
+                    "value": "{{project}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"project_id\": 7,\n    \"entity_name\": \"user\",\n    \"page\": -1\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{horizon-base-url}}/segment/segment_definition/list",
+                  "host": [
+                    "{{host}}{{horizon-base-url}}"
+                  ],
+                  "path": [
+                    "segment",
+                    "segment_definition",
+                    "list"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "获取分群定义(元信息）",
+              "id": "368b04f4-247e-4778-b64a-b9ae40c87768",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Sensorsdata-Project",
+                    "value": "{{project_fintech_summit}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"project_id\": 7,\n    \"entity_name\": \"user\",\n    \"name\": \"segment_t001a_copy\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://{{host}}/{{horizon_api_prefix}}/segment/definition/get",
+                  "protocol": "http",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "{{horizon_api_prefix}}",
+                    "segment",
+                    "definition",
+                    "get"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "触发分群计算",
+              "id": "c9d48ff4-2db5-4c31-b22e-09205dd597ad",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Sensorsdata-Project",
+                    "value": "{{project_fintech_summit}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"project_id\": 7,\n    \"entity_name\": \"user\",\n    \"evaluate_params\": [{\n        \"segment_definition_name\": \"segment_t001a_copy\",\n        \"segment_rule_name\": \"96d0e0e751324077b9b7bd632dc1fd94\",\n        \"base_time\": \"2024-08-12T16:00:00Z\",\n        \"segment_rule_version\": \"1\"\n    }]\n    \n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://{{host}}/{{horizon_api_prefix}}/segment/definition/evaluate",
+                  "protocol": "http",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "{{horizon_api_prefix}}",
+                    "segment",
+                    "definition",
+                    "evaluate"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "获取分群计算任务",
+              "id": "c3f22cda-5070-443a-918c-ba57b31b0a44",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Sensorsdata-Project",
+                    "value": "{{project_fintech_summit}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"project_id\": 7,\n    \"entity_name\": \"user\",\n    \"definition_name\": \"segment_t001a_copy\",\n   \"fetch_all\": \"true\",\n    \"base_time_list\": [\"2024-08-12T16:00:00Z\"]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://{{host}}/{{horizon_api_prefix}}/segment/task/get",
+                  "protocol": "http",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "{{horizon_api_prefix}}",
+                    "segment",
+                    "task",
+                    "get"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "取消分群计算任务",
+              "id": "15ed2d01-1c9d-47d1-85f6-aa70ad3f05ef",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Sensorsdata-Project",
+                    "value": "{{project_fintech_summit}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"project_id\": 7,\n    \"entity_name\": \"user\",\n    \"segment_definition_name\": \"segment_t001a_copy\",\n    \"task_ids\":[9244]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://{{host}}/{{horizon_api_prefix}}/segment/task/cancel",
+                  "protocol": "http",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "{{horizon_api_prefix}}",
+                    "segment",
+                    "task",
+                    "cancel"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "获取所有/部分partition",
+              "id": "39bf5a3d-4acf-40c6-98da-f802c7e2bde2",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Sensorsdata-Project",
+                    "value": "{{project_fintech_summit}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"project_id\": 7,\n    \"entity_name\": \"user\",\n    \"definition_name\":\"segment_t001a_copy\"\n    \n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "http://{{host}}/{{horizon_api_prefix}}/segment/item/list",
+                  "protocol": "http",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "{{horizon_api_prefix}}",
+                    "segment",
+                    "item",
+                    "list"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "9cc55bf0-5b39-4c7c-b9b7-40f325bdd805"
+        }
+      ],
+      "id": "7e73f98c-49c6-41d9-8ad2-a1480a7f47cc"
+    },
+    {
+      "name": "SBP",
+      "item": [
+        {
+          "name": "✅获取账号列表",
+          "event": [
+            {
+              "listen": "test",
+              "script": {
+                "exec": [
+                  ""
+                ],
+                "type": "text/javascript",
+                "packages": {},
+                "id": "890b0c75-db18-4e5e-b327-d684a0b77012"
+              }
+            }
+          ],
+          "id": "6f82eb63-1afd-4e87-b84c-2cd0b7335697",
+          "protocolProfileBehavior": {
+            "followRedirects": true,
+            "disableUrlEncoding": false,
+            "disableCookies": false
+          },
+          "request": {
+            "method": "GET",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              },
+              {
+                "key": "sensorsdata-project",
+                "value": "{{project}}"
+              },
+              {
+                "key": "api-key",
+                "value": "{{api_key}}"
+              }
+            ],
+            "url": {
+              "raw": "{{host}}{{porrtal-base-url}}/identity/account/list?page_index=1&page_size=20",
+              "host": [
+                "{{host}}{{porrtal-base-url}}"
+              ],
+              "path": [
+                "identity",
+                "account",
+                "list"
+              ],
+              "query": [
+                {
+                  "key": "page_index",
+                  "value": "1"
+                },
+                {
+                  "key": "page_size",
+                  "value": "20"
+                }
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "6da4634c-76f2-4f4f-875f-73aaab96c238"
+    },
+    {
+      "name": "SA",
+      "item": [
+        {
+          "name": "业务集市",
+          "item": [
+            {
+              "name": "✅获取业务模型列表",
+              "id": "e64332d5-4108-477b-bfb4-4909806a2519",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{project}}",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"group_name\": \"默认分组\",\n  \"dataset_types\": [\n    \"CUSTOME_SQL_QUERY\",\n    \"ANALYSIS_MODEL_SEGMENTATION\",\n     \"ANALYSIS_MODEL_SEGMENTATION_TABLE\"\n  ],\n  \"scheduler_statuses\": [\n    \"PROCESSING_BY_HOUR\",\n    \"PROCESSING_BY_DAY\",\n    \"MANUALLY\"\n  ],\n  \"sync_statuses\": [\n    \"SUCCESS\",\n    \"WAITING\"\n  ],\n  \"page_index\": 0,\n  \"page_size\": 10\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{sa-base-url}}/dataset/detail_list",
+                  "host": [
+                    "{{host}}{{sa-base-url}}"
+                  ],
+                  "path": [
+                    "dataset",
+                    "detail_list"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "✅刷新指定业务模型的数据",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "id": "8f0e02f8-effd-4cc0-9e2f-7b1c16db7f56"
+                  }
+                }
+              ],
+              "id": "d71913f5-7df8-4d69-a3f4-8efaaf26adf1",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "BingoPlus"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"dataset_id\": 621,\n  \"sync_type\": \"INCREMENTAL\",\n  \"refresh_from_date\": \"2024-05-01 00:00:00\",\n  \"refresh_to_date\": \"2024-05-04 00:00:00\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{sa-base-url}}/dataset/refresh",
+                  "host": [
+                    "{{host}}{{sa-base-url}}"
+                  ],
+                  "path": [
+                    "dataset",
+                    "refresh"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "查询业务模型数据",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "id": "35263a3a-aa98-49ec-b4af-cdbe39414e8b"
+                  }
+                }
+              ],
+              "id": "4bcba483-3d2d-422a-9a83-bbcdcaba93ff",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{project}}"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"dataset_id\": 812,\n  \"dimensions\": [\n    {\n      \"column_name\": \"event_anything_product_name\"\n    },\n    {\n      \"column_name\": \"event_anything_lib\"\n    }\n  ],\n\n  \"measures\": [\n        {\n            \"column_name\": \"fundview_count_0\",\n            \"aggregation\": \"sum\"\n        }\n  ],\n\n  \"description\": \"业务模型查询描述\",\n  \"page_index\": 1,\n  \"page_size\": 3,\n   \"from_date\": \"2013-01-15\",\n    \"to_date\": \"2024-01-20\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{sa-base-url}}/dataset/model/query",
+                  "host": [
+                    "{{host}}{{sa-base-url}}"
+                  ],
+                  "path": [
+                    "dataset",
+                    "model",
+                    "query"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "✅查询业务模型详情",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "id": "3948890a-ab72-4050-b597-721193aec1e7"
+                  }
+                }
+              ],
+              "id": "5a22c00a-f585-4c07-a292-a9f34471e0cd",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{project}}"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}"
+                  }
+                ],
+                "url": {
+                  "raw": "{{host}}{{sa-base-url}}/dataset/detail?dataset_id=812",
+                  "host": [
+                    "{{host}}{{sa-base-url}}"
+                  ],
+                  "path": [
+                    "dataset",
+                    "detail"
+                  ],
+                  "query": [
+                    {
+                      "key": "dataset_id",
+                      "value": "812"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "查询业务模型分组",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "id": "ff6f4e55-472c-45be-a0de-07bd358ec66c"
+                  }
+                }
+              ],
+              "id": "54d9bd6e-9d06-4337-bd90-fedb3b6b61ea",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "Fintech_Summit"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "#K-XbKKkWWgaIWhwKmNz70H9NhESFAU5J52"
+                  }
+                ],
+                "url": {
+                  "raw": "https://horizon_test.debugbox.sensorsdata.cn/api/v3/analytics/v1/dataset/group/list",
+                  "protocol": "https",
+                  "host": [
+                    "horizon_test",
+                    "debugbox",
+                    "sensorsdata",
+                    "cn"
+                  ],
+                  "path": [
+                    "api",
+                    "v3",
+                    "analytics",
+                    "v1",
+                    "dataset",
+                    "group",
+                    "list"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "eecd8f47-a221-429d-8f9c-0bf17f937fde"
+        },
+        {
+          "name": "事件",
+          "item": [
+            {
+              "name": "✅获取所有事件属性",
+              "id": "99aa009d-649e-4601-a159-ca408a7863b6",
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "default",
+                    "type": "text"
+                  }
+                ],
+                "url": {
+                  "raw": "{{host}}{{sa-base-url}}/property-meta/event-properties/all",
+                  "host": [
+                    "{{host}}{{sa-base-url}}"
+                  ],
+                  "path": [
+                    "property-meta",
+                    "event-properties",
+                    "all"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "4dc9271c-68d5-43f9-aec1-e16084ebf04e"
+        }
+      ],
+      "id": "201cdd1c-99e3-423e-b747-8b26a670b667"
+    },
+    {
+      "name": "SF",
+      "item": [
+        {
+          "name": "运营计划+画布",
+          "item": [
+            {
+              "name": "✅SF-运营计划-列表查询",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "id": "5ace4930-5de3-4624-9187-60f86a1f11fc"
+                  }
+                }
+              ],
+              "id": "c44e9e97-d898-4ceb-b130-8f4478ca0feb",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{project}}"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Organization-Id",
+                    "value": "{{org-id}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"page_filter\": {\n    \"limit\": 50,\n    \"offset\": 0,\n    \"total\": 0\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{focus-base-url}}/web/plan/list",
+                  "host": [
+                    "{{host}}{{focus-base-url}}"
+                  ],
+                  "path": [
+                    "web",
+                    "plan",
+                    "list"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "✅SF-流程画布-列表查询",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "id": "6dafb655-2894-44b2-8623-92368e16e579"
+                  }
+                }
+              ],
+              "id": "126c7e60-b424-43df-a904-521655978199",
+              "protocolProfileBehavior": {
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{project}}"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Organization-Id",
+                    "value": "{{org-id}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"page_filter\": {\n    \"limit\": 50,\n    \"offset\": 0,\n    \"total\": 0\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{focus-base-url}}/web/canvas/list",
+                  "host": [
+                    "{{host}}{{focus-base-url}}"
+                  ],
+                  "path": [
+                    "web",
+                    "canvas",
+                    "list"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "✅SF-运营计划-单个查询",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "id": "ec73e578-4ec8-44cc-95bc-fdb5b1c017b7"
+                  }
+                }
+              ],
+              "id": "a3ef96cf-b48e-490a-86a0-d0f5ff9e7b1c",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true,
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{project}}"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Organization-Id",
+                    "value": "{{org-id}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"page_filter\": {\n    \"limit\": 50,\n    \"offset\": 0,\n    \"total\": 0\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{focus-base-url}}/web/plan/get?id=22",
+                  "host": [
+                    "{{host}}{{focus-base-url}}"
+                  ],
+                  "path": [
+                    "web",
+                    "plan",
+                    "get"
+                  ],
+                  "query": [
+                    {
+                      "key": "id",
+                      "value": "22"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "✅SF-流程画布-单个查询",
+              "event": [
+                {
+                  "listen": "test",
+                  "script": {
+                    "exec": [
+                      ""
+                    ],
+                    "type": "text/javascript",
+                    "packages": {},
+                    "id": "954a0dc0-d8e2-412f-9e7a-cdd6f88d713d"
+                  }
+                }
+              ],
+              "id": "3e396487-37b5-414c-b169-50b5a49c5b0a",
+              "protocolProfileBehavior": {
+                "disableBodyPruning": true,
+                "followRedirects": true,
+                "disableUrlEncoding": false,
+                "disableCookies": false
+              },
+              "request": {
+                "method": "GET",
+                "header": [
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{project}}"
+                  },
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}"
+                  },
+                  {
+                    "key": "X-Organization-Id",
+                    "value": "{{org-id}}"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"page_filter\": {\n    \"limit\": 50,\n    \"offset\": 0,\n    \"total\": 0\n  }\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{focus-base-url}}/web/canvas/get?id=17",
+                  "host": [
+                    "{{host}}{{focus-base-url}}"
+                  ],
+                  "path": [
+                    "web",
+                    "canvas",
+                    "get"
+                  ],
+                  "query": [
+                    {
+                      "key": "id",
+                      "value": "17"
+                    }
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "9ec982e9-f51a-4a83-8ad8-080b1e4e8e8a"
+        },
+        {
+          "name": "在线接口",
+          "item": [
+            {
+              "name": "✅单个用户获取多属性/标签纸",
+              "id": "6693d229-6fe6-4953-b823-6e75664d7786",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "api-key",
+                    "value": "#K-mZPDxbT7SjQNKp4jnsv3dSoeqKUAAxBw",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Organization-Id",
+                    "value": "able-test",
+                    "type": "text"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "BingoPlus",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"entity_name\": \"user\",\n    \"audience_entity_id\": {\n        \"identity_id_map\": {\n            \"distinct_id\": \"bingoplusbuvgzj\"\n        }\n    },\n    \"attribute_names\": [\n        \"user_tag_yhbdjcs\"\n    ]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{online_host}}{{focus-base-url}}/express-attribute-online/get",
+                  "host": [
+                    "{{online_host}}{{focus-base-url}}"
+                  ],
+                  "path": [
+                    "express-attribute-online",
+                    "get"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "✅属性订阅状态查询",
+              "id": "d5ae7789-d317-4c97-a25b-ad96db2e821c",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Organization-Id",
+                    "value": "{{org-id}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "BingoPlus",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"entity_name\": \"user\",\n  \"attribute_names\": [\"user_tag_yhbdjcs\"]\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}/api/v3/focus/v1/express-attribute/status/query",
+                  "host": [
+                    "{{host}}"
+                  ],
+                  "path": [
+                    "api",
+                    "v3",
+                    "focus",
+                    "v1",
+                    "express-attribute",
+                    "status",
+                    "query"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "✅取消属性订阅",
+              "id": "a7b1714d-bf49-49a4-8883-585e94cba484",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Organization-Id",
+                    "value": "{{org-id}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "BingoPlus",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"entity_name\": \"user\",\n  \"attribute_name\": \"user_tag_yhbdjcs\",\n  \"subscriber\": \"jack\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{focus-base-url}}/express-attribute/unsubscribe",
+                  "host": [
+                    "{{host}}{{focus-base-url}}"
+                  ],
+                  "path": [
+                    "express-attribute",
+                    "unsubscribe"
+                  ]
+                }
+              },
+              "response": []
+            },
+            {
+              "name": "✅属性标签订阅",
+              "id": "f2c50bf1-0c05-4ca8-8030-73da44fa795c",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Organization-Id",
+                    "value": "{{org-id}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "BingoPlus",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"entity_name\": \"user\",\n  \"attribute_name\": \"user_tag_yhbdjcs\",\n  \"subscriber\": \"jack\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{focus-base-url}}/express-attribute/subscribe",
+                  "host": [
+                    "{{host}}{{focus-base-url}}"
+                  ],
+                  "path": [
+                    "express-attribute",
+                    "subscribe"
+                  ]
+                }
+              },
+              "response": []
+            }
+          ],
+          "id": "9322aa68-21ca-45c0-8ab4-2ef2045c3d08"
+        },
+        {
+          "name": "资源位",
+          "item": [
+            {
+              "name": "✅获取资源位列表",
+              "id": "202a1331-86a0-4db8-89a6-f683df272475",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Organization-Id",
+                    "value": "{{org-id}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{project}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"page_filter\": {\n        \"limit\": 10,\n        \"offset\": 0,\n        \"total\": 0\n    },\n    \"type\": \"CAROUSEL\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{focus-base-url}}/web-sections/list",
+                  "host": [
+                    "{{host}}{{focus-base-url}}"
+                  ],
+                  "path": [
+                    "web-sections",
+                    "list"
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "id": "ee11906a-ddd2-4fcc-a75e-9a329cc239cd",
+                  "name": "获取资源位列表",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "api-key",
+                        "value": "#K-mZPDxbT7SjQNKp4jnsv3dSoeqKUAAxBw",
+                        "type": "text"
+                      },
+                      {
+                        "key": "X-Organization-Id",
+                        "value": "able-test",
+                        "type": "text"
+                      },
+                      {
+                        "key": "sensorsdata-project",
+                        "value": "BingoPlus",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"page_filter\": {\n        \"limit\": 10,\n        \"offset\": 0,\n        \"total\": 0\n    },\n    \"type\": \"CAROUSEL\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{host}}{{focus-base-url}}/web-sections/list",
+                      "host": [
+                        "{{host}}{{focus-base-url}}"
+                      ],
+                      "path": [
+                        "web-sections",
+                        "list"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Date",
+                      "value": "Wed, 07 May 2025 06:51:32 GMT"
+                    },
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json;charset=utf-8"
+                    },
+                    {
+                      "key": "Transfer-Encoding",
+                      "value": "chunked"
+                    },
+                    {
+                      "key": "Connection",
+                      "value": "keep-alive"
+                    },
+                    {
+                      "key": "Sensorsdata-Hostname",
+                      "value": "hybrid03.abroad-test-sfn.sfn-ali-singapore-01.cloud"
+                    },
+                    {
+                      "key": "X-Request-Id",
+                      "value": "07145132adfc4dbb0e03177316eaf01b"
+                    },
+                    {
+                      "key": "X-Frame-Options",
+                      "value": "sameorigin"
+                    },
+                    {
+                      "key": "X-Frame-Options",
+                      "value": "sameorigin"
+                    },
+                    {
+                      "key": "X-XSS-Protection",
+                      "value": "1;mode=block"
+                    },
+                    {
+                      "key": "X-XSS-Protection",
+                      "value": "1;mode=block"
+                    },
+                    {
+                      "key": "X-Content-Type-Options",
+                      "value": "nosniff"
+                    },
+                    {
+                      "key": "X-Content-Type-Options",
+                      "value": "nosniff"
+                    },
+                    {
+                      "key": "Referrer-Policy",
+                      "value": "no-referrer-when-downgrade"
+                    },
+                    {
+                      "key": "Referrer-Policy",
+                      "value": "no-referrer-when-downgrade"
+                    },
+                    {
+                      "key": "Content-Encoding",
+                      "value": "gzip"
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"07145132adfc4dbb0e03177316eaf01b\",\n    \"data\": {\n        \"page_filter\": {\n            \"limit\": 10,\n            \"offset\": 0,\n            \"total\": 1\n        },\n        \"sections\": [\n            {\n                \"section_id\": \"section_id_3500418804811\",\n                \"cname\": \"轮播资源位A\",\n                \"type\": \"CAROUSEL\",\n                \"create_time\": \"2025-04-30 19:42:41\"\n            }\n        ]\n    }\n}"
+                }
+              ]
+            }
+          ],
+          "id": "9dfd2f8b-ebd8-4766-a88a-bc2b10fbba66"
+        },
+        {
+          "name": "受众",
+          "item": [
+            {
+              "name": "✅获取受众列表(全部)",
+              "id": "7facaeb5-d37b-4c26-915b-ccdac49d1e4e",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "api-key",
+                    "value": "{{api_key}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Organization-Id",
+                    "value": "{{org-id}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "{{project}}",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n  \"query_type\": \"QUERY_ALL\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{focus-base-url}}/express-audience-meta/rule/query",
+                  "host": [
+                    "{{host}}{{focus-base-url}}"
+                  ],
+                  "path": [
+                    "express-audience-meta",
+                    "rule",
+                    "query"
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "id": "f7b130c4-3f1d-4b4f-91fd-0194aad6c311",
+                  "name": "获取资源位列表",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "api-key",
+                        "value": "#K-mZPDxbT7SjQNKp4jnsv3dSoeqKUAAxBw",
+                        "type": "text"
+                      },
+                      {
+                        "key": "X-Organization-Id",
+                        "value": "able-test",
+                        "type": "text"
+                      },
+                      {
+                        "key": "sensorsdata-project",
+                        "value": "BingoPlus",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"page_filter\": {\n        \"limit\": 10,\n        \"offset\": 0,\n        \"total\": 0\n    },\n    \"type\": \"CAROUSEL\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{host}}{{focus-base-url}}/web-sections/list",
+                      "host": [
+                        "{{host}}{{focus-base-url}}"
+                      ],
+                      "path": [
+                        "web-sections",
+                        "list"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Date",
+                      "value": "Wed, 07 May 2025 06:51:32 GMT"
+                    },
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json;charset=utf-8"
+                    },
+                    {
+                      "key": "Transfer-Encoding",
+                      "value": "chunked"
+                    },
+                    {
+                      "key": "Connection",
+                      "value": "keep-alive"
+                    },
+                    {
+                      "key": "Sensorsdata-Hostname",
+                      "value": "hybrid03.abroad-test-sfn.sfn-ali-singapore-01.cloud"
+                    },
+                    {
+                      "key": "X-Request-Id",
+                      "value": "07145132adfc4dbb0e03177316eaf01b"
+                    },
+                    {
+                      "key": "X-Frame-Options",
+                      "value": "sameorigin"
+                    },
+                    {
+                      "key": "X-Frame-Options",
+                      "value": "sameorigin"
+                    },
+                    {
+                      "key": "X-XSS-Protection",
+                      "value": "1;mode=block"
+                    },
+                    {
+                      "key": "X-XSS-Protection",
+                      "value": "1;mode=block"
+                    },
+                    {
+                      "key": "X-Content-Type-Options",
+                      "value": "nosniff"
+                    },
+                    {
+                      "key": "X-Content-Type-Options",
+                      "value": "nosniff"
+                    },
+                    {
+                      "key": "Referrer-Policy",
+                      "value": "no-referrer-when-downgrade"
+                    },
+                    {
+                      "key": "Referrer-Policy",
+                      "value": "no-referrer-when-downgrade"
+                    },
+                    {
+                      "key": "Content-Encoding",
+                      "value": "gzip"
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"07145132adfc4dbb0e03177316eaf01b\",\n    \"data\": {\n        \"page_filter\": {\n            \"limit\": 10,\n            \"offset\": 0,\n            \"total\": 1\n        },\n        \"sections\": [\n            {\n                \"section_id\": \"section_id_3500418804811\",\n                \"cname\": \"轮播资源位A\",\n                \"type\": \"CAROUSEL\",\n                \"create_time\": \"2025-04-30 19:42:41\"\n            }\n        ]\n    }\n}"
+                }
+              ]
+            },
+            {
+              "name": "✅获取受众列表(传参)",
+              "id": "135b1c54-cc3d-4eee-b7c3-93ea8658d3a0",
+              "request": {
+                "method": "POST",
+                "header": [
+                  {
+                    "key": "api-key",
+                    "value": "#K-mZPDxbT7SjQNKp4jnsv3dSoeqKUAAxBw",
+                    "type": "text"
+                  },
+                  {
+                    "key": "X-Organization-Id",
+                    "value": "able-test",
+                    "type": "text"
+                  },
+                  {
+                    "key": "sensorsdata-project",
+                    "value": "BingoPlus",
+                    "type": "text"
+                  },
+                  {
+                    "key": "Content-Type",
+                    "value": "application/json",
+                    "type": "text"
+                  }
+                ],
+                "body": {
+                  "mode": "raw",
+                  "raw": "{\n    \"page_filter\": {\n        \"limit\": 10,\n        \"offset\": 0,\n        \"total\": 0\n    },\n    \"type\": \"CAROUSEL\"\n}",
+                  "options": {
+                    "raw": {
+                      "language": "json"
+                    }
+                  }
+                },
+                "url": {
+                  "raw": "{{host}}{{focus-base-url}}/web-sections/list",
+                  "host": [
+                    "{{host}}{{focus-base-url}}"
+                  ],
+                  "path": [
+                    "web-sections",
+                    "list"
+                  ]
+                }
+              },
+              "response": [
+                {
+                  "id": "2ae29221-e1ca-42ea-bb0d-6d6541ab160d",
+                  "name": "获取资源位列表",
+                  "originalRequest": {
+                    "method": "POST",
+                    "header": [
+                      {
+                        "key": "api-key",
+                        "value": "#K-mZPDxbT7SjQNKp4jnsv3dSoeqKUAAxBw",
+                        "type": "text"
+                      },
+                      {
+                        "key": "X-Organization-Id",
+                        "value": "able-test",
+                        "type": "text"
+                      },
+                      {
+                        "key": "sensorsdata-project",
+                        "value": "BingoPlus",
+                        "type": "text"
+                      },
+                      {
+                        "key": "Content-Type",
+                        "value": "application/json",
+                        "type": "text"
+                      }
+                    ],
+                    "body": {
+                      "mode": "raw",
+                      "raw": "{\n    \"page_filter\": {\n        \"limit\": 10,\n        \"offset\": 0,\n        \"total\": 0\n    },\n    \"type\": \"CAROUSEL\"\n}",
+                      "options": {
+                        "raw": {
+                          "language": "json"
+                        }
+                      }
+                    },
+                    "url": {
+                      "raw": "{{host}}{{focus-base-url}}/web-sections/list",
+                      "host": [
+                        "{{host}}{{focus-base-url}}"
+                      ],
+                      "path": [
+                        "web-sections",
+                        "list"
+                      ]
+                    }
+                  },
+                  "status": "OK",
+                  "code": 200,
+                  "_postman_previewlanguage": "json",
+                  "header": [
+                    {
+                      "key": "Date",
+                      "value": "Wed, 07 May 2025 06:51:32 GMT"
+                    },
+                    {
+                      "key": "Content-Type",
+                      "value": "application/json;charset=utf-8"
+                    },
+                    {
+                      "key": "Transfer-Encoding",
+                      "value": "chunked"
+                    },
+                    {
+                      "key": "Connection",
+                      "value": "keep-alive"
+                    },
+                    {
+                      "key": "Sensorsdata-Hostname",
+                      "value": "hybrid03.abroad-test-sfn.sfn-ali-singapore-01.cloud"
+                    },
+                    {
+                      "key": "X-Request-Id",
+                      "value": "07145132adfc4dbb0e03177316eaf01b"
+                    },
+                    {
+                      "key": "X-Frame-Options",
+                      "value": "sameorigin"
+                    },
+                    {
+                      "key": "X-Frame-Options",
+                      "value": "sameorigin"
+                    },
+                    {
+                      "key": "X-XSS-Protection",
+                      "value": "1;mode=block"
+                    },
+                    {
+                      "key": "X-XSS-Protection",
+                      "value": "1;mode=block"
+                    },
+                    {
+                      "key": "X-Content-Type-Options",
+                      "value": "nosniff"
+                    },
+                    {
+                      "key": "X-Content-Type-Options",
+                      "value": "nosniff"
+                    },
+                    {
+                      "key": "Referrer-Policy",
+                      "value": "no-referrer-when-downgrade"
+                    },
+                    {
+                      "key": "Referrer-Policy",
+                      "value": "no-referrer-when-downgrade"
+                    },
+                    {
+                      "key": "Content-Encoding",
+                      "value": "gzip"
+                    }
+                  ],
+                  "cookie": [],
+                  "body": "{\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"07145132adfc4dbb0e03177316eaf01b\",\n    \"data\": {\n        \"page_filter\": {\n            \"limit\": 10,\n            \"offset\": 0,\n            \"total\": 1\n        },\n        \"sections\": [\n            {\n                \"section_id\": \"section_id_3500418804811\",\n                \"cname\": \"轮播资源位A\",\n                \"type\": \"CAROUSEL\",\n                \"create_time\": \"2025-04-30 19:42:41\"\n            }\n        ]\n    }\n}"
+                }
+              ]
+            }
+          ],
+          "id": "d293076a-448b-42fa-8b58-9503ebecfc88"
+        }
+      ],
+      "id": "72ea3be3-6cbf-42fe-81fe-8d8da2042cba"
+    }
+  ]
+}

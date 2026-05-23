@@ -1,0 +1,62 @@
+{
+  "info": {
+    "_postman_id": "01d5eb5a-900c-41d8-acf2-c87b2949a851",
+    "name": "PlayGround",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "状态检查",
+      "id": "e1a79557-fc63-43a2-97fb-47d25eda635b",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "http://localhost:8000/health",
+          "protocol": "http",
+          "host": [
+            "localhost"
+          ],
+          "port": "8000",
+          "path": [
+            "health"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "发送Webhook信息",
+      "id": "640496cc-f8c0-496d-90d4-c2ed7d78986c",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"task_name\": \"XX 策略补发任务\",\n  \"strategy_name\": \"新用户激活策略\",\n  \"plan_id\": \"PLAN-2024-001\",\n  \"resend_count\": 1000,\n  \"run_time\": \"2024-01-15 14:30:00\",\n  \"webhook_urls\": [\n    \"https://qyapi.weixin.qq.com/cgi-bin/webhook/send?key=fff6fb99-3ec5-431a-a3c8-a3ce4cd31b58\"\n  ]\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "http://172.22.56.57:8000/send/strategy-resend",
+          "protocol": "http",
+          "host": [
+            "172",
+            "22",
+            "56",
+            "57"
+          ],
+          "port": "8000",
+          "path": [
+            "send",
+            "strategy-resend"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

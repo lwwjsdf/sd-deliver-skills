@@ -1,0 +1,36 @@
+{
+  "info": {
+    "_postman_id": "b7d5b5cc-ce26-42c3-8896-567ee4eba813",
+    "name": "Telegram",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "New Request",
+      "id": "7b3336bc-fbc7-477d-a144-599414b02124",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "获取图片地址",
+      "id": "9a7f6b39-783f-4bca-97a2-795985d06925",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    },
+    {
+      "name": "获取图片",
+      "id": "e3bb0f5f-9e79-4d00-8447-4ee80ca3bc98",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    }
+  ]
+}

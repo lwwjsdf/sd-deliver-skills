@@ -1,0 +1,112 @@
+{
+  "info": {
+    "_postman_id": "75f44da8-8b74-4431-9bde-617e5cf45dc4",
+    "name": "阿里云千问",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "提交图片任务",
+      "id": "8df3d915-dca1-4b11-bf39-0291e4c03f77",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer sk-232ed723e570446e9e1b3be8cb223fc0",
+            "type": "text"
+          },
+          {
+            "key": "X-DashScope-Async",
+            "value": "enable",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"model\": \"wanx2.1-t2i-turbo\",\n    \"input\": {\n        \"prompt\": \"一间有着精致窗户的花店，漂亮的木质门，摆放着花朵\"\n    },\n    \"parameters\": {\n        \"size\": \"1024*1024\",\n        \"n\": 1\n    }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://dashscope.aliyuncs.com/api/v1/services/aigc/text2image/image-synthesis",
+          "protocol": "https",
+          "host": [
+            "dashscope",
+            "aliyuncs",
+            "com"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "services",
+            "aigc",
+            "text2image",
+            "image-synthesis"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "查看任务运行状态",
+      "id": "63019184-fef0-41b0-9bda-4e31c8c2253d",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer sk-232ed723e570446e9e1b3be8cb223fc0",
+            "type": "text"
+          },
+          {
+            "key": "X-DashScope-Async",
+            "value": "enable",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"model\": \"wanx2.1-t2i-turbo\",\n    \"input\": {\n        \"prompt\": \"一间有着精致窗户的花店，漂亮的木质门，摆放着花朵\"\n    },\n    \"parameters\": {\n        \"size\": \"1024*1024\",\n        \"n\": 1\n    }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://dashscope.aliyuncs.com/api/v1/tasks/e74f8bfc-b9d8-4052-8e08-dc9f21ff9024",
+          "protocol": "https",
+          "host": [
+            "dashscope",
+            "aliyuncs",
+            "com"
+          ],
+          "path": [
+            "api",
+            "v1",
+            "tasks",
+            "e74f8bfc-b9d8-4052-8e08-dc9f21ff9024"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

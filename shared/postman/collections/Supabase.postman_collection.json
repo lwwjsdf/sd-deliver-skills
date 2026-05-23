@@ -1,0 +1,110 @@
+{
+  "info": {
+    "_postman_id": "e6bc0990-efba-4635-b4f7-930a9627da5a",
+    "name": "Supabase",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "transition_image_job状态机管理",
+      "id": "725bac63-171f-405c-9eed-46ba2a4ef7bd",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "sb_publishable_YwWyX0-4KNuwli7yV-T2Xw_-AHOC9X0",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer sb_publishable_YwWyX0-4KNuwli7yV-T2Xw_-AHOC9X0",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"p_job_id\": 25,\n  \"p_from\": \"queued\",\n  \"p_to\": \"running\",\n  \"p_payload\": {\n    \"image_url\": \"null\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://sztzpjuddguvemoxqzbi.supabase.co/rest/v1/rpc/transition_image_job",
+          "protocol": "https",
+          "host": [
+            "sztzpjuddguvemoxqzbi",
+            "supabase",
+            "co"
+          ],
+          "path": [
+            "rest",
+            "v1",
+            "rpc",
+            "transition_image_job"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "transition_image_job状态机管理 Copy",
+      "id": "7e938192-23bf-4f1c-9995-d4d2b141c620",
+      "protocolProfileBehavior": {
+        "disableBodyPruning": true
+      },
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "sb_publishable_YwWyX0-4KNuwli7yV-T2Xw_-AHOC9X0",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "Bearer sb_publishable_YwWyX0-4KNuwli7yV-T2Xw_-AHOC9X0",
+            "type": "text"
+          },
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"p_job_id\": 25,\n  \"p_from\": \"queued\",\n  \"p_to\": \"running\",\n  \"p_payload\": {\n    \"image_url\": \"null\"\n  }\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://sztzpjuddguvemoxqzbi.supabase.co/rest/v1/rpc/transition_image_job",
+          "protocol": "https",
+          "host": [
+            "sztzpjuddguvemoxqzbi",
+            "supabase",
+            "co"
+          ],
+          "path": [
+            "rest",
+            "v1",
+            "rpc",
+            "transition_image_job"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

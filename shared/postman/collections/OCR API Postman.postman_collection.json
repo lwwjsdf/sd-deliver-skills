@@ -1,0 +1,411 @@
+{
+  "info": {
+    "_postman_id": "603f42d9-fd5d-42eb-9531-decb8a6c773a",
+    "name": "OCR API Postman",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Convert image from URL",
+      "id": "0dbdd9eb-e36c-421f-8d52-33a5f07a2e50",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "helloworld"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "language",
+              "value": "eng",
+              "type": "text"
+            },
+            {
+              "key": "isOverlayRequired",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "url",
+              "value": "http://dl.a9t9.com/ocrbenchmark/eng.png",
+              "type": "text"
+            },
+            {
+              "key": "iscreatesearchablepdf",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "issearchablepdfhidetextlayer",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "filetype",
+              "value": "jpg",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://api.ocr.space/parse/image",
+          "protocol": "https",
+          "host": [
+            "api",
+            "ocr",
+            "space"
+          ],
+          "path": [
+            "parse",
+            "image"
+          ]
+        },
+        "description": "This test uses the \"helloworld\" API key and shows a basic OCR conversion for an image submitted via URL."
+      },
+      "response": []
+    },
+    {
+      "name": "Convert PDF from URL",
+      "id": "e0bcf406-b724-4b64-8380-1dc40f9e9931",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "helloworld"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "language",
+              "value": "eng",
+              "type": "text"
+            },
+            {
+              "key": "isOverlayRequired",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "url",
+              "value": "http://dl.a9t9.com/ocrbenchmark/eng.png",
+              "type": "text"
+            },
+            {
+              "key": "iscreatesearchablepdf",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "issearchablepdfhidetextlayer",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "filetype",
+              "value": "jpg",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://api.ocr.space/parse/image",
+          "protocol": "https",
+          "host": [
+            "api",
+            "ocr",
+            "space"
+          ],
+          "path": [
+            "parse",
+            "image"
+          ]
+        },
+        "description": "This test uses the \"helloworld\" API key and shows a basic OCR conversion for an image submitted via URL."
+      },
+      "response": []
+    },
+    {
+      "name": "Set OCR language",
+      "id": "8cd35ee0-f55b-4e45-befc-88758d54d688",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "helloworld"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "language",
+              "value": "eng",
+              "type": "text"
+            },
+            {
+              "key": "isOverlayRequired",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "url",
+              "value": "http://dl.a9t9.com/ocrbenchmark/eng.png",
+              "type": "text"
+            },
+            {
+              "key": "iscreatesearchablepdf",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "issearchablepdfhidetextlayer",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "filetype",
+              "value": "jpg",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://api.ocr.space/parse/image",
+          "protocol": "https",
+          "host": [
+            "api",
+            "ocr",
+            "space"
+          ],
+          "path": [
+            "parse",
+            "image"
+          ]
+        },
+        "description": "This test uses the \"helloworld\" API key and shows a basic OCR conversion for an image submitted via URL."
+      },
+      "response": []
+    },
+    {
+      "name": "Convert image from BASE64 string",
+      "id": "cf1513e9-b587-4120-8b22-a4a3ddd440bb",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "helloworld"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "language",
+              "value": "eng",
+              "type": "text"
+            },
+            {
+              "key": "isOverlayRequired",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "url",
+              "value": "http://dl.a9t9.com/ocrbenchmark/eng.png",
+              "type": "text"
+            },
+            {
+              "key": "iscreatesearchablepdf",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "issearchablepdfhidetextlayer",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "filetype",
+              "value": "jpg",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://api.ocr.space/parse/image",
+          "protocol": "https",
+          "host": [
+            "api",
+            "ocr",
+            "space"
+          ],
+          "path": [
+            "parse",
+            "image"
+          ]
+        },
+        "description": "This test uses the \"helloworld\" API key and shows a basic OCR conversion for an image submitted via URL."
+      },
+      "response": []
+    },
+    {
+      "name": "Create Searchable PDF from image (Response returns PDF download link)",
+      "id": "29f68279-d5f1-4ad9-9b2f-913a9e29dea2",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "helloworld"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "language",
+              "value": "eng",
+              "type": "text"
+            },
+            {
+              "key": "isOverlayRequired",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "url",
+              "value": "http://dl.a9t9.com/ocrbenchmark/eng.png",
+              "type": "text"
+            },
+            {
+              "key": "iscreatesearchablepdf",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "issearchablepdfhidetextlayer",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "filetype",
+              "value": "jpg",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://api.ocr.space/parse/image",
+          "protocol": "https",
+          "host": [
+            "api",
+            "ocr",
+            "space"
+          ],
+          "path": [
+            "parse",
+            "image"
+          ]
+        },
+        "description": "This test uses the \"helloworld\" API key and shows a basic OCR conversion for an image submitted via URL."
+      },
+      "response": []
+    },
+    {
+      "name": "GET ocr api call",
+      "id": "9da8acbf-22f4-4e97-87d6-4dbcc8f2727f",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "apikey",
+            "value": "helloworld"
+          }
+        ],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "language",
+              "value": "eng",
+              "type": "text"
+            },
+            {
+              "key": "isOverlayRequired",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "url",
+              "value": "http://dl.a9t9.com/ocrbenchmark/eng.png",
+              "type": "text"
+            },
+            {
+              "key": "iscreatesearchablepdf",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "issearchablepdfhidetextlayer",
+              "value": "false",
+              "type": "text"
+            },
+            {
+              "key": "filetype",
+              "value": "jpg",
+              "type": "text",
+              "disabled": true
+            }
+          ]
+        },
+        "url": {
+          "raw": "https://api.ocr.space/parse/imageurl?apikey=helloworld&url=http://i.imgur.com/s1JZUnd.gif&language=chs&isOverlayRequired=true",
+          "protocol": "https",
+          "host": [
+            "api",
+            "ocr",
+            "space"
+          ],
+          "path": [
+            "parse",
+            "imageurl"
+          ],
+          "query": [
+            {
+              "key": "apikey",
+              "value": "helloworld"
+            },
+            {
+              "key": "url",
+              "value": "http://i.imgur.com/s1JZUnd.gif"
+            },
+            {
+              "key": "language",
+              "value": "chs"
+            },
+            {
+              "key": "isOverlayRequired",
+              "value": "true"
+            }
+          ]
+        },
+        "description": "This test uses the \"helloworld\" API key and shows a basic OCR conversion for an image submitted via URL."
+      },
+      "response": []
+    }
+  ]
+}
