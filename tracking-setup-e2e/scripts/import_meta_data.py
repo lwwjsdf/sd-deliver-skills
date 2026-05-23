@@ -155,6 +155,42 @@ def import_user_attrs(api: SAOpenAPI, plan: TrackingPlan) -> dict:
     return {"ok": ok, "failed": failed}
 
 
+def confirm_import(excel_path: Path, plan: TrackingPlan) -> bool:
+    """二次确认导入内容"""
+    event_names = plan.list_events()
+    custom_events = [n for n in event_names if not n.startswith("$")]
+    user_attrs = plan.get_user_attributes()
+
+    print("\n" + "=" * 60)
+    print("📋 导入确认")
+    print("=" * 60)
+    print(f"目标环境: {SA_HOST}")
+    print(f"项目:     {SA_PROJECT}")
+    print(f"文件:     {excel_path.name}")
+    print(f"\n即将导入:")
+    print(f"  • 自定义事件: {len(custom_events)} 个")
+    print(f"  • 用户属性:   {len(user_attrs)} 个")
+
+    if custom_events:
+        print(f"\n事件列表 (前10个):")
+        for name in custom_events[:10]:
+            print(f"    - {name}")
+        if len(custom_events) > 10:
+            print(f"    ... 等共 {len(custom_events)} 个")
+
+    print("\n" + "=" * 60)
+
+    while True:
+        choice = input("确认导入以上元数据? [y/N]: ").strip().lower()
+        if choice in ("y", "yes"):
+            return True
+        elif choice in ("n", "no", ""):
+            print("❌ 已取消导入")
+            return False
+        else:
+            print("请输入 y 或 n")
+
+
 def main():
     validate_env()
 
@@ -164,11 +200,15 @@ def main():
         sys.exit(1)
 
     print(f"=== 神策 CDP 元数据导入 ===")
-    print(f"文件: {excel_path.name}")
-    print(f"目标: {SA_HOST}  项目: {SA_PROJECT}\n")
 
     api = SAOpenAPI(SA_HOST, API_KEY, SA_PROJECT)
     plan = TrackingPlan(str(excel_path))
+
+    # 二次确认
+    if not confirm_import(excel_path, plan):
+        sys.exit(0)
+
+    print(f"\n目标: {SA_HOST}  项目: {SA_PROJECT}\n")
 
     # ── 元事件 ──
     print("── 元事件导入 ──")

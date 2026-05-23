@@ -1,0 +1,3443 @@
+{
+    "openapi": "3.0.1",
+    "info": {
+        "description": "元数据管理服务",
+        "title": "神策数界",
+        "version": ""
+    },
+    "servers": [
+        {
+            "url": "/api/v3/horizon/v1"
+        }
+    ],
+    "paths": {
+        "/schema/event/list": {
+            "post": {
+                "description": "获取事件定义列表\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/event/list' \\\n    -H 'Accept: application/json' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {apiKey}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\"expand\": \"custom_params\",\"page_size\": 1\n    }'\n  返回值示例:\n  {\n      \"code\": \"SUCCESS\",\n      \"request_id\": \"111439553289fbce04c278b6db07656c\",\n      \"data\": {\n          \"schemas\": [\n              {\n                  \"project_id\": 1,\n                  \"name\": \"events.ViewProduct\",\n                  \"display_name\": \"ViewProduct\",\n                  \"type\": \"LOGICAL\",\n                  \"schema_class\": \"EVENT\",\n                  \"schema_display_type\": \"BASIC\",\n                  \"original_name\": \"ViewProduct\",\n                  \"builtin\": false,\n                  \"has_data\": true,\n                  \"visible\": true,\n                  \"enable\": true,\n                  \"custom_params\": {\n                      \"meta_schema_mapping_condition\": \"{\\\"operator\\\":\\\"AND\\\",\\\"conditions\\\":[{\\\"function\\\":\\\"EQUAL\\\",\\\"params\\\":[{\\\"param_type\\\":\\\"FIELD\\\",\\\"field\\\":\\\"event_id\\\"},{\\\"param_type\\\":\\\"VALUE\\\",\\\"value\\\":{\\\"data_type\\\":\\\"INT\\\",\\\"int_value\\\":\\\"6\\\"}}]}]}\"\n                  },\n                  \"fields\": [],\n                  \"version\": 3,\n                  \"legacy_id\": 6,\n                  \"schema_data_mapping_type\": \"SCHEMA_DATA_MAPPING_TYPE_UNSPECIFIED\"\n              }\n          ],\n          \"total_size\": 6,\n          \"has_next\": true\n      }\n  }\n```",
+                "operationId": "ListEventSchemas",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListLogicalSchemasRequest"
+                            }
+                        }
+                    },
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {
+                                        "schemas": [
+                                            {
+                                                "has_data": false,
+                                                "mapping": {
+                                                    "condition": {
+                                                        "index": 10,
+                                                        "conditions": [
+                                                            {
+                                                                "function": "EQUAL",
+                                                                "index": 10,
+                                                                "params": [
+                                                                    {
+                                                                        "expression": "user.p1/user.p2+user.p3",
+                                                                        "field": "#ResourceId",
+                                                                        "time_point": {
+                                                                            "relative_time": {
+                                                                                "time_interval": {}
+                                                                            }
+                                                                        },
+                                                                        "variable": "$ENTRY_TIME",
+                                                                        "value": {},
+                                                                        "param_type": "FIELD"
+                                                                    }
+                                                                ]
+                                                            }
+                                                        ],
+                                                        "operator": "AND"
+                                                    }
+                                                },
+                                                "visible": "true",
+                                                "data_mapping": {
+                                                    "view_table": {},
+                                                    "extended_tables": [
+                                                        {
+                                                            "access_info": {}
+                                                        }
+                                                    ]
+                                                },
+                                                "schema_data_mapping_type": "BUILTIN_TABLE",
+                                                "enable": "true",
+                                                "schema_display_type": "BASIC",
+                                                "type": "PHYSICAL",
+                                                "fields": [
+                                                    {
+                                                        "unit": {},
+                                                        "data_mapping": {
+                                                            "extended_column": {}
+                                                        },
+                                                        "data_type": {
+                                                            "type": "STRING"
+                                                        },
+                                                        "view_data_source": {
+                                                            "inline_expression": {},
+                                                            "view_column_source_data": {},
+                                                            "complex_expression": {}
+                                                        },
+                                                        "object_fields": [
+                                                            {}
+                                                        ]
+                                                    }
+                                                ],
+                                                "statistics": {
+                                                    "track_platforms": [
+                                                        {}
+                                                    ]
+                                                }
+                                            }
+                                        ]
+                                    },
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListLogicalSchemasResponseHttpApiResult"
+                                }
+                            }
+                        },
+                        "description": "sensorsdata.horizon.v1.ListLogicalSchemasResponse"
+                    }
+                },
+                "summary": "获取事件定义列表",
+                "x-sd-openapi": {
+                    "responseClass": "com.sensorsdata.horizon.v1.ListLogicalSchemasResponse",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.ListLogicalSchemasRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "ListLogicalSchemasRequest"
+            }
+        },
+        "/schema/event/get": {
+            "post": {
+                "description": "获取事件定义\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/event/get' \\\n    -H 'Accept: application/json' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {apiKey}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\"expand\": \"custom_params\",\"original_name\": \"ViewProduct\"}'\n  返回值示例：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"11154529714df4438627873ae61ad15e\",\n    \"data\": {\n        \"visible\": true,\n        \"builtin\": false,\n        \"schema_class\": \"EVENT\",\n        \"schema_display_type\": \"BASIC\",\n        \"display_name\": \"ViewProduct\",\n        \"type\": \"LOGICAL\",\n        \"version\": 3,\n        \"has_data\": true,\n        \"custom_params\": {\n            \"meta_schema_mapping_condition\": \"{\\\"operator\\\":\\\"AND\\\",\\\"conditions\\\":[{\\\"function\\\":\\\"EQUAL\\\",\\\"params\\\":[{\\\"param_type\\\":\\\"FIELD\\\",\\\"field\\\":\\\"event_id\\\"},{\\\"param_type\\\":\\\"VALUE\\\",\\\"value\\\":{\\\"data_type\\\":\\\"INT\\\",\\\"int_value\\\":\\\"6\\\"}}]}]}\"\n        },\n        \"project_id\": 1,\n        \"schema_data_mapping_type\": \"SCHEMA_DATA_MAPPING_TYPE_UNSPECIFIED\",\n        \"enable\": true,\n        \"original_name\": \"ViewProduct\",\n        \"name\": \"events.ViewProduct\",\n        \"legacy_id\": 6,\n        \"fields\": []\n    }\n  }\n```",
+                "operationId": "GetEvent",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.GetSchemaByOriginalNameRequest"
+                            }
+                        }
+                    },
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {
+                                        "has_data": false,
+                                        "mapping": {
+                                            "condition": {
+                                                "index": 10,
+                                                "conditions": [
+                                                    {
+                                                        "function": "EQUAL",
+                                                        "index": 10,
+                                                        "params": [
+                                                            {
+                                                                "expression": "user.p1/user.p2+user.p3",
+                                                                "field": "#ResourceId",
+                                                                "time_point": {
+                                                                    "relative_time": {
+                                                                        "time_interval": {}
+                                                                    }
+                                                                },
+                                                                "variable": "$ENTRY_TIME",
+                                                                "value": {},
+                                                                "param_type": "FIELD"
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "operator": "AND"
+                                            }
+                                        },
+                                        "visible": "true",
+                                        "data_mapping": {
+                                            "view_table": {},
+                                            "extended_tables": [
+                                                {
+                                                    "access_info": {}
+                                                }
+                                            ]
+                                        },
+                                        "schema_data_mapping_type": "BUILTIN_TABLE",
+                                        "enable": "true",
+                                        "schema_display_type": "BASIC",
+                                        "type": "PHYSICAL",
+                                        "fields": [
+                                            {
+                                                "unit": {},
+                                                "data_mapping": {
+                                                    "extended_column": {}
+                                                },
+                                                "data_type": {
+                                                    "type": "STRING"
+                                                },
+                                                "view_data_source": {
+                                                    "inline_expression": {},
+                                                    "view_column_source_data": {},
+                                                    "complex_expression": {}
+                                                },
+                                                "object_fields": [
+                                                    {}
+                                                ]
+                                            }
+                                        ],
+                                        "statistics": {
+                                            "track_platforms": [
+                                                {}
+                                            ]
+                                        }
+                                    },
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaHttpApiResult"
+                                }
+                            }
+                        },
+                        "description": "sensorsdata.horizon.v1.Schema"
+                    }
+                },
+                "summary": "获取事件定义",
+                "x-sd-openapi": {
+                    "responseClass": "com.sensorsdata.horizon.v1.Schema",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.GetSchemaByOriginalNameRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "GetSchemaByOriginalNameRequest"
+            }
+        },
+        "/schema/event/create": {
+            "post": {
+                "description": "创建事件定义\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/event/create' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {apiKey}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\n    \"physical_schema_name\": \"events\",\n    \"schemas\": [\n      {\n        \"original_name\": \"buttonclick\",\n        \"display_name\": \"buttonclick\",\n        \"custom_params\": {\n          \"meta_desc\": \"备注\",\n          \"meta_trigger_action_desc\": \"aaa\"\n        },\n        \"statistics\": {\n          \"track_platforms\": [\n            {\n              \"platform\": \"ANDROID\",\n              \"has_data\": false\n            },\n            {\n              \"platform\": \"IOS\",\n              \"has_data\": false\n            }\n          ]\n        }\n      }\n    ]\n   }'\n  返回值示例：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"1115555389cba16b5b816e0514fd338d\",\n    \"data\": {}\n  }\n```",
+                "operationId": "CreateEvent",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.BatchCreateLogicalSchemasRequest"
+                            }
+                        }
+                    },
+                    "description": "批量创建元事件",
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {},
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.common.HttpApiResult"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "summary": "创建事件定义",
+                "x-sd-openapi": {
+                    "responseClass": "com.google.protobuf.Empty",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.BatchCreateLogicalSchemasRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "BatchCreateLogicalSchemasRequest"
+            }
+        },
+        "/schema/event/update": {
+            "post": {
+                "description": "更新事件定义\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/event/update' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {api_key}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\n      \"schema\": {\n      \"name\": \"events.buttonclick\",\n      \"display_name\": \"test\"\n    },\n    \"update_mask\": \"display_name\"\n  }'\n  返回值示例：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"11164928bb5f4702fcd21875da74dfd4\",\n    \"data\": {\n        \"visible\": true,\n        \"builtin\": false,\n        \"schema_class\": \"EVENT\",\n        \"schema_display_type\": \"BASIC\",\n        \"display_name\": \"test\",\n        \"type\": \"LOGICAL\",\n        \"version\": 2,\n        \"has_data\": false,\n        \"custom_params\": {},\n        \"project_id\": 1,\n        \"schema_data_mapping_type\": \"SCHEMA_DATA_MAPPING_TYPE_UNSPECIFIED\",\n        \"enable\": true,\n        \"original_name\": \"buttonclick\",\n        \"name\": \"events.buttonclick\",\n        \"legacy_id\": 37,\n        \"fields\": []\n    }\n  }\n```",
+                "operationId": "UpdateEvent",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.UpdateSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {
+                                        "has_data": false,
+                                        "mapping": {
+                                            "condition": {
+                                                "index": 10,
+                                                "conditions": [
+                                                    {
+                                                        "function": "EQUAL",
+                                                        "index": 10,
+                                                        "params": [
+                                                            {
+                                                                "expression": "user.p1/user.p2+user.p3",
+                                                                "field": "#ResourceId",
+                                                                "time_point": {
+                                                                    "relative_time": {
+                                                                        "time_interval": {}
+                                                                    }
+                                                                },
+                                                                "variable": "$ENTRY_TIME",
+                                                                "value": {},
+                                                                "param_type": "FIELD"
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "operator": "AND"
+                                            }
+                                        },
+                                        "visible": "true",
+                                        "data_mapping": {
+                                            "view_table": {},
+                                            "extended_tables": [
+                                                {
+                                                    "access_info": {}
+                                                }
+                                            ]
+                                        },
+                                        "schema_data_mapping_type": "BUILTIN_TABLE",
+                                        "enable": "true",
+                                        "schema_display_type": "BASIC",
+                                        "type": "PHYSICAL",
+                                        "fields": [
+                                            {
+                                                "unit": {},
+                                                "data_mapping": {
+                                                    "extended_column": {}
+                                                },
+                                                "data_type": {
+                                                    "type": "STRING"
+                                                },
+                                                "view_data_source": {
+                                                    "inline_expression": {},
+                                                    "view_column_source_data": {},
+                                                    "complex_expression": {}
+                                                },
+                                                "object_fields": [
+                                                    {}
+                                                ]
+                                            }
+                                        ],
+                                        "statistics": {
+                                            "track_platforms": [
+                                                {}
+                                            ]
+                                        }
+                                    },
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaHttpApiResult"
+                                }
+                            }
+                        },
+                        "description": "sensorsdata.horizon.v1.Schema"
+                    }
+                },
+                "summary": "更新事件定义",
+                "x-sd-openapi": {
+                    "responseClass": "com.sensorsdata.horizon.v1.Schema",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.UpdateSchemaRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "UpdateSchemaRequest"
+            }
+        },
+        "/schema/event/field/list": {
+            "post": {
+                "description": "获取事件属性\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/event/field/list' \\\n  -H 'Content-Type: application/json' \\\n  -H 'api-key: {api_key}' \\\n  -H 'sensorsdata-project: {projectName}' \\\n  -d '{\n  \"schema_name\": \"events.buttonclick\"\n  }'\n  返回值示例：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"11171105110d11d01f2f2fd41f60f4e7\",\n    \"data\": {\n        \"fields\": [\n            {\n                \"name\": \"user_id\",\n                \"display_name\": \"user_id\",\n                \"data_type\": {\n                    \"type\": \"BIGINT\",\n                    \"element_data_types\": \"DATA_TYPE_UNSPECIFIED\"\n                },\n                \"field_display_type\": \"BASIC\",\n                \"created_by\": \"sensorsdata.horizon.identity\",\n                \"builtin\": true,\n                \"has_data\": false,\n                \"has_dict\": false,\n                \"visible\": true,\n                \"enable\": true,\n                \"identity\": false,\n                \"primary_identity\": false,\n                \"required\": true,\n                \"subscribable\": true,\n                \"data_versioned\": false,\n                \"data_version_form\": \"FIELD_VERSION_LEVEL_UNSPECIFIED\",\n                \"custom_params\": {},\n                \"object_fields\": [],\n                \"version\": 1,\n                \"legacy_id\": 22\n            }, ...\n        ]\n    }\n  }\n```",
+                "operationId": "ListEventFields",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaFieldsRequest"
+                            }
+                        }
+                    },
+                    "description": "获取属性列表",
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {
+                                        "fields": [
+                                            {
+                                                "unit": {},
+                                                "data_mapping": {
+                                                    "extended_column": {}
+                                                },
+                                                "data_type": {
+                                                    "type": "STRING"
+                                                },
+                                                "view_data_source": {
+                                                    "inline_expression": {},
+                                                    "view_column_source_data": {},
+                                                    "complex_expression": {}
+                                                },
+                                                "object_fields": [
+                                                    {}
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaFieldsResponseHttpApiResult"
+                                }
+                            }
+                        },
+                        "description": "sensorsdata.horizon.v1.ListSchemaFieldsResponse"
+                    }
+                },
+                "summary": "获取事件属性",
+                "x-sd-openapi": {
+                    "responseClass": "com.sensorsdata.horizon.v1.ListSchemaFieldsResponse",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.ListSchemaFieldsRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "ListSchemaFieldsRequest"
+            }
+        },
+        "/schema/field/list": {
+            "post": {
+                "description": "获取属性列表\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/field/list' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {api_key}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\n    \"schema_name\": \"items\",\n    \"expand\": \"custom_params,data_mapping,view_data_source\",\n    \"page_size\": 1\n  }'\n  返回值示例：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"111727233b327426b628b0b72d088cc0\",\n    \"data\": {\n        \"fields\": [\n            {\n                \"name\": \"$create_time\",\n                \"display_name\": \"$create_time\",\n                \"data_type\": {\n                    \"type\": \"NUMBER\",\n                    \"element_data_types\": \"DATA_TYPE_UNSPECIFIED\"\n                },\n                \"field_display_type\": \"BASIC\",\n                \"created_by\": \"sensorsdata.horizon.meta\",\n                \"builtin\": true,\n                \"has_data\": false,\n                \"has_dict\": false,\n                \"visible\": false,\n                \"enable\": true,\n                \"identity\": false,\n                \"primary_identity\": false,\n                \"required\": false,\n                \"subscribable\": true,\n                \"data_versioned\": false,\n                \"data_version_form\": \"FIELD_VERSION_LEVEL_UNSPECIFIED\",\n                \"custom_params\": {},\n                \"object_fields\": [],\n                \"version\": 1,\n                \"legacy_id\": 25\n            }, ...\n        ]\n    }\n  }\n```",
+                "operationId": "ListSchemaFields",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaFieldsRequest"
+                            }
+                        }
+                    },
+                    "description": "获取属性列表",
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {
+                                        "fields": [
+                                            {
+                                                "unit": {},
+                                                "data_mapping": {
+                                                    "extended_column": {}
+                                                },
+                                                "data_type": {
+                                                    "type": "STRING"
+                                                },
+                                                "view_data_source": {
+                                                    "inline_expression": {},
+                                                    "view_column_source_data": {},
+                                                    "complex_expression": {}
+                                                },
+                                                "object_fields": [
+                                                    {}
+                                                ]
+                                            }
+                                        ]
+                                    },
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaFieldsResponseHttpApiResult"
+                                }
+                            }
+                        },
+                        "description": "sensorsdata.horizon.v1.ListSchemaFieldsResponse"
+                    }
+                },
+                "summary": "获取属性列表",
+                "x-sd-openapi": {
+                    "responseClass": "com.sensorsdata.horizon.v1.ListSchemaFieldsResponse",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.ListSchemaFieldsRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "ListSchemaFieldsRequest"
+            }
+        },
+        "/schema/field/get": {
+            "post": {
+                "description": "获取属性信息\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/field/get' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {api_key}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\n    \"schema_name\": \"events\",\n    \"field_name\": \"event_id\",\n    \"expand\": \"custom_params,data_mapping,view_data_source,unit\"\n  }'\n  返回值示例：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"11174157af1a20e42523a79622bd015c\",\n    \"data\": {\n        \"visible\": false,\n        \"has_dict\": false,\n        \"builtin\": true,\n        \"primary_identity\": false,\n        \"object_fields\": [],\n        \"display_name\": \"event_id\",\n        \"created_by\": \"sensorsdata.horizon.meta\",\n        \"version\": 2,\n        \"required\": false,\n        \"field_display_type\": \"BASIC\",\n        \"has_data\": true,\n        \"data_version_form\": \"FIELD_VERSION_LEVEL_UNSPECIFIED\",\n        \"custom_params\": {},\n        \"data_versioned\": false,\n        \"enable\": true,\n        \"identity\": false,\n        \"name\": \"event_id\",\n        \"data_type\": {\n            \"type\": \"INT\",\n            \"element_data_types\": \"DATA_TYPE_UNSPECIFIED\"\n        },\n        \"legacy_id\": 8,\n        \"subscribable\": true\n    }\n  }\n```",
+                "operationId": "GetSchemaField",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.GetSchemaFieldRequest"
+                            }
+                        }
+                    },
+                    "description": "获取schema属性信息",
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {
+                                        "unit": {},
+                                        "data_mapping": {
+                                            "extended_column": {}
+                                        },
+                                        "data_type": {
+                                            "type": "STRING"
+                                        },
+                                        "view_data_source": {
+                                            "inline_expression": {},
+                                            "view_column_source_data": {},
+                                            "complex_expression": {}
+                                        },
+                                        "object_fields": [
+                                            {}
+                                        ]
+                                    },
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.horizon.v1.FieldHttpApiResult"
+                                }
+                            }
+                        },
+                        "description": "sensorsdata.horizon.v1.Field"
+                    }
+                },
+                "summary": "获取属性信息",
+                "x-sd-openapi": {
+                    "responseClass": "com.sensorsdata.horizon.v1.Field",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.GetSchemaFieldRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "GetSchemaFieldRequest"
+            }
+        },
+        "/schema/field/batch-create": {
+            "post": {
+                "description": "批量创建属性\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/field/batch-create' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {api_key}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\n    \"fields\": [\n      {\n        \"schema_name\": \"events\",\n        \"field\": {\n          \"name\": \"product_id\",\n          \"display_name\": \"product_id\",\n          \"data_type\": {\n            \"type\": \"STRING\"\n          },\n          \"data_mapping\": {\n            \"source_type\": \"MAIN_TABLE_COLUMN\"\n          },\n          \"custom_params\": {\n            \"meta_desc\": \"备注\"\n          }\n        }\n      }\n    ]\n   }'\n  返回值示例：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"11184302633b26d1accbe76da891b2f6\",\n    \"data\": {}\n  }\n```\n 批量创建属性\n 命名规则 `^[a-zA-Z_$][a-zA-Z\\d_$]{0,99}$`\n 不允许创建以下保留字段及包含保留前缀的字段\n - 保留字段\n   - 公共保留字段\n     - distinct_id, original_id, time, properties, id, first_id, second_id, users, events, event, user_id, date, datetime\n   - SchemaClass = EVENT\n     - 公共保留字段以及 event_id, event_bucket, day, week_id, month_id, _offset, sampling_group\n   - SchemaClass = USER\n     - 公共保留字段以及 _offset, first_id_type, second_id_type, generated_from, merged_to\n   - SchemaClass = ITEM\n     - 公共保留字段以及 item_type, item_id\n - 保留前缀\n   - user_tag, user_group, $identity_, identity_, segment_ (可以创建 $ 开头的属性)",
+                "operationId": "BatchCreateSchemaFields",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.BatchCreateSchemaFieldsRequest"
+                            }
+                        }
+                    },
+                    "description": "批量创建schema属性",
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {},
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.horizon.v1.BatchCreateSchemaFieldsResponseHttpApiResult"
+                                }
+                            }
+                        },
+                        "description": "sensorsdata.horizon.v1.BatchCreateSchemaFieldsResponse"
+                    }
+                },
+                "summary": "批量创建属性",
+                "x-sd-openapi": {
+                    "responseClass": "com.sensorsdata.horizon.v1.BatchCreateSchemaFieldsResponse",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.BatchCreateSchemaFieldsRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "BatchCreateSchemaFieldsRequest"
+            }
+        },
+        "/schema/field/update": {
+            "post": {
+                "description": "更新属性\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/field/update' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {api_key}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\n    \"schema_name\": \"events\",\n    \"field\": {\n      \"name\": \"product_id\",\n      \"display_name\": \"test\",\n      \"custom_params\": {\n        \"meta_desc\": \"备注\"\n      }\n    },\n    \"update_mask\": \"display_name,custom_params\"\n}'\n  返回值示例：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"1210192666fd2dcf558ae476758ade5e\",\n    \"data\": {\n        \"visible\": true,\n        \"has_dict\": false,\n        \"builtin\": false,\n        \"primary_identity\": false,\n        \"object_fields\": [],\n        \"display_name\": \"test\",\n        \"created_by\": \"\",\n        \"version\": 2,\n        \"required\": false,\n        \"field_display_type\": \"BASIC\",\n        \"has_data\": false,\n        \"data_version_form\": \"FIELD_VERSION_LEVEL_UNSPECIFIED\",\n        \"custom_params\": {},\n        \"data_versioned\": false,\n        \"enable\": true,\n        \"identity\": false,\n        \"name\": \"product_id\",\n        \"data_type\": {\n            \"type\": \"STRING\",\n            \"element_data_types\": \"DATA_TYPE_UNSPECIFIED\"\n        },\n        \"legacy_id\": 170,\n        \"subscribable\": true\n    }\n  }\n```",
+                "operationId": "UpdateSchemaField",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.UpdateSchemaFieldRequest"
+                            }
+                        }
+                    },
+                    "description": "更新schema属性",
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {
+                                        "unit": {},
+                                        "data_mapping": {
+                                            "extended_column": {}
+                                        },
+                                        "data_type": {
+                                            "type": "STRING"
+                                        },
+                                        "view_data_source": {
+                                            "inline_expression": {},
+                                            "view_column_source_data": {},
+                                            "complex_expression": {}
+                                        },
+                                        "object_fields": [
+                                            {}
+                                        ]
+                                    },
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.horizon.v1.FieldHttpApiResult"
+                                }
+                            }
+                        },
+                        "description": "sensorsdata.horizon.v1.Field"
+                    }
+                },
+                "summary": "更新属性\n 支持修改 display_name,unit,custom_param,visible,enable,has_data,required,data_type,view_data_source,dict\n 支持更新维度字典",
+                "x-sd-openapi": {
+                    "responseClass": "com.sensorsdata.horizon.v1.Field",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.UpdateSchemaFieldRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "UpdateSchemaFieldRequest"
+            }
+        },
+        "/schema/extended-table/list": {
+            "post": {
+                "description": "查询 Schema 关联的 Table\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/extended-table/list' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {api_key}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\n    \"schema_names\": [\"events\"]\n  }'\n  返回值示例：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"1210530786ea1e0e61e51918c5bbb3fd\",\n    \"data\": {\n        \"extended_tables\": [\n            {\n                \"extended_table_id\": \"users\",\n                \"schema_name\": \"events\",\n                \"db_name\": \"horizon_default_1\",\n                \"table_name\": \"users\",\n                \"table_display_type\": \"\",\n                \"display_name\": \"users\",\n                \"join_on_expression\": \"events.user_id = users.id\",\n                \"join_key_columns\": [\n                    \"id\"\n                ],\n                \"join_mode\": \"LEFT_JOIN\"\n            }\n        ]\n    }\n  }\n```",
+                "operationId": "ListSchemaExtendedTables",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaExtendedTablesRequest"
+                            }
+                        }
+                    },
+                    "description": "查询schema关联的table",
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {
+                                        "extended_tables": [
+                                            {
+                                                "access_info": {}
+                                            }
+                                        ]
+                                    },
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaExtendedTablesResponseHttpApiResult"
+                                }
+                            }
+                        },
+                        "description": "sensorsdata.horizon.v1.ListSchemaExtendedTablesResponse"
+                    }
+                },
+                "summary": "查询 Schema 关联的 Table",
+                "x-sd-openapi": {
+                    "responseClass": "com.sensorsdata.horizon.v1.ListSchemaExtendedTablesResponse",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.ListSchemaExtendedTablesRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "ListSchemaExtendedTablesRequest"
+            }
+        },
+        "/schema/extended-table/batch-create": {
+            "post": {
+                "description": "创建维度表关联关系，只能对物理 Schema 进行创建\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/extended-table/batch-create' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {api_key}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\n    \"extended_tables\": [\n      {\n        \"extended_table_id\": \"test_table\",\n        \"schema_name\": \"events\",\n        \"db_name\": \"horizon_workspace_default_1\",\n        \"table_name\": \"one_test_table\",\n        \"display_name\": \"test_table\",\n        \"join_on_expression\": \"events.video_id = one_test_table.id\",\n        \"join_mode\": \"LEFT_JOIN\"\n      }\n    ]\n  }'\n  返回值示例：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"121053078680124e06f58555ce009f333\",\n    \"data\": {\n    }\n  }\n```",
+                "operationId": "BatchCreateSchemaExtendedTables",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.BatchCreateSchemaExtendedTablesRequest"
+                            }
+                        }
+                    },
+                    "description": "批量创建维度表关联关系",
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {},
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.common.HttpApiResult"
+                                }
+                            }
+                        },
+                        "description": ""
+                    }
+                },
+                "summary": "创建维度表关联关系",
+                "x-sd-openapi": {
+                    "responseClass": "com.google.protobuf.Empty",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.BatchCreateSchemaExtendedTablesRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "BatchCreateSchemaExtendedTablesRequest"
+            }
+        },
+        "/schema/extended-table/update": {
+            "post": {
+                "description": "更新 SchemaExtendedTable\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/extended-table/update' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {api_key}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\n    \"extended_table\": {\n      \"extended_table_id\": \"users\",\n      \"schema_name\": \"events\",\n      \"display_name\": \"users\"\n    },\n    \"update_mask\": \"display_name\"\n  }'\n  返回值示例：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"121205198723e4f1134fc1d2a117ae9e\",\n    \"data\": {\n        \"extended_table_id\": \"users\",\n        \"join_mode\": \"LEFT_JOIN\",\n        \"db_name\": \"horizon_default_1\",\n        \"join_on_expression\": \"events.user_id = users.id\",\n        \"join_key_columns\": [\n            \"id\"\n        ],\n        \"schema_name\": \"events\",\n        \"display_name\": \"users\",\n        \"table_name\": \"users\",\n        \"table_display_type\": \"\"\n    }\n  }\n```",
+                "operationId": "UpdateSchemaExtendedTable",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.UpdateSchemaExtendedTableRequest"
+                            }
+                        }
+                    },
+                    "description": "更新SchemaExtendedTable",
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {
+                                        "access_info": {}
+                                    },
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaExtendedTableHttpApiResult"
+                                }
+                            }
+                        },
+                        "description": "sensorsdata.horizon.v1.SchemaExtendedTable"
+                    }
+                },
+                "summary": "更新 SchemaExtendedTable",
+                "x-sd-openapi": {
+                    "responseClass": "com.sensorsdata.horizon.v1.SchemaExtendedTable",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.UpdateSchemaExtendedTableRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "UpdateSchemaExtendedTableRequest"
+            }
+        },
+        "/schema/get": {
+            "post": {
+                "description": "获取用户表/事件表元信息\n```\n  curl -X POST 'http://{host}:{port}/api/v3/horizon/v1/schema/get' \\\n    -H 'Content-Type: application/json' \\\n    -H 'api-key: {api_key}' \\\n    -H 'sensorsdata-project: {projectName}' \\\n    -d '{\n    \"name\": \"users\",\n    \"expand\": \"data_mapping\"\n  }'\n  返回示例值：\n  {\n    \"code\": \"SUCCESS\",\n    \"request_id\": \"121209562976bb3116f47e046d2a0762\",\n    \"data\": {\n        \"visible\": true,\n        \"data_mapping\": {\n            \"view_table\": {\n                \"db_name\": \"horizon_default_1\",\n                \"table_name\": \"users\",\n                \"condition\": \"\"\n            },\n            \"main_table\": {\n                \"db_name\": \"horizon_private_default_1\",\n                \"table_name\": \"users\",\n                \"condition\": \"`$is_deleted` is null or `$is_deleted` = 0\"\n            },\n            \"extended_tables\": []\n        },\n        \"builtin\": true,\n        \"schema_class\": \"USER\",\n        \"schema_display_type\": \"BASIC\",\n        \"display_name\": \"用户表\",\n        \"type\": \"PHYSICAL\",\n        \"version\": 3,\n        \"has_data\": true,\n        \"custom_params\": {},\n        \"project_id\": 1,\n        \"schema_data_mapping_type\": \"BUILTIN_TABLE\",\n        \"enable\": true,\n        \"original_name\": \"users\",\n        \"name\": \"users\",\n        \"legacy_id\": 0,\n        \"fields\": []\n    }\n  }\n```",
+                "operationId": "GetSchema",
+                "parameters": [
+                    {
+                        "description": "全局唯一的密钥，用于验证和授权访问 API 接口",
+                        "in": "header",
+                        "name": "api-key",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    },
+                    {
+                        "description": "项目名, 指定请求所属项目",
+                        "in": "header",
+                        "name": "sensorsdata-project",
+                        "required": true,
+                        "schema": {
+                            "type": "string"
+                        }
+                    }
+                ],
+                "requestBody": {
+                    "content": {
+                        "application/json": {
+                            "schema": {
+                                "$ref": "#/components/schemas/sensorsdata.horizon.v1.GetSchemaRequest"
+                            }
+                        }
+                    },
+                    "required": false
+                },
+                "responses": {
+                    "default": {
+                        "content": {
+                            "application/json": {
+                                "example": {
+                                    "code": "SUCCESS",
+                                    "data": {
+                                        "has_data": false,
+                                        "mapping": {
+                                            "condition": {
+                                                "index": 10,
+                                                "conditions": [
+                                                    {
+                                                        "function": "EQUAL",
+                                                        "index": 10,
+                                                        "params": [
+                                                            {
+                                                                "expression": "user.p1/user.p2+user.p3",
+                                                                "field": "#ResourceId",
+                                                                "time_point": {
+                                                                    "relative_time": {
+                                                                        "time_interval": {}
+                                                                    }
+                                                                },
+                                                                "variable": "$ENTRY_TIME",
+                                                                "value": {},
+                                                                "param_type": "FIELD"
+                                                            }
+                                                        ]
+                                                    }
+                                                ],
+                                                "operator": "AND"
+                                            }
+                                        },
+                                        "visible": "true",
+                                        "data_mapping": {
+                                            "view_table": {},
+                                            "extended_tables": [
+                                                {
+                                                    "access_info": {}
+                                                }
+                                            ]
+                                        },
+                                        "schema_data_mapping_type": "BUILTIN_TABLE",
+                                        "enable": "true",
+                                        "schema_display_type": "BASIC",
+                                        "type": "PHYSICAL",
+                                        "fields": [
+                                            {
+                                                "unit": {},
+                                                "data_mapping": {
+                                                    "extended_column": {}
+                                                },
+                                                "data_type": {
+                                                    "type": "STRING"
+                                                },
+                                                "view_data_source": {
+                                                    "inline_expression": {},
+                                                    "view_column_source_data": {},
+                                                    "complex_expression": {}
+                                                },
+                                                "object_fields": [
+                                                    {}
+                                                ]
+                                            }
+                                        ],
+                                        "statistics": {
+                                            "track_platforms": [
+                                                {}
+                                            ]
+                                        }
+                                    },
+                                    "request_id": "1"
+                                },
+                                "schema": {
+                                    "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaHttpApiResult"
+                                }
+                            }
+                        },
+                        "description": "sensorsdata.horizon.v1.Schema"
+                    }
+                },
+                "summary": "获取用户表/事件表元信息",
+                "x-sd-openapi": {
+                    "responseClass": "com.sensorsdata.horizon.v1.Schema",
+                    "isServerStreaming": false,
+                    "requestClass": "com.sensorsdata.horizon.v1.GetSchemaRequest",
+                    "grpcServiceBase": "com.sensorsdata.horizon.v1.SchemaServiceGrpc.SchemaServiceImplBase",
+                    "internalDesc": "classes in template for grpc service dynamic invoking",
+                    "isClientStreaming": false
+                },
+                "x-codegen-request-body-name": "GetSchemaRequest"
+            }
+        }
+    },
+    "components": {
+        "schemas": {
+            "sensorsdata.horizon.v1.GetSchemaByOriginalNameRequest": {
+                "description": "",
+                "properties": {
+                    "project_id": {
+                        "description": "项目 id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "physical_schema_name": {
+                        "description": "物理 schema 的 name",
+                        "type": "string"
+                    },
+                    "original_name": {
+                        "description": "物理 schema 下逻辑或者虚拟 schema 的 origin_name，对于 SDG Core 就是上传数据中的 event name",
+                        "type": "string"
+                    },
+                    "expand": {
+                        "description": "扩展返回指定字段",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "original_name",
+                    "physical_schema_name",
+                    "project_id"
+                ],
+                "title": "GetSchemaByOriginalNameRequest",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.BatchUpdateFieldViewDataSourcesResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.BatchUpdateFieldViewDataSourcesResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.BatchUpdateFieldViewDataSourcesResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.GetEventSchemaStatisticsRangeResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.GetEventSchemaStatisticsRangeResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.GetEventSchemaStatisticsRangeResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.Schema.SchemaMapping": {
+                "description": "映射信息",
+                "properties": {
+                    "target_schema_name": {
+                        "description": "目标 schema 名称，必须是同一 SchemaClass 下的物理 Schema",
+                        "type": "string"
+                    },
+                    "condition": {
+                        "$ref": "#/components/schemas/sensorsdata.common.CompoundFilterCondition"
+                    },
+                    "raw_condition": {
+                        "$ref": "#/components/schemas/sensorsdata.common.CompoundFilterCondition"
+                    }
+                },
+                "required": [
+                    "target_schema_name"
+                ],
+                "title": "SchemaMapping",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.SchemaDataMapping.SchemaSourceTable": {
+                "description": "",
+                "properties": {
+                    "db_name": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "table_name": {
+                        "description": "映射的表名称",
+                        "type": "string"
+                    },
+                    "condition": {
+                        "description": "筛选条件，sql 中的 filter，用于查询方拼接 sql 使用\n 系统会通过 SchemaMapping 中的 condition 翻译成视图或者物理表的条件\n 使用场景：QE 和 EQL",
+                        "type": "string"
+                    }
+                },
+                "title": "SchemaSourceTable",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemaFieldViewDataSourcesResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaFieldViewDataSourcesResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.ListSchemaFieldViewDataSourcesResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.FieldStatisticsHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.FieldStatistics"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.FieldStatisticsHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.FieldDataVersionHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.FieldDataVersion"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.FieldDataVersionHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.BatchDeleteSchemaFieldsResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.BatchDeleteSchemaFieldsResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.BatchDeleteSchemaFieldsResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.UpdateSchemaFieldRequest": {
+                "description": "更新schema属性",
+                "properties": {
+                    "project_id": {
+                        "description": "项目 id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "schema_name": {
+                        "description": "schema 名字",
+                        "type": "string"
+                    },
+                    "field": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.Field"
+                    },
+                    "dimension_dict": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaFieldDimensionDict"
+                    },
+                    "update_mask": {
+                        "description": "指定需要更新的字段",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "field",
+                    "project_id",
+                    "schema_name",
+                    "update_mask"
+                ],
+                "title": "UpdateSchemaFieldRequest",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListAllSchemaClassesResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListAllSchemaClassesResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.ListAllSchemaClassesResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.GetEventSchemaStatisticsResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.GetEventSchemaStatisticsResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.GetEventSchemaStatisticsResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.common.ErrorContext": {
+                "description": "发生错误时，系统快照信息",
+                "properties": {
+                    "origin_stack": {
+                        "description": "上游异常的 stack，由系统截获",
+                        "type": "string"
+                    },
+                    "origin_cause": {
+                        "description": "上游异常的 cause by，由系统截获",
+                        "type": "string"
+                    },
+                    "origin_code": {
+                        "description": "上游异常的错误简码",
+                        "type": "string"
+                    },
+                    "origin_complete_code": {
+                        "description": "上游异常的完整错误码",
+                        "type": "string"
+                    },
+                    "error_extend_desc": {
+                        "description": "本次异常的辅助说明，可传入",
+                        "type": "string"
+                    }
+                },
+                "title": "ErrorContext",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.SchemaExtendedTable": {
+                "description": "拓展表定义",
+                "properties": {
+                    "extended_table_id": {
+                        "description": "同一 table 在关联同一 Schema 但是 join 表达式不同时， 需要用唯一名称区分",
+                        "type": "string"
+                    },
+                    "schema_name": {
+                        "description": "关联的 Schema",
+                        "type": "string"
+                    },
+                    "db_name": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "table_name": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "table_display_type": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "display_name": {
+                        "description": "显示名\n 最长 100 个字符 , 同一 schema 内唯一",
+                        "type": "string"
+                    },
+                    "join_on_expression": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "join_key_columns": {
+                        "description": "",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "join_mode": {
+                        "description": "关联方式，默认 LEFT_JOIN\n```\n  SCHEMA_TABLE_JOIN_MODE_UNSPECIFIED = 0; // 未标识\n  INNER_JOIN = 1;                         // 内连接\n  LEFT_JOIN = 2;                          // 左外连接 默认方式\n  RIGHT_JOIN = 3;                         // 右外连接\n  LEFT_ANTI_JOIN = 4;                     // 左反连接\n  LEFT_SEMI_JOIN = 5;                     // 左半连接\n  FULL_OUTER_JOIN = 6;                    // 全外连接\n```",
+                        "enum": [
+                            "SCHEMA_TABLE_JOIN_MODE_UNSPECIFIED",
+                            "INNER_JOIN",
+                            "LEFT_JOIN",
+                            "RIGHT_JOIN",
+                            "LEFT_ANTI_JOIN",
+                            "LEFT_SEMI_JOIN",
+                            "FULL_OUTER_JOIN"
+                        ],
+                        "type": "string"
+                    },
+                    "access_info": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.AccessInfo"
+                    }
+                },
+                "required": [
+                    "db_name",
+                    "extended_table_id",
+                    "join_on_expression",
+                    "schema_name",
+                    "table_name"
+                ],
+                "title": "SchemaExtendedTable",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.Field.CustomParamsEntry": {
+                "description": "",
+                "properties": {
+                    "key": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "value": {
+                        "description": "",
+                        "type": "string"
+                    }
+                },
+                "title": "CustomParamsEntry",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemasPermissionResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemasPermissionResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.ListSchemasPermissionResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.BatchCreateSchemaFieldsRequest.FieldCreateDescriptor": {
+                "description": "",
+                "properties": {
+                    "schema_name": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "field": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.Field"
+                    },
+                    "dimension_dict": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaFieldDimensionDict"
+                    }
+                },
+                "required": [
+                    "field",
+                    "schema_name"
+                ],
+                "title": "FieldCreateDescriptor",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.SchemaFieldDimensionDict": {
+                "description": "schema字段维度字典",
+                "properties": {
+                    "dict": {
+                        "additionalProperties": {
+                            "description": "",
+                            "type": "string"
+                        },
+                        "description": "维度字典数据",
+                        "type": "object"
+                    },
+                    "upload_mode": {
+                        "description": "字典上传模式\n```\n  UPLOAD_TYPE_UNSPECIFIED = 0;       // 未标识\n  OVERWRITE = 1;                     // 覆盖模式，会清空原来的字典再上传\n  INCREMENT_IGNORE_DUPLICATE = 2;    // 增量模式，若 key 重复，则忽略\n  INCREMENT_OVERWRITE_DUPLICATE = 3; // 增量模式，或 key 重复，则覆盖\n```",
+                        "enum": [
+                            "UPLOAD_TYPE_UNSPECIFIED",
+                            "OVERWRITE",
+                            "INCREMENT_IGNORE_DUPLICATE",
+                            "INCREMENT_OVERWRITE_DUPLICATE"
+                        ],
+                        "example": "OVERWRITE",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "dict"
+                ],
+                "title": "SchemaFieldDimensionDict",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.BatchGetLatestSchemaFieldDataVersionsResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.BatchGetLatestSchemaFieldDataVersionsResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.BatchGetLatestSchemaFieldDataVersionsResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.CheckSchemaExtendedTableExpressionResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.CheckSchemaExtendedTableExpressionResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.CheckSchemaExtendedTableExpressionResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.Field.ObjectField": {
+                "description": "",
+                "properties": {
+                    "name": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "display_name": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "data_type": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.DataType"
+                    },
+                    "description": {
+                        "description": "",
+                        "type": "string"
+                    }
+                },
+                "title": "ObjectField",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.SchemaStatistics.SchemaTrackPlatform": {
+                "description": "",
+                "properties": {
+                    "platform": {
+                        "description": "平台",
+                        "type": "string"
+                    },
+                    "has_data": {
+                        "description": "是否有数据",
+                        "type": "boolean"
+                    }
+                },
+                "required": [
+                    "platform"
+                ],
+                "title": "SchemaTrackPlatform",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.SchemaStatisticsHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaStatistics"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.SchemaStatisticsHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.FieldHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.Field"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.FieldHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.UpdateSchemaRequest": {
+                "description": "",
+                "properties": {
+                    "project_id": {
+                        "description": "项目 id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "schema": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.Schema"
+                    },
+                    "update_mask": {
+                        "description": "指定需要更新的字段",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "project_id",
+                    "schema",
+                    "update_mask"
+                ],
+                "title": "UpdateSchemaRequest",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.BatchCreateSchemaFieldsResponse": {
+                "description": "",
+                "title": "BatchCreateSchemaFieldsResponse",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemasResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemasResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.ListSchemasResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemaFieldsPermissionResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaFieldsPermissionResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.ListSchemaFieldsPermissionResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.SchemaHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.Schema"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.SchemaHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.DataType": {
+                "description": "数据类型",
+                "properties": {
+                    "type": {
+                        "description": "数据类型",
+                        "enum": [
+                            "DATA_TYPE_UNSPECIFIED",
+                            "BOOL",
+                            "INT",
+                            "NUMBER",
+                            "BIGINT",
+                            "DECIMAL",
+                            "STRING",
+                            "DATETIME",
+                            "DATE",
+                            "TIMESTAMP",
+                            "LIST",
+                            "OBJECT_ARRAY",
+                            "UNKNOWN_DATA_TYPE"
+                        ],
+                        "example": "STRING",
+                        "type": "string"
+                    },
+                    "number_decimal_precision": {
+                        "description": "精度\n 例如，数字 123.45 的精度是 5",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "number_decimal_scale": {
+                        "description": "小数位数\n 例如，数字 123.45 的小数位数是 2",
+                        "format": "int32",
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "type"
+                ],
+                "title": "DataType",
+                "type": "object"
+            },
+            "sensorsdata.common.TimePoint": {
+                "description": "",
+                "properties": {
+                    "type": {
+                        "description": "",
+                        "enum": [
+                            "TIME_POINT_TYPE_UNSPECIFIED",
+                            "STATIC",
+                            "RELATIVE",
+                            "EXPRESSION"
+                        ],
+                        "type": "string"
+                    },
+                    "trunc_unit": {
+                        "description": "",
+                        "enum": [
+                            "TRUNC_UNIT_UNSPECIFIED",
+                            "TRUNC_HOUR",
+                            "TRUNC_DAY",
+                            "TRUNC_WEEK",
+                            "TRUNC_MONTH",
+                            "TRUNC_YEAR",
+                            "TRUNC_BIGBANG"
+                        ],
+                        "type": "string"
+                    },
+                    "static_time": {
+                        "description": "",
+                        "format": "date-time",
+                        "type": "string"
+                    },
+                    "relative_time": {
+                        "$ref": "#/components/schemas/sensorsdata.common.TimePoint.RelativeTimePoint"
+                    },
+                    "expression": {
+                        "description": "",
+                        "type": "string"
+                    }
+                },
+                "title": "TimePoint",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.CheckSchemaExtendedTableDuplicateResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.CheckSchemaExtendedTableDuplicateResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.CheckSchemaExtendedTableDuplicateResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListLogicalSchemasResponse": {
+                "description": "",
+                "properties": {
+                    "schemas": {
+                        "description": "protolint:disable:next REPEATED_FIELD_NAMES_PLURALIZED",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.horizon.v1.Schema"
+                        },
+                        "type": "array"
+                    },
+                    "total_size": {
+                        "description": "总数据条数",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "has_next": {
+                        "description": "是否还有下一页",
+                        "type": "boolean"
+                    }
+                },
+                "title": "ListLogicalSchemasResponse",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.FieldViewDataSource.ViewColumnSourceData": {
+                "description": "用于构建 Schema View 中，表征扩展属性的列数据",
+                "properties": {
+                    "extended_table_id": {
+                        "description": "扩展表关联id, SchemaExtendedTable.extended_table_id",
+                        "type": "string"
+                    },
+                    "extended_table_condition": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "column_name": {
+                        "description": "映射的列名",
+                        "type": "string"
+                    },
+                    "alias_view_name": {
+                        "description": "使用视图实现的表别名。(select $column_name from $extended_table_id where $extended_table_condition) $alias_view_name",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "extended_table_id"
+                ],
+                "title": "ViewColumnSourceData",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.SchemaDataMapping": {
+                "description": "Schema数据映射",
+                "properties": {
+                    "view_table": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaDataMapping.SchemaSourceTable"
+                    },
+                    "main_table": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaDataMapping.SchemaSourceTable"
+                    },
+                    "extended_tables": {
+                        "description": "拓展表",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaExtendedTable"
+                        },
+                        "type": "array"
+                    }
+                },
+                "title": "SchemaDataMapping",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemaFieldsRequest": {
+                "description": "获取属性列表",
+                "properties": {
+                    "project_id": {
+                        "description": "项目 id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "schema_name": {
+                        "description": "schema 名字",
+                        "type": "string"
+                    },
+                    "field_names": {
+                        "description": "属性名字",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "field_display_names": {
+                        "description": "属性显示名",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "expand": {
+                        "description": "扩展返回指定字段",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "project_id",
+                    "schema_name"
+                ],
+                "title": "ListSchemaFieldsRequest",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.SchemaClassDescriptorHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaClassDescriptor"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.SchemaClassDescriptorHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.FieldUnit": {
+                "description": "属性单位",
+                "properties": {
+                    "name": {
+                        "description": "唯一标识",
+                        "type": "string"
+                    },
+                    "display_name": {
+                        "description": "单位显示名",
+                        "type": "string"
+                    },
+                    "builtin": {
+                        "description": "是否系统内置单位",
+                        "type": "boolean"
+                    },
+                    "data_type": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.DataType"
+                    },
+                    "base": {
+                        "description": "单位进制",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "unit_group_name": {
+                        "description": "单位分组",
+                        "type": "string"
+                    },
+                    "unit_group_display_name": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "access_info": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.AccessInfo"
+                    }
+                },
+                "required": [
+                    "display_name"
+                ],
+                "title": "FieldUnit",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.BatchGetSchemaStatisticsResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.BatchGetSchemaStatisticsResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.BatchGetSchemaStatisticsResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.common.FilterCondition": {
+                "description": "单个过滤条件",
+                "properties": {
+                    "function": {
+                        "description": "过滤条件的判断函数",
+                        "enum": [
+                            "PREDICATE_FUNCTION_TYPE_UNSPECIFIED",
+                            "IS_SET",
+                            "IS_NOT_SET",
+                            "EQUAL",
+                            "NOT_EQUAL",
+                            "IN",
+                            "NOT_IN",
+                            "LESS",
+                            "LESS_EQUAL",
+                            "GREATER",
+                            "GREATER_EQUAL",
+                            "BETWEEN",
+                            "RIGHT_OPEN_BETWEEN",
+                            "HASH_BETWEEN",
+                            "LEFT_OPEN_BETWEEN",
+                            "OPEN_BETWEEN",
+                            "IS_TRUE",
+                            "IS_FALSE",
+                            "CONTAIN",
+                            "NOT_CONTAIN",
+                            "IS_EMPTY",
+                            "IS_NOT_EMPTY",
+                            "RLIKE",
+                            "NOT_RLIKE",
+                            "INCLUDE",
+                            "NOT_INCLUDE",
+                            "ABSOLUTE_BETWEEN",
+                            "RELATIVE_WITHIN",
+                            "RELATIVE_BETWEEN",
+                            "RELATIVE_EVENT_TIME",
+                            "RELATIVE_BEFORE",
+                            "INTERSECTS",
+                            "NOT_INTERSECTS",
+                            "SUBSET_OF",
+                            "NOT_SUBSET_OF",
+                            "SUPERSET_OF",
+                            "NOT_SUPERSET_OF"
+                        ],
+                        "example": "EQUAL",
+                        "type": "string"
+                    },
+                    "params": {
+                        "description": "函数的参数",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.common.PredicateFunctionParam"
+                        },
+                        "type": "array"
+                    },
+                    "index": {
+                        "description": "当前筛选条件所处的位置下标，主要为了保证前端展示顺序的稳定",
+                        "example": 10,
+                        "format": "int32",
+                        "type": "integer"
+                    }
+                },
+                "title": "FilterCondition",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListLogicalSchemasRequest": {
+                "description": "",
+                "properties": {
+                    "project_id": {
+                        "description": "项目 id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "physical_schema_name": {
+                        "description": "物理 Schema",
+                        "type": "string"
+                    },
+                    "schema_type": {
+                        "description": "LOGICAL or VIRTUAL, 也可以不填 (代表 LOGICAL and VIRTUAL)",
+                        "enum": [
+                            "SCHEMA_TYPE_UNSPECIFIED",
+                            "PHYSICAL",
+                            "LOGICAL",
+                            "VIRTUAL"
+                        ],
+                        "example": "LOGICAL",
+                        "type": "string"
+                    },
+                    "contain_field_names": {
+                        "description": "查询包含某些 Field 的所有 Schema",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "display_names": {
+                        "description": "显示名",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "expand": {
+                        "description": "扩展返回指定字段",
+                        "type": "string"
+                    },
+                    "page": {
+                        "description": "从 0 开始",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "page_size": {
+                        "description": "默认值 1000，最大值 1000，-1 返回所有数据",
+                        "format": "int32",
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "physical_schema_name",
+                    "project_id"
+                ],
+                "title": "ListLogicalSchemasRequest",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.GetSchemaFieldRequest": {
+                "description": "获取schema属性信息",
+                "properties": {
+                    "project_id": {
+                        "description": "项目 id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "schema_name": {
+                        "description": "schema 名字",
+                        "type": "string"
+                    },
+                    "field_name": {
+                        "description": "属性名字",
+                        "example": "event_id",
+                        "type": "string"
+                    },
+                    "expand": {
+                        "description": "扩展返回指定字段",
+                        "example": "\"custom_params,data_mapping,view_data_source,unit\"",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "field_name",
+                    "project_id",
+                    "schema_name"
+                ],
+                "title": "GetSchemaFieldRequest",
+                "type": "object"
+            },
+            "sensorsdata.common.PredicateFunctionParam": {
+                "description": "```\n 函数的参数，有几种可能\n 1. 一个 field, 如 events.$Anything.$city\n 2. 一个 Literal 的常量\n 3. 一个变量, 如 $ENTRY_TIME, 需要在执行上下文里进行替换\n 4. 一个 TimePoint, 代表一个相对或绝对的时间点, 用于时间类型的条件\n 5. 一个 expression user.p1/user.p2+user.p3\n ```",
+                "properties": {
+                    "param_type": {
+                        "description": "函数的参数类型",
+                        "enum": [
+                            "FUNCTION_PARAM_TYPE_UNSPECIFIED",
+                            "FIELD",
+                            "VALUE",
+                            "VARIABLE",
+                            "TIME_POINT",
+                            "EXPRESSION"
+                        ],
+                        "example": "FIELD",
+                        "type": "string"
+                    },
+                    "field": {
+                        "description": "字段名",
+                        "example": "#ResourceId",
+                        "type": "string"
+                    },
+                    "value": {
+                        "$ref": "#/components/schemas/sensorsdata.common.Literal"
+                    },
+                    "variable": {
+                        "description": "变量，需要在执行上下文里进行替换",
+                        "example": "$ENTRY_TIME",
+                        "type": "string"
+                    },
+                    "time_point": {
+                        "$ref": "#/components/schemas/sensorsdata.common.TimePoint"
+                    },
+                    "expression": {
+                        "description": "自定义表达式",
+                        "example": "user.p1/user.p2+user.p3",
+                        "type": "string"
+                    }
+                },
+                "title": "PredicateFunctionParam",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.CheckSchemaDuplicateResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.CheckSchemaDuplicateResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.CheckSchemaDuplicateResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.UpdateSchemaExtendedTableRequest": {
+                "description": "更新SchemaExtendedTable",
+                "properties": {
+                    "project_id": {
+                        "description": "项目 id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "extended_table": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaExtendedTable"
+                    },
+                    "update_mask": {
+                        "description": "指定需要更新的字段,目前只能更新 display_name, join_on_expression",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "extended_table",
+                    "project_id",
+                    "update_mask"
+                ],
+                "title": "UpdateSchemaExtendedTableRequest",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.BatchCreateSchemaFieldsResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.BatchCreateSchemaFieldsResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.BatchCreateSchemaFieldsResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.CheckSchemaFieldDuplicateResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.CheckSchemaFieldDuplicateResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.CheckSchemaFieldDuplicateResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.common.CompoundFilterCondition": {
+                "description": "复合过滤条件，用于描述 condition 或 compound_filter 之间的关系",
+                "properties": {
+                    "operator": {
+                        "description": "逻辑运算法",
+                        "enum": [
+                            "LOGICAL_OPERATOR_UNSPECIFIED",
+                            "AND",
+                            "OR"
+                        ],
+                        "example": "AND",
+                        "type": "string"
+                    },
+                    "conditions": {
+                        "description": "过滤条件列表，只有最后一级才有",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.common.FilterCondition"
+                        },
+                        "type": "array"
+                    },
+                    "compound_conditions": {
+                        "description": "嵌套的下一级复合过滤条件",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.common.CompoundFilterCondition"
+                        },
+                        "type": "array"
+                    },
+                    "index": {
+                        "description": "当前筛选条件所处的位置下标，主要为了保证前端展示顺序的稳定",
+                        "example": 10,
+                        "format": "int32",
+                        "type": "integer"
+                    }
+                },
+                "title": "CompoundFilterCondition",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.FieldViewDataSource.ComplexExpression": {
+                "description": "原虚拟属性的表达",
+                "properties": {
+                    "extended_table_ids": {
+                        "description": "虚拟属性表达式引用的表",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "expression": {
+                        "description": "虚拟属性表达式",
+                        "type": "string"
+                    },
+                    "related_mode": {
+                        "description": "关联 Schema 的方式，可选字段若不传默认为：CONTAINS_ALL",
+                        "enum": [
+                            "RELATED_MODE_UNSPECIFIED",
+                            "CONTAINS_ALL",
+                            "CONTAINS_ANY"
+                        ],
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "expression"
+                ],
+                "title": "ComplexExpression",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemaFieldsResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaFieldsResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.ListSchemaFieldsResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListLogicalSchemasResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListLogicalSchemasResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.ListLogicalSchemasResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.BatchCreateSchemaExtendedTablesRequest": {
+                "description": "批量创建维度表关联关系",
+                "properties": {
+                    "project_id": {
+                        "description": "项目id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "extended_tables": {
+                        "description": "",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaExtendedTable"
+                        },
+                        "type": "array"
+                    }
+                },
+                "required": [
+                    "extended_tables",
+                    "project_id"
+                ],
+                "title": "BatchCreateSchemaExtendedTablesRequest",
+                "type": "object"
+            },
+            "sensorsdata.common.HttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "properties": {},
+                        "type": "object"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "HttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.GetSchemaFieldDimensionDictResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.GetSchemaFieldDimensionDictResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.GetSchemaFieldDimensionDictResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.SchemaFieldDimensionDict.DictEntry": {
+                "description": "",
+                "properties": {
+                    "key": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "value": {
+                        "description": "",
+                        "type": "string"
+                    }
+                },
+                "title": "DictEntry",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.CheckSchemaFieldComplexExpressionResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.CheckSchemaFieldComplexExpressionResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.CheckSchemaFieldComplexExpressionResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.BatchCreateSchemaFieldsRequest": {
+                "description": "批量创建schema属性",
+                "properties": {
+                    "project_id": {
+                        "description": "项目 id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "fields": {
+                        "description": "要创建的字段定义",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.horizon.v1.BatchCreateSchemaFieldsRequest.FieldCreateDescriptor"
+                        },
+                        "type": "array"
+                    }
+                },
+                "required": [
+                    "fields",
+                    "project_id"
+                ],
+                "title": "BatchCreateSchemaFieldsRequest",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.Schema": {
+                "description": "Schema 定义",
+                "properties": {
+                    "project_id": {
+                        "description": "",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "description": "Schema 唯一识别名，可当 id 使用, 由系统生成\n 同一项目内唯一\n 生成规则：\n 1. SchemaType = PHYSICAL, name = ${original_name}, 如 student_events, student\n 2. SchemaType = LOGICAL || VIRTUAL, name = ${target_schema_name}.${original_name}, 如 student_events.$AppStart\n 需要唯一获取 Schema 时，使用此字段查询",
+                        "type": "string"
+                    },
+                    "original_name": {
+                        "description": "Schema 的原生名，主要用于解决多物理 Event Schema 下，名称可以重复的场景\n 最长 100 个字符\n 1. SchemaType = PHYSICAL 时， 全 project 唯一, 如 student_events, student\n    命名规则 ^[a-z][a-z\\d_]{0,99}$\n 2. SchemaType = LOGICAL || VIRTUAL，project + target_schema_name 下唯一, 如 $AppStart\n    命名规则 ^[a-zA-Z_\\$][a-zA-Z\\d_\\$]{0,99}$\n 仅限前端在展示 Schema Name 时，以及 sdg-core 处理 event 报文时使用此字段",
+                        "type": "string"
+                    },
+                    "display_name": {
+                        "description": "Schema 显示名\n 最长 100 个字符\n 约束：\n 1. SchemaType = PHYSICAL 时， 全 project 唯一\n 2. SchemaType = LOGICAL || VIRTUAL，project + target_schema_name 下唯一",
+                        "type": "string"
+                    },
+                    "type": {
+                        "description": "Schema类型\n```\n SCHEMA_TYPE_UNSPECIFIED = 0;\n PHYSICAL = 1; // 物理 Schema\n LOGICAL = 2;  // 共用 PHYSICAL Schema 的底层存储\n VIRTUAL = 3;  // 基于 PHYSICAL Schema 实现，此类型的 Schema 不允许导入数据，Field 由系统自动生成不允许创建\n```",
+                        "enum": [
+                            "SCHEMA_TYPE_UNSPECIFIED",
+                            "PHYSICAL",
+                            "LOGICAL",
+                            "VIRTUAL"
+                        ],
+                        "example": "PHYSICAL",
+                        "type": "string"
+                    },
+                    "schema_class": {
+                        "description": "",
+                        "enum": [
+                            "SCHEMA_CLASS_UNSPECIFIED",
+                            "EVENT",
+                            "USER",
+                            "ITEM",
+                            "DETAIL"
+                        ],
+                        "type": "string"
+                    },
+                    "schema_display_type": {
+                        "description": "业务上展示的类型，使用方定义，已定义的值：\n```\n BASIC      基础 Schema，默认是这个\n VIRTUAL    虚拟 Schema\n VISUALIZED 可视化全埋点 Schema\n```",
+                        "example": "BASIC",
+                        "type": "string"
+                    },
+                    "builtin": {
+                        "description": "是否系统内置 Schema，默认为 false，内置的不允许修改和删除",
+                        "type": "boolean"
+                    },
+                    "has_data": {
+                        "description": "是否有数据，默认 false，更新时只能从 false 变更为 true\n has_data 为 true 时不能删除 Schema\n SchemaType = VIRTUAL 时此字段无意义，始终为 false",
+                        "example": false,
+                        "type": "boolean"
+                    },
+                    "visible": {
+                        "description": "是否可见，默认为 true，是否在前端能够被选出来，但是已有的概览不受影响，以及数据写入不受影响",
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "enable": {
+                        "description": "默认为 true，不影响自定义查询",
+                        "example": true,
+                        "type": "boolean"
+                    },
+                    "mapping": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.Schema.SchemaMapping"
+                    },
+                    "data_mapping": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaDataMapping"
+                    },
+                    "schema_data_mapping_type": {
+                        "description": "引用的表类型\n```\n BUILTIN_TABLE = 1;   // Schema 托管创建物理表\n REFERENCE_TABLE = 2; // 直接引用表\n```",
+                        "enum": [
+                            "SCHEMA_DATA_MAPPING_TYPE_UNSPECIFIED",
+                            "BUILTIN_TABLE",
+                            "REFERENCE_TABLE"
+                        ],
+                        "example": "BUILTIN_TABLE",
+                        "type": "string"
+                    },
+                    "custom_params": {
+                        "additionalProperties": {
+                            "description": "",
+                            "type": "string"
+                        },
+                        "description": "",
+                        "type": "object"
+                    },
+                    "fields": {
+                        "description": "Schema 包含的属性，查询时默认不返回",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.horizon.v1.Field"
+                        },
+                        "type": "array"
+                    },
+                    "version": {
+                        "description": "Schema 版本，从 1 开始",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "access_info": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.AccessInfo"
+                    },
+                    "statistics": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaStatistics"
+                    },
+                    "legacy_id": {
+                        "description": "兼容实现 infinity_internal_event_id，只对 LOGICAL 和 VIRTUAL Schema 有效",
+                        "format": "int32",
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "original_name",
+                    "schema_class",
+                    "type"
+                ],
+                "title": "Schema",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemaFieldsResponse": {
+                "description": "",
+                "properties": {
+                    "fields": {
+                        "description": "",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.horizon.v1.Field"
+                        },
+                        "type": "array"
+                    }
+                },
+                "title": "ListSchemaFieldsResponse",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.Field": {
+                "description": "属性定义",
+                "properties": {
+                    "name": {
+                        "description": "属性名称\n 同一 Schema 内唯一，最长 100 个字符\n 不能使用保留字段\n 命名规则 `^[a-zA-Z_$][a-zA-Z\\d_$]{0,99}$`",
+                        "type": "string"
+                    },
+                    "display_name": {
+                        "description": "属性显示名\n 不为空时同一 Schema 内唯一，最长 100 个字符",
+                        "type": "string"
+                    },
+                    "data_type": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.DataType"
+                    },
+                    "field_display_type": {
+                        "description": "业务上展示的类型，使用方定义，已定义的值：\n BASIC 基础属性，默认是这个\n TAG 标签\n VIRTUAL 虚拟属性\n DIMENSION 维度属性",
+                        "type": "string"
+                    },
+                    "created_by": {
+                        "description": "属性数据的生产应用方，不仅限 SDH 内部模块，亦可是其他系统的数据生产模块，由权限控制\n 最长 100 个字符\n 每个应用需定义系统内唯一的应用名\n 如 sensorsdata.horizon.meta, sensorsdata.horizon.tag 等",
+                        "type": "string"
+                    },
+                    "builtin": {
+                        "description": "是否系统内置属性，默认 false，内置属性不允许修改和删除",
+                        "type": "boolean"
+                    },
+                    "has_data": {
+                        "description": "是否有数据，默认 false，更新时只能从 false 变更为 true\n has_data 为 true 时不能删除 Field",
+                        "type": "boolean"
+                    },
+                    "has_dict": {
+                        "description": "是否有字典，默认 false，这里不能直接更新",
+                        "type": "boolean"
+                    },
+                    "visible": {
+                        "description": "是否可见，默认 true，是否在前端能够被选出来，但是已有的概览不受影响，以及数据写入不受影响",
+                        "type": "boolean"
+                    },
+                    "enable": {
+                        "description": "是否启用，默认 true\n 不启用时不能查询，不能参与计算",
+                        "type": "boolean"
+                    },
+                    "subscribable": {
+                        "description": "数据是否可订阅，允许订阅的规则如下\n DataSourceType = MAIN_TABLE_COLUMN\n DataSourceType = COMPLEX_EXPRESSION 并且只引用了当前 Schema 中的 MAIN_TABLE_COLUMN Field",
+                        "type": "boolean"
+                    },
+                    "primary_identity": {
+                        "description": "[READ ONLY] 是否是主识别键\n 目前仅有 User Schema 的 id, Item Schema 的 id",
+                        "type": "boolean"
+                    },
+                    "identity": {
+                        "description": "是否是识别键，默认 false",
+                        "type": "boolean"
+                    },
+                    "required": {
+                        "description": "此属性是否可为空，默认 false, 即可以为空值。\n 目前不对用户界面开放，仅为平台应用提供组装逻辑使用\n 创建 Logical Event Schema 时，自动引入 Physical Event Schema 中 required = true 的字段\n SDI 数据接入时，根据此值校验是否拦截\n 使用场景： 1 Event 中的 user_id 或 item_id\n           2 关系 Item 中的 左id 和 右id",
+                        "type": "boolean"
+                    },
+                    "data_versioned": {
+                        "description": "数据是否有版本，默认 false",
+                        "type": "boolean"
+                    },
+                    "data_version_form": {
+                        "description": "数据版本粒度，data_versioned 为 true 时必填\n```\n FIELD_VERSION_LEVEL_UNSPECIFIED = 0;  // 未标识\n HOUR = 1;                             // 时\n DAY = 2;                              // 天\n WEEK = 3;                             // 周\n MONTH = 4;                            // 月\n YEAR = 5;                             // 年\n CUSTOM = 11;                          // 自定义\n```",
+                        "enum": [
+                            "FIELD_VERSION_LEVEL_UNSPECIFIED",
+                            "HOUR",
+                            "DAY",
+                            "WEEK",
+                            "MONTH",
+                            "YEAR",
+                            "CUSTOM"
+                        ],
+                        "type": "string"
+                    },
+                    "data_mapping": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.FieldDataMapping"
+                    },
+                    "view_data_source": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.FieldViewDataSource"
+                    },
+                    "custom_params": {
+                        "additionalProperties": {
+                            "description": "",
+                            "type": "string"
+                        },
+                        "description": "",
+                        "type": "object"
+                    },
+                    "unit": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.FieldUnit"
+                    },
+                    "object_fields": {
+                        "description": "对象数组配置信息，当 data_type=OBJECT_ARRAY 时必填",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.horizon.v1.Field.ObjectField"
+                        },
+                        "type": "array"
+                    },
+                    "version": {
+                        "description": "属性元数据版本",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "access_info": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.AccessInfo"
+                    },
+                    "legacy_id": {
+                        "description": "兼容实现 infinity_internal_property_id",
+                        "format": "int32",
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "created_by",
+                    "data_type",
+                    "name"
+                ],
+                "title": "Field",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.SchemaExtendedTableHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaExtendedTable"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.SchemaExtendedTableHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.BatchGetSchemaFieldStatisticsResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.BatchGetSchemaFieldStatisticsResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.BatchGetSchemaFieldStatisticsResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.FieldViewDataSource": {
+                "description": "Schema View 依据此信息进行构建\n 更新该数据的角色：「数据生产系统」，如 Tag Service\n 使用该数据的场景：「系统」在发现 Field 发生改动时，使用此数据进行 Schema View 表的生成\n 可通过接口修改和查询",
+                "properties": {
+                    "field_name": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "view_column_source_data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.FieldViewDataSource.ViewColumnSourceData"
+                    },
+                    "complex_expression": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.FieldViewDataSource.ComplexExpression"
+                    },
+                    "inline_expression": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.FieldViewDataSource.InlineExpression"
+                    },
+                    "version": {
+                        "description": "视图的版本，用于校验更新视图时是否有并发，从 1 开始，为 0 时不检查版本",
+                        "format": "int32",
+                        "type": "integer"
+                    }
+                },
+                "required": [
+                    "field_name"
+                ],
+                "title": "FieldViewDataSource",
+                "type": "object"
+            },
+            "sensorsdata.common.TimePoint.RelativeTimePoint": {
+                "description": "",
+                "properties": {
+                    "base_time": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "time_interval": {
+                        "$ref": "#/components/schemas/sensorsdata.common.TimeInterval"
+                    }
+                },
+                "title": "RelativeTimePoint",
+                "type": "object"
+            },
+            "sensorsdata.common.Literal": {
+                "description": "",
+                "properties": {
+                    "data_type": {
+                        "description": "",
+                        "enum": [
+                            "DATA_TYPE_UNSPECIFIED",
+                            "BOOL",
+                            "INT",
+                            "NUMBER",
+                            "STRING",
+                            "LIST",
+                            "DATETIME",
+                            "DATE",
+                            "BIGINT",
+                            "DECIMAL"
+                        ],
+                        "type": "string"
+                    },
+                    "bool_value": {
+                        "description": "",
+                        "type": "boolean"
+                    },
+                    "int_value": {
+                        "description": "",
+                        "format": "int64",
+                        "type": "integer"
+                    },
+                    "number_value": {
+                        "description": "",
+                        "format": "double",
+                        "type": "number"
+                    },
+                    "string_value": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "list_value": {
+                        "description": "",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "datetime_value": {
+                        "description": "",
+                        "format": "date-time",
+                        "type": "string"
+                    },
+                    "date_value": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "bigint_value": {
+                        "description": "",
+                        "format": "int64",
+                        "type": "integer"
+                    },
+                    "decimal_value": {
+                        "description": "",
+                        "type": "string"
+                    }
+                },
+                "title": "Literal",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.FieldDataMapping.ExtendedColumn": {
+                "description": "",
+                "properties": {
+                    "extended_table_id": {
+                        "description": "扩展表关联id, SchemaExtendedTable.extended_table_id",
+                        "type": "string"
+                    },
+                    "column_name": {
+                        "description": "映射的列名",
+                        "type": "string"
+                    },
+                    "version_column": {
+                        "description": "版本字段，对应数据表中的 column",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "extended_table_id"
+                ],
+                "title": "ExtendedColumn",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.BatchCreateLogicalSchemasRequest": {
+                "description": "批量创建元事件",
+                "properties": {
+                    "project_id": {
+                        "description": "项目 id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "physical_schema_name": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "schemas": {
+                        "description": "",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.horizon.v1.Schema"
+                        },
+                        "type": "array"
+                    }
+                },
+                "required": [
+                    "physical_schema_name",
+                    "project_id",
+                    "schemas"
+                ],
+                "title": "BatchCreateLogicalSchemasRequest",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemaExtendedTablesResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaExtendedTablesResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.ListSchemaExtendedTablesResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.SchemaStatistics": {
+                "description": "Schema 统计信息，只能更新不能新建和删除",
+                "properties": {
+                    "last_30_day_count": {
+                        "description": "过去 30 天数据量",
+                        "format": "int64",
+                        "type": "integer"
+                    },
+                    "track_platforms": {
+                        "description": "埋点平台，只能进行全量覆盖更新",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaStatistics.SchemaTrackPlatform"
+                        },
+                        "type": "array"
+                    },
+                    "access_info": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.AccessInfo"
+                    }
+                },
+                "title": "SchemaStatistics",
+                "type": "object"
+            },
+            "sensorsdata.common.ErrorCause": {
+                "properties": {
+                    "error_cause": {
+                        "description": "致错原因1",
+                        "example": "参数异常1",
+                        "type": "string"
+                    },
+                    "action_suggestion": {
+                        "description": "操作建议，针对该原因，建议的解决方式",
+                        "example": "检测入参的数据类型1",
+                        "type": "string"
+                    }
+                },
+                "title": "ErrorCause",
+                "type": "object"
+            },
+            "sensorsdata.common.ErrorInfo": {
+                "properties": {
+                    "code": {
+                        "description": "具体的错误码",
+                        "example": "XX-D-F-2-1",
+                        "type": "string"
+                    },
+                    "description": {
+                        "description": "错误描述",
+                        "example": "前端参数校验异常,PARAMETER_FORMAT_ERROR(quantiles=[10, -90] is not include [0, 100])",
+                        "type": "string"
+                    },
+                    "system_response": {
+                        "description": "致错的可能原因列表",
+                        "example": "系统终止了查询处理",
+                        "type": "string"
+                    },
+                    "error_causes": {
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.common.ErrorCause"
+                        },
+                        "type": "array"
+                    },
+                    "context": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorContext"
+                    }
+                },
+                "title": "ErrorInfo",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemaExtendedTablesRequest": {
+                "description": "查询schema关联的table",
+                "properties": {
+                    "project_id": {
+                        "description": "项目 id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "schema_names": {
+                        "description": "schema 名字",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "table_display_types": {
+                        "description": "table显示类型",
+                        "items": {
+                            "type": "string"
+                        },
+                        "type": "array"
+                    },
+                    "expand": {
+                        "description": "扩展返回指定字段",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "project_id",
+                    "schema_names"
+                ],
+                "title": "ListSchemaExtendedTablesRequest",
+                "type": "object"
+            },
+            "sensorsdata.common.TimeInterval": {
+                "description": "",
+                "properties": {
+                    "size": {
+                        "description": "",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "unit": {
+                        "description": "",
+                        "enum": [
+                            "DATE_TIME_UNIT_UNSPECIFIED",
+                            "MILLISECOND",
+                            "SECOND",
+                            "MINUTE",
+                            "HOUR",
+                            "DAY",
+                            "WEEK",
+                            "MONTH",
+                            "YEAR"
+                        ],
+                        "type": "string"
+                    }
+                },
+                "title": "TimeInterval",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.GetSchemaRequest": {
+                "description": "",
+                "properties": {
+                    "project_id": {
+                        "description": "项目 id",
+                        "format": "int32",
+                        "type": "integer"
+                    },
+                    "name": {
+                        "description": "Schema名称",
+                        "type": "string"
+                    },
+                    "expand": {
+                        "description": "扩展返回指定字段",
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "name",
+                    "project_id"
+                ],
+                "title": "GetSchemaRequest",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.Schema.CustomParamsEntry": {
+                "description": "",
+                "properties": {
+                    "key": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "value": {
+                        "description": "",
+                        "type": "string"
+                    }
+                },
+                "title": "CustomParamsEntry",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemaFieldDataVersionsResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaFieldDataVersionsResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.ListSchemaFieldDataVersionsResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.FieldViewDataSource.InlineExpression": {
+                "description": "",
+                "properties": {
+                    "expression": {
+                        "description": "",
+                        "type": "string"
+                    },
+                    "related_mode": {
+                        "description": "关联 Schema 的方式",
+                        "enum": [
+                            "RELATED_MODE_UNSPECIFIED",
+                            "CONTAINS_ALL",
+                            "CONTAINS_ANY"
+                        ],
+                        "type": "string"
+                    }
+                },
+                "required": [
+                    "expression",
+                    "related_mode"
+                ],
+                "title": "InlineExpression",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemaExtendedTablesResponse": {
+                "description": "",
+                "properties": {
+                    "extended_tables": {
+                        "description": "",
+                        "items": {
+                            "$ref": "#/components/schemas/sensorsdata.horizon.v1.SchemaExtendedTable"
+                        },
+                        "type": "array"
+                    }
+                },
+                "title": "ListSchemaExtendedTablesResponse",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.FieldDataMapping": {
+                "description": "数据应用查询时使用\n 查当前数据版本时，使用 schema_view_table.view_column_name 表示该 Field 数据\n 查询历史版本时，使用 source_table 自行拼接",
+                "properties": {
+                    "view_column_name": {
+                        "description": "映射 Schema View 中的列名，不一定是 field name，SDH 内部会分配一个",
+                        "type": "string"
+                    },
+                    "source_type": {
+                        "description": "属性来源类型\n```\n  FIELD_SOURCE_TYPE_UNSPECIFIED = 0;  // 表示 field 来自主表列，若单独使用时, 拼装方式为: SELECT ${source_column_name} AS ${view_column_name} FROM ${main_table}\n  MAIN_TABLE_COLUMN = 1;              // 主表 表示 field 是扩展表的列，若单独使用时, 拼装方式为: SELECT ${source_column_name} AS ${view_column_name} FROM ${extended_table}\n  EXTENDED_TABLE_COLUMN = 2;          // 使用表扩展属性，跨表计算出属性，原虚拟属性的逻辑, 例如: concat(events.aa, users.bb, items.cc)，均迁移到这个类型，官网文档: https://manual.sensorsdata.cn/sa/latest/%E8%99%9A%E6%8B%9F%E5%B1%9E%E6%80%A7-22253764.html\n  COMPLEX_EXPRESSION = 3;             // Schema 中多 Field 的计算， 暂不支持\n  INLINE_EXPRESSION = 4;\n```",
+                        "enum": [
+                            "FIELD_SOURCE_TYPE_UNSPECIFIED",
+                            "MAIN_TABLE_COLUMN",
+                            "EXTENDED_TABLE_COLUMN",
+                            "COMPLEX_EXPRESSION",
+                            "INLINE_EXPRESSION"
+                        ],
+                        "type": "string"
+                    },
+                    "extended_column": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.FieldDataMapping.ExtendedColumn"
+                    }
+                },
+                "title": "FieldDataMapping",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.ListSchemaExtendedTablesByTableNamesResponseHttpApiResult": {
+                "properties": {
+                    "code": {
+                        "type": "string"
+                    },
+                    "message": {
+                        "type": "string"
+                    },
+                    "request_id": {
+                        "type": "string"
+                    },
+                    "data": {
+                        "$ref": "#/components/schemas/sensorsdata.horizon.v1.ListSchemaExtendedTablesByTableNamesResponse"
+                    },
+                    "error_info": {
+                        "$ref": "#/components/schemas/sensorsdata.common.ErrorInfo"
+                    }
+                },
+                "title": "sensorsdata.horizon.v1.ListSchemaExtendedTablesByTableNamesResponseHttpApiResult",
+                "type": "object"
+            },
+            "sensorsdata.horizon.v1.AccessInfo": {
+                "description": "数据访问信息",
+                "properties": {
+                    "creator_id": {
+                        "description": "创建人 ID",
+                        "type": "string"
+                    },
+                    "modifier_id": {
+                        "description": "最近一次修改人 ID",
+                        "type": "string"
+                    },
+                    "create_time": {
+                        "description": "创建时间",
+                        "format": "date-time",
+                        "type": "string"
+                    },
+                    "update_time": {
+                        "description": "最近一次修改时间",
+                        "format": "date-time",
+                        "type": "string"
+                    }
+                },
+                "title": "AccessInfo",
+                "type": "object"
+            }
+        }
+    },
+    "x-sd-openapi-service-name": "Schema",
+    "x-sd-openapi-service-name-hyphen": "schema",
+    "x-sd-openapi-app-name": "horizon",
+    "x-sd-openapi-service-name-zh_cn": "用户表和事件表管理",
+    "x-original-swagger-version": "2.0"
+}

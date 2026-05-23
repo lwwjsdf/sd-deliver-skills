@@ -112,6 +112,38 @@ def verify_import(batch_info: dict, timeout: int = 60) -> dict:
         return {"status": "failed", "error": str(e)}
 
 
+def confirm_import(batch_info: dict, batch_file: str) -> bool:
+    """二次确认导入内容"""
+    print("\n" + "=" * 60)
+    print("📋 导入确认")
+    print("=" * 60)
+    print(f"目标环境: {SA_TRACK_URL}")
+    print(f"数据文件: {Path(batch_file).name}")
+    print(f"\n即将导入:")
+    print(f"  • 总记录数: {batch_info['total_records']} 条")
+    print(f"  • 唯一用户: {batch_info['unique_users']} 个")
+    print(f"  • 事件类型: {batch_info['event_types']} 种")
+    if batch_info["batch_ids"]:
+        print(f"  • 批次标识: {', '.join(batch_info['batch_ids'])}")
+
+    print(f"\n事件分布 (前10):")
+    for event, count in batch_info["top_events"]:
+        print(f"    {event}: {count} 条")
+
+    print("\n⚠️  注意: 重复导入会产生重复数据")
+    print("=" * 60)
+
+    while True:
+        choice = input("确认导入以上数据? [y/N]: ").strip().lower()
+        if choice in ("y", "yes"):
+            return True
+        elif choice in ("n", "no", ""):
+            print("❌ 已取消导入")
+            return False
+        else:
+            print("请输入 y 或 n")
+
+
 def import_data(batch_file: str):
     """导入 batch 数据到神策"""
     if not Path(batch_file).exists():
@@ -133,6 +165,10 @@ def import_data(batch_file: str):
     print(f"  事件分布:")
     for event, count in batch_info["top_events"]:
         print(f"    {event}: {count}")
+
+    # 二次确认
+    if not confirm_import(batch_info, batch_file):
+        sys.exit(0)
 
     # 使用 BatchConsumer 批量发送（每 100 条批量发送）
     consumer = sensorsanalytics.BatchConsumer(SA_TRACK_URL, max_size=100)
