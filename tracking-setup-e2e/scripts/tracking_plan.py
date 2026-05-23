@@ -379,6 +379,10 @@ class TrackingPlan:
             list(self._custom_events.keys()) + list(self._preset_events.keys())
         )
 
+    def has_mp_events(self) -> bool:
+        """Check if the tracking plan contains any Mini Program preset events ($MP*)."""
+        return any(name.startswith("$") for name in self.list_events())
+
     def generate_value(self, prop: PropertyDef) -> object:
         """
         Generate a plausible mock value for a property.
