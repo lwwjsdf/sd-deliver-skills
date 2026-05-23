@@ -3,18 +3,25 @@
 import_meta_data.py — 从埋点方案 Excel 自动导入元事件和用户属性到神策 CDP
 
 用法：
+    # 方式1：命令行参数（推荐）
+    python3 tracking-setup-e2e/scripts/import_meta_data.py \
+        --cdp-url https://demo.sensorsdata.cn \
+        --project default \
+        --api-key xxx \
+        --tracking-plan ./plan.xlsx
+
+    # 方式2：交互式提示（未传参时自动提示）
     python3 tracking-setup-e2e/scripts/import_meta_data.py
 
-前置条件（在项目根目录的 .env 中配置）：
-    SA_HOST             神策 CDP 地址
-    SA_PROJECT          项目 ID
-    API_KEY             神策 Open API 密钥
-    TRACKING_PLAN_PATH  埋点方案 Excel 路径
+    # 方式3：使用 .env 配置
+    python3 tracking-setup-e2e/scripts/import_meta_data.py
 
 依赖：
     pip install openpyxl python-dotenv requests
 """
 
+import argparse
+import getpass
 import os
 import sys
 from pathlib import Path
@@ -37,11 +44,6 @@ sys.path.insert(0, os.path.dirname(__file__))
 from tracking_plan import TrackingPlan
 from sa_openapi import SAOpenAPI, map_data_type
 
-SA_HOST = os.getenv("SA_HOST", "").rstrip("/")
-SA_PROJECT = os.getenv("SA_PROJECT", "")
-API_KEY = os.getenv("API_KEY", "")
-TRACKING_PLAN_PATH = os.getenv("TRACKING_PLAN_PATH", "")
-
 # 系统保留字段名（无法创建，自动跳过）
 RESERVED_FIELD_NAMES = {"Id", "PersonEmail"}
 
@@ -49,44 +51,105 @@ RESERVED_FIELD_NAMES = {"Id", "PersonEmail"}
 BUILTIN_FIELD_NAMES = {"platformType", "applicationName", "version"}
 
 
-def validate_env():
-    missing = [
-        k
-        for k in ["SA_HOST", "SA_PROJECT", "API_KEY", "TRACKING_PLAN_PATH"]
-        if not os.getenv(k)
-    ]
-    if missing:
-        print(f"❌ 错误：缺少必要配置，请在 .env 中设置：{', '.join(missing)}")
-        print("\n获取方式：")
-        print("  SA_HOST:      神策 CDP 地址，如 https://demo.sensorsdata.cn")
-        print("  SA_PROJECT:   项目 ID，登录后 URL 中 project= 的值")
-        print("  API_KEY:      神策后台 → 系统管理 → API 密钥 → 创建密钥")
-        print("  TRACKING_PLAN_PATH: 埋点方案 Excel 文件路径")
-        sys.exit(1)
+# ---------------------------------------------------------------------------
+# Configuration helpers
+# ---------------------------------------------------------------------------
+
+CONFIG_PROMPTS = {
+    "cdp_url": {
+        "env_key": "SA_HOST",
+        "prompt": "CDP 地址",
+        "example": "https://demo.sensorsdata.cn",
+        "help": "神策 CDP 控制台地址，登录后在浏览器地址栏看到",
+    },
+    "project": {
+        "env_key": "SA_PROJECT",
+        "prompt": "项目 ID",
+        "example": "default",
+        "help": "登录神策后 URL 中 project= 后面的值",
+    },
+    "api_key": {
+        "env_key": "API_KEY",
+        "prompt": "Open API 密钥",
+        "example": "#K-jHllJkcPOMeRke3Vi5Nokeuc1MDlRZls",
+        "help": "神策后台 → 系统管理 → API 密钥 → 创建密钥",
+        "secret": True,
+    },
+    "tracking_plan": {
+        "env_key": "TRACKING_PLAN_PATH",
+        "prompt": "埋点方案路径",
+        "example": "./refrences/tracking-plan.xlsx",
+        "help": "埋点方案 Excel 文件的路径",
+    },
+}
 
 
-def test_api_connection():
+def get_config_value(key: str, args_value: str = "", interactive: bool = True) -> str:
+    """Get config value with priority: args > env > interactive prompt > error"""
+    config = CONFIG_PROMPTS[key]
+    env_key = config["env_key"]
+
+    # Priority 1: command line argument
+    if args_value:
+        return args_value
+
+    # Priority 2: environment variable
+    env_value = os.getenv(env_key, "")
+    if env_value:
+        return env_value
+
+    # Priority 3: interactive prompt
+    if interactive and sys.stdin.isatty():
+        print(f"\n{config['prompt']}:")
+        print(f"  示例: {config['example']}")
+        print(f"  获取: {config['help']}")
+
+        if config.get("secret"):
+            value = getpass.getpass("  请输入: ").strip()
+        else:
+            value = input("  请输入: ").strip()
+
+        if value:
+            return value
+
+    # Priority 4: error
+    print(f"\n❌ 错误：缺少 {config['prompt']}")
+    print(f"  请通过以下方式之一提供：")
+    print(f"  1. 命令行参数: --{key.replace('_', '-')} <值>")
+    print(f"  2. 环境变量: {env_key}=<值>")
+    print(f"  3. .env 文件: {env_key}=<值>")
+    print(f"  4. 交互式提示（直接运行脚本）")
+    print(f"\n  示例值: {config['example']}")
+    print(f"  获取方式: {config['help']}")
+    sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# Import logic
+# ---------------------------------------------------------------------------
+
+
+def test_api_connection(cdp_url: str, api_key: str, project: str) -> bool:
     """Test API connectivity before import to fail fast."""
     try:
-        api = SAOpenAPI(SA_HOST, API_KEY, SA_PROJECT)
-        # Try to list events as a connectivity test
+        api = SAOpenAPI(cdp_url, api_key, project)
         events = api.list_events()
         print(f"✓ API 连接成功，系统中已有 {len(events)} 个事件")
         return True
     except Exception as e:
         print(f"\n❌ API 连接失败: {e}")
         print("\n可能原因：")
-        print("  1. API_KEY 错误 - 请确认使用的是 Open API 密钥（不是数据接入 token）")
+        print("  1. API 密钥错误 - 请确认使用的是 Open API 密钥")
         print("     获取位置：神策后台 → 系统管理 → API 密钥")
-        print("  2. SA_HOST 错误 - 请确认是 CDP 地址（不是数据接入地址）")
+        print("  2. CDP 地址错误 - 请确认是控制台地址（不是数据接收地址）")
         print("  3. 网络问题 - 请检查能否访问神策环境")
         print("\n当前配置：")
-        print(f"  SA_HOST: {SA_HOST}")
-        print(f"  SA_PROJECT: {SA_PROJECT}")
+        print(f"  CDP 地址: {cdp_url}")
+        print(f"  项目 ID:  {project}")
         print(
-            f"  API_KEY: {API_KEY[:10]}..."
-            if len(API_KEY) > 10
-            else f"  API_KEY: {API_KEY}"
+            f"  API 密钥: {api_key[:10]}..."
+            if len(api_key) > 10
+            else f"  API 密钥: {api_key}"
         )
         return False
 
@@ -186,7 +249,9 @@ def import_user_attrs(api: SAOpenAPI, plan: TrackingPlan) -> dict:
     return {"ok": ok, "failed": failed}
 
 
-def confirm_import(excel_path: Path, plan: TrackingPlan) -> bool:
+def confirm_import(
+    excel_path: Path, plan: TrackingPlan, cdp_url: str, project: str
+) -> bool:
     """二次确认导入内容"""
     event_names = plan.list_events()
     custom_events = [n for n in event_names if not n.startswith("$")]
@@ -195,8 +260,8 @@ def confirm_import(excel_path: Path, plan: TrackingPlan) -> bool:
     print("\n" + "=" * 60)
     print("📋 导入确认")
     print("=" * 60)
-    print(f"目标环境: {SA_HOST}")
-    print(f"项目:     {SA_PROJECT}")
+    print(f"目标环境: {cdp_url}")
+    print(f"项目:     {project}")
     print(f"文件:     {excel_path.name}")
     print(f"\n即将导入:")
     print(f"  • 自定义事件: {len(custom_events)} 个")
@@ -222,19 +287,79 @@ def confirm_import(excel_path: Path, plan: TrackingPlan) -> bool:
             print("请输入 y 或 n")
 
 
-def main():
-    validate_env()
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
-    excel_path = Path(TRACKING_PLAN_PATH)
+
+def main():
+    parser = argparse.ArgumentParser(
+        description="从埋点方案 Excel 导入元事件和用户属性到神策 CDP",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  # 使用命令行参数
+  python3 %(prog)s --cdp-url https://demo.sensorsdata.cn --project default --api-key xxx --tracking-plan ./plan.xlsx
+
+  # 使用 .env 配置（无需传参）
+  python3 %(prog)s
+
+  # 交互式提示（未传参时自动提示）
+  python3 %(prog)s
+        """,
+    )
+
+    parser.add_argument(
+        "--cdp-url",
+        dest="cdp_url",
+        default="",
+        help="神策 CDP 地址，示例：https://demo.sensorsdata.cn",
+    )
+    parser.add_argument(
+        "--project",
+        dest="project",
+        default="",
+        help="项目 ID，示例：default",
+    )
+    parser.add_argument(
+        "--api-key",
+        dest="api_key",
+        default="",
+        help="Open API 密钥，示例：#K-jHllJkcPOMeRke3Vi5Nokeuc1MDlRZls",
+    )
+    parser.add_argument(
+        "--tracking-plan",
+        dest="tracking_plan",
+        default="",
+        help="埋点方案 Excel 路径，示例：./refrences/tracking-plan.xlsx",
+    )
+    parser.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        help="跳过确认提示，直接导入",
+    )
+
+    args = parser.parse_args()
+
+    print("=== 神策 CDP 元数据导入 ===")
+
+    # Get configuration
+    cdp_url = get_config_value("cdp_url", args.cdp_url)
+    project = get_config_value("project", args.project)
+    api_key = get_config_value("api_key", args.api_key)
+    tracking_plan_path = get_config_value("tracking_plan", args.tracking_plan)
+
+    excel_path = Path(tracking_plan_path)
     if not excel_path.exists():
-        print(f"❌ 错误：找不到埋点方案文件：{excel_path}")
+        print(f"\n❌ 错误：找不到埋点方案文件：{excel_path}")
+        print(f"  请确认路径是否正确")
+        print(f"  示例: ./refrences/Annex 6 - Tracking Plan - Mini Program_V0.1.xlsx")
         sys.exit(1)
 
-    print(f"=== 神策 CDP 元数据导入 ===")
-
-    # Step 1: Test API connectivity first
+    # Step 1: Test API connectivity
     print("\n🔍 检查 API 连接...")
-    if not test_api_connection():
+    if not test_api_connection(cdp_url, api_key, project):
         sys.exit(1)
 
     # Step 2: Parse tracking plan
@@ -260,13 +385,14 @@ def main():
         )
         sys.exit(1)
 
-    api = SAOpenAPI(SA_HOST, API_KEY, SA_PROJECT)
+    api = SAOpenAPI(cdp_url, api_key, project)
 
     # Step 3: Confirm import
-    if not confirm_import(excel_path, plan):
-        sys.exit(0)
+    if not args.yes:
+        if not confirm_import(excel_path, plan, cdp_url, project):
+            sys.exit(0)
 
-    print(f"\n目标: {SA_HOST}  项目: {SA_PROJECT}\n")
+    print(f"\n目标: {cdp_url}  项目: {project}\n")
 
     # ── 元事件 ──
     print("── 元事件导入 ──")

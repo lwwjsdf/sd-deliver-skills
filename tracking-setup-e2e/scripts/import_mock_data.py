@@ -3,21 +3,29 @@
 import_mock_data.py — 将生成的模拟数据导入神策 CDP（使用官方 SDK）
 
 用法：
+    # 方式1：命令行参数（推荐）
+    python tracking-setup-e2e/scripts/import_mock_data.py \
+        --data-url https://demo.sensorsdata.cn/sa?project=default \
+        --jsonl ./mock_data/westk.jsonl
+
+    # 方式2：交互式提示（未传参时自动提示）
     python tracking-setup-e2e/scripts/import_mock_data.py
 
-前置条件（在项目根目录的 .env 中配置）：
-    SA_TRACK_URL        神策数据接入 URL
-    SA_HOST             神策 CDP 地址（用于校验）
-    API_KEY             Open API 密钥（用于校验）
-    SA_PROJECT          项目 ID
+    # 方式3：使用 .env 配置
+    python tracking-setup-e2e/scripts/import_mock_data.py
+
+依赖：
+    pip install python-dotenv SensorsAnalyticsSDK
 """
 
+import argparse
+import getpass
+import json
 import os
 import sys
-import json
 import time
-from pathlib import Path
 from collections import Counter
+from pathlib import Path
 
 try:
     from dotenv import load_dotenv
@@ -38,19 +46,61 @@ for _p in [
         load_dotenv(env_file, override=True)
         break
 
-SA_TRACK_URL = os.getenv("SA_TRACK_URL", "")
-SA_HOST = os.getenv("SA_HOST", "")
-API_KEY = os.getenv("API_KEY", "")
-SA_PROJECT = os.getenv("SA_PROJECT", "default")
+
+# ---------------------------------------------------------------------------
+# Configuration helpers
+# ---------------------------------------------------------------------------
+
+CONFIG_PROMPTS = {
+    "data_url": {
+        "env_key": "SA_TRACK_URL",
+        "prompt": "数据接收地址",
+        "example": "https://demo.sensorsdata.cn/sa?project=default",
+        "help": "神策后台 → 数据接入 → HTTP API → 复制接入地址",
+    },
+}
 
 
-def validate_env():
-    if not SA_TRACK_URL:
-        print("❌ 错误：缺少 SA_TRACK_URL 配置，请在 .env 中设置")
-        print("\n获取方式：")
-        print("  神策后台 → 数据接入 → HTTP API → 复制接入地址")
-        print("  格式如：https://<host>/sa?project=<project>")
-        sys.exit(1)
+def get_config_value(key: str, args_value: str = "", interactive: bool = True) -> str:
+    """Get config value with priority: args > env > interactive prompt > error"""
+    config = CONFIG_PROMPTS[key]
+    env_key = config["env_key"]
+
+    # Priority 1: command line argument
+    if args_value:
+        return args_value
+
+    # Priority 2: environment variable
+    env_value = os.getenv(env_key, "")
+    if env_value:
+        return env_value
+
+    # Priority 3: interactive prompt
+    if interactive and sys.stdin.isatty():
+        print(f"\n{config['prompt']}:")
+        print(f"  示例: {config['example']}")
+        print(f"  获取: {config['help']}")
+
+        value = input("  请输入: ").strip()
+
+        if value:
+            return value
+
+    # Priority 4: error
+    print(f"\n❌ 错误：缺少 {config['prompt']}")
+    print(f"  请通过以下方式之一提供：")
+    print(f"  1. 命令行参数: --{key.replace('_', '-')} <值>")
+    print(f"  2. 环境变量: {env_key}=<值>")
+    print(f"  3. .env 文件: {env_key}=<值>")
+    print(f"  4. 交互式提示（直接运行脚本）")
+    print(f"\n  示例值: {config['example']}")
+    print(f"  获取方式: {config['help']}")
+    sys.exit(1)
+
+
+# ---------------------------------------------------------------------------
+# Import logic
+# ---------------------------------------------------------------------------
 
 
 def get_batch_info(batch_file: str) -> dict:
@@ -83,44 +133,12 @@ def get_batch_info(batch_file: str) -> dict:
     }
 
 
-def verify_import(batch_info: dict, timeout: int = 60) -> dict:
-    """验证导入结果（通过 Open API 查询）"""
-    if not all([SA_HOST, API_KEY, SA_PROJECT]):
-        print("⚠️  缺少 Open API 配置，跳过在线验证")
-        return {}
-
-    try:
-        sys.path.insert(0, str(Path(__file__).parent))
-        from sa_openapi import SAOpenAPI
-
-        api = SAOpenAPI(SA_HOST, API_KEY, SA_PROJECT)
-
-        # 等待数据写入
-        print(f"⏳ 等待数据写入（{timeout}秒）...")
-        time.sleep(min(timeout, 5))  # 至少等待 5 秒
-
-        # 查询事件列表
-        events = api.list_events()
-
-        # 查询用户属性
-        user_fields = api.list_user_fields()
-
-        return {
-            "total_events_in_system": len(events),
-            "total_user_fields": len(user_fields),
-            "status": "verified",
-        }
-    except Exception as e:
-        print(f"⚠️  在线验证失败: {e}")
-        return {"status": "failed", "error": str(e)}
-
-
-def confirm_import(batch_info: dict, batch_file: str) -> bool:
+def confirm_import(batch_info: dict, batch_file: str, data_url: str) -> bool:
     """二次确认导入内容"""
     print("\n" + "=" * 60)
     print("📋 导入确认")
     print("=" * 60)
-    print(f"目标环境: {SA_TRACK_URL}")
+    print(f"目标环境: {data_url}")
     print(f"数据文件: {Path(batch_file).name}")
     print(f"\n即将导入:")
     print(f"  • 总记录数: {batch_info['total_records']} 条")
@@ -147,7 +165,7 @@ def confirm_import(batch_info: dict, batch_file: str) -> bool:
             print("请输入 y 或 n")
 
 
-def import_data(batch_file: str):
+def import_data(batch_file: str, data_url: str):
     """导入 batch 数据到神策"""
     if not Path(batch_file).exists():
         print(f"错误：找不到数据文件：{batch_file}")
@@ -155,7 +173,7 @@ def import_data(batch_file: str):
 
     print(f"=== 数据导入 ===")
     print(f"文件: {batch_file}")
-    print(f"目标: {SA_TRACK_URL}")
+    print(f"目标: {data_url}")
 
     # 获取批次信息
     batch_info = get_batch_info(batch_file)
@@ -170,11 +188,11 @@ def import_data(batch_file: str):
         print(f"    {event}: {count}")
 
     # 二次确认
-    if not confirm_import(batch_info, batch_file):
+    if not confirm_import(batch_info, batch_file, data_url):
         sys.exit(0)
 
     # 使用 BatchConsumer 批量发送（每 100 条批量发送）
-    consumer = sensorsanalytics.BatchConsumer(SA_TRACK_URL, max_size=100)
+    consumer = sensorsanalytics.BatchConsumer(data_url, max_size=100)
     sa = sensorsanalytics.SensorsAnalytics(consumer, enable_time_free=True)
 
     # 读取 JSONL 数据
@@ -229,29 +247,72 @@ def import_data(batch_file: str):
         for err in error_samples:
             print(f"  {err}")
 
-    # 验证导入结果
-    print(f"\n🔍 验证导入结果...")
-    verify_result = verify_import(batch_info)
-    if verify_result:
-        print(f"  系统中事件总数: {verify_result.get('total_events_in_system', 'N/A')}")
-        print(f"  用户属性总数: {verify_result.get('total_user_fields', 'N/A')}")
+
+# ---------------------------------------------------------------------------
+# Main
+# ---------------------------------------------------------------------------
 
 
 def main():
-    validate_env()
+    parser = argparse.ArgumentParser(
+        description="将模拟数据导入神策 CDP",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog="""
+示例:
+  # 使用命令行参数
+  python3 %(prog)s --data-url https://demo.sensorsdata.cn/sa?project=default --jsonl ./mock_data/westk.jsonl
 
-    # 查找最新的 jsonl 文件
-    mock_data_dir = Path(__file__).parent.parent / "mock_data"
-    jsonl_files = sorted(
-        mock_data_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True
+  # 使用 .env 配置（无需传参）
+  python3 %(prog)s
+
+  # 交互式提示（未传参时自动提示）
+  python3 %(prog)s
+        """,
     )
 
-    if not jsonl_files:
-        print("错误：找不到 jsonl 数据文件，请先运行 generate_mock_data.py 生成数据")
-        sys.exit(1)
+    parser.add_argument(
+        "--data-url",
+        dest="data_url",
+        default="",
+        help="数据接收地址，示例：https://demo.sensorsdata.cn/sa?project=default",
+    )
+    parser.add_argument(
+        "--jsonl",
+        dest="jsonl",
+        default="",
+        help="JSONL 数据文件路径，示例：./mock_data/westk.jsonl",
+    )
+    parser.add_argument(
+        "--yes",
+        "-y",
+        action="store_true",
+        help="跳过确认提示，直接导入",
+    )
 
-    batch_file = str(jsonl_files[0])
-    import_data(batch_file)
+    args = parser.parse_args()
+
+    # Get configuration
+    data_url = get_config_value("data_url", args.data_url)
+
+    # Find jsonl file
+    if args.jsonl:
+        batch_file = args.jsonl
+    else:
+        # 查找最新的 jsonl 文件
+        mock_data_dir = Path(__file__).parent.parent / "mock_data"
+        jsonl_files = sorted(
+            mock_data_dir.glob("*.jsonl"), key=lambda p: p.stat().st_mtime, reverse=True
+        )
+
+        if not jsonl_files:
+            print(
+                "错误：找不到 jsonl 数据文件，请先运行 generate_mock_data.py 生成数据"
+            )
+            sys.exit(1)
+
+        batch_file = str(jsonl_files[0])
+
+    import_data(batch_file, data_url)
 
 
 if __name__ == "__main__":
