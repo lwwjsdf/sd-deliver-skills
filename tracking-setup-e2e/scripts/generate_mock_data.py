@@ -38,10 +38,11 @@ sys.path.insert(0, str(Path(__file__).parent))
 try:
     from rule_engine import RuleEngine
     from tracking_plan import TrackingPlan
-    from fixed_account_generator import FixedAccountGenerator, User
+    from fixed_account_generator import FixedAccountGenerator, BatchUserGenerator, User
     from event_sequencer import EventSequencer
     from constraint_validator import ConstraintValidator
     from report_generator import ReportGenerator
+
     _RULES_MODE_AVAILABLE = True
 except ImportError:
     _RULES_MODE_AVAILABLE = False
@@ -59,6 +60,7 @@ TRACKING_PLAN_PATH = os.getenv("TRACKING_PLAN_PATH", "")
 # ---------------------------------------------------------------------------
 # Excel parsing
 # ---------------------------------------------------------------------------
+
 
 def parse_tracking_plan(xlsx_path: str) -> dict:
     """Parse a Sensors Data tracking plan Excel into a structured dict."""
@@ -81,12 +83,18 @@ def parse_tracking_plan(xlsx_path: str) -> dict:
         # Format: (None, priority_int, '$identity_xxx', display_name, ...)
         if header_row_idx is not None:
             for row in rows[:header_row_idx]:
-                if isinstance(row[1], int) and row[2] and str(row[2]).startswith("$identity_"):
-                    plan["identities"].append({
-                        "name": str(row[2]).strip(),
-                        "display": str(row[3] or row[2]).strip(),
-                        "priority": row[1],
-                    })
+                if (
+                    isinstance(row[1], int)
+                    and row[2]
+                    and str(row[2]).startswith("$identity_")
+                ):
+                    plan["identities"].append(
+                        {
+                            "name": str(row[2]).strip(),
+                            "display": str(row[3] or row[2]).strip(),
+                            "priority": row[1],
+                        }
+                    )
             # Sort by priority ascending (1 = highest)
             plan["identities"].sort(key=lambda x: x["priority"])
 
@@ -107,31 +115,59 @@ def parse_tracking_plan(xlsx_path: str) -> dict:
             col = {v: i for i, v in enumerate(headers) if v}
 
             current_event = None
-            for row in rows[header_row_idx + 1:]:
-                event_name = row[col.get("Event Variable Name", 1)] if col.get("Event Variable Name") is not None else None
-                attr_name = row[col.get("Event  Attribute Variable Name", 3)] if col.get("Event  Attribute Variable Name") is not None else None
-                attr_display = row[col.get("Event  Attribute Variable Display Name", 4)] if col.get("Event  Attribute Variable Display Name") is not None else None
-                data_type = row[col.get("Date Type", 5)] if col.get("Date Type") is not None else None
-                sample = row[col.get("Sample Data", 11)] if col.get("Sample Data") is not None else None
-                remark = row[col.get("Remark", 12)] if col.get("Remark") is not None else None
+            for row in rows[header_row_idx + 1 :]:
+                event_name = (
+                    row[col.get("Event Variable Name", 1)]
+                    if col.get("Event Variable Name") is not None
+                    else None
+                )
+                attr_name = (
+                    row[col.get("Event  Attribute Variable Name", 3)]
+                    if col.get("Event  Attribute Variable Name") is not None
+                    else None
+                )
+                attr_display = (
+                    row[col.get("Event  Attribute Variable Display Name", 4)]
+                    if col.get("Event  Attribute Variable Display Name") is not None
+                    else None
+                )
+                data_type = (
+                    row[col.get("Date Type", 5)]
+                    if col.get("Date Type") is not None
+                    else None
+                )
+                sample = (
+                    row[col.get("Sample Data", 11)]
+                    if col.get("Sample Data") is not None
+                    else None
+                )
+                remark = (
+                    row[col.get("Remark", 12)]
+                    if col.get("Remark") is not None
+                    else None
+                )
 
                 if event_name:
                     current_event = {
                         "name": event_name,
-                        "display_name": row[col.get("Event Display Name", 2)] if col.get("Event Display Name") is not None else event_name,
-                        "properties": []
+                        "display_name": row[col.get("Event Display Name", 2)]
+                        if col.get("Event Display Name") is not None
+                        else event_name,
+                        "properties": [],
                     }
                     plan["events"].append(current_event)
 
                 if current_event and attr_name:
                     options = _parse_options(remark) or _parse_options(sample)
-                    current_event["properties"].append({
-                        "name": str(attr_name).strip(),
-                        "display_name": str(attr_display or attr_name).strip(),
-                        "type": str(data_type or "String").strip(),
-                        "sample": sample,
-                        "options": options,
-                    })
+                    current_event["properties"].append(
+                        {
+                            "name": str(attr_name).strip(),
+                            "display_name": str(attr_display or attr_name).strip(),
+                            "type": str(data_type or "String").strip(),
+                            "sample": sample,
+                            "options": options,
+                        }
+                    )
 
     # --- Users sheet ---
     if "Users" in wb.sheetnames:
@@ -148,19 +184,41 @@ def parse_tracking_plan(xlsx_path: str) -> dict:
             headers = rows[header_row_idx]
             col = {v: i for i, v in enumerate(headers) if v}
 
-            for row in rows[header_row_idx + 1:]:
-                attr_name = row[col.get("Attribute variable name", 1)] if col.get("Attribute variable name") is not None else None
+            for row in rows[header_row_idx + 1 :]:
+                attr_name = (
+                    row[col.get("Attribute variable name", 1)]
+                    if col.get("Attribute variable name") is not None
+                    else None
+                )
                 if attr_name:
-                    sample = row[col.get("Sample Data", 9)] if col.get("Sample Data") is not None else None
-                    remark = row[col.get("Remark", 10)] if col.get("Remark") is not None else None
+                    sample = (
+                        row[col.get("Sample Data", 9)]
+                        if col.get("Sample Data") is not None
+                        else None
+                    )
+                    remark = (
+                        row[col.get("Remark", 10)]
+                        if col.get("Remark") is not None
+                        else None
+                    )
                     options = _parse_options(remark) or _parse_options(sample)
-                    plan["users"].append({
-                        "name": str(attr_name).strip(),
-                        "display_name": str(row[col.get("Attribute display name", 2)] or attr_name).strip() if col.get("Attribute display name") is not None else str(attr_name).strip(),
-                        "type": str(row[col.get("Data Type", 3)] or "String").strip() if col.get("Data Type") is not None else "String",
-                        "sample": sample,
-                        "options": options,
-                    })
+                    plan["users"].append(
+                        {
+                            "name": str(attr_name).strip(),
+                            "display_name": str(
+                                row[col.get("Attribute display name", 2)] or attr_name
+                            ).strip()
+                            if col.get("Attribute display name") is not None
+                            else str(attr_name).strip(),
+                            "type": str(
+                                row[col.get("Data Type", 3)] or "String"
+                            ).strip()
+                            if col.get("Data Type") is not None
+                            else "String",
+                            "sample": sample,
+                            "options": options,
+                        }
+                    )
 
     return plan
 
@@ -168,6 +226,7 @@ def parse_tracking_plan(xlsx_path: str) -> dict:
 # ---------------------------------------------------------------------------
 # Mock value generation
 # ---------------------------------------------------------------------------
+
 
 def _parse_options(text: str) -> list[str]:
     """从 Remark/Sample 文本中提取值域列表（支持分号和换行分隔）。"""
@@ -182,8 +241,15 @@ def _parse_options(text: str) -> list[str]:
     return opts if len(opts) > 1 else []
 
 
-def _extract_prop(row: tuple, col: dict, name_key: str, display_key: str,
-                  type_key: str, sample_key: str, remark_key: str) -> dict:
+def _extract_prop(
+    row: tuple,
+    col: dict,
+    name_key: str,
+    display_key: str,
+    type_key: str,
+    sample_key: str,
+    remark_key: str,
+) -> dict:
     """从一行 Excel 数据提取属性定义，包含值域信息。"""
     name = row[col.get(name_key, 1)] if col.get(name_key) is not None else None
     if not name:
@@ -210,12 +276,16 @@ def _random_string(length=8):
 
 
 def _random_datetime(days_back=90):
-    delta = timedelta(days=random.randint(0, days_back), seconds=random.randint(0, 86400))
+    delta = timedelta(
+        days=random.randint(0, days_back), seconds=random.randint(0, 86400)
+    )
     return (datetime.now() - delta).strftime("%Y-%m-%dT%H:%M:%S.000Z")
 
 
 def _random_timestamp_ms(days_back=90):
-    delta = timedelta(days=random.randint(0, days_back), seconds=random.randint(0, 86400))
+    delta = timedelta(
+        days=random.randint(0, days_back), seconds=random.randint(0, 86400)
+    )
     return int((datetime.now() - delta).timestamp() * 1000)
 
 
@@ -301,8 +371,15 @@ def generate_identities(identity_defs: list[dict], uid: str, idx: int) -> dict:
 # Sensors Data event record builder
 # ---------------------------------------------------------------------------
 
-def build_track_record(event: dict, distinct_id: str, event_time_ms: int,
-                       user_idx: int, project: str, identity_defs: list) -> dict:
+
+def build_track_record(
+    event: dict,
+    distinct_id: str,
+    event_time_ms: int,
+    user_idx: int,
+    project: str,
+    identity_defs: list,
+) -> dict:
     properties = {
         "$app_version": "1.0.0",
         "$lib": "python",
@@ -325,8 +402,9 @@ def build_track_record(event: dict, distinct_id: str, event_time_ms: int,
     }
 
 
-def build_profile_record(user_attrs: list, distinct_id: str,
-                         user_idx: int, project: str, identity_defs: list) -> dict:
+def build_profile_record(
+    user_attrs: list, distinct_id: str, user_idx: int, project: str, identity_defs: list
+) -> dict:
     properties = {}
     for attr in user_attrs:
         properties[attr["name"]] = generate_value(attr)
@@ -346,6 +424,7 @@ def build_profile_record(user_attrs: list, distinct_id: str,
 # ---------------------------------------------------------------------------
 # Output formats
 # ---------------------------------------------------------------------------
+
 
 def to_batch_payload(records: list) -> str:
     """Encode records as base64 for Sensors Data batch HTTP API."""
@@ -370,16 +449,21 @@ def write_identity_map(users: list, identity_defs: list, output_dir: str) -> str
     用于校验 ID-Mapping：同一行的所有 identity 值应被神策合并为同一用户。
     """
     import csv
-    identity_names = [d["name"] for d in identity_defs] if identity_defs else [
-        "$identity_login_id", "$identity_email", "$identity_mobile"
-    ]
+
+    identity_names = (
+        [d["name"] for d in identity_defs]
+        if identity_defs
+        else ["$identity_login_id", "$identity_email", "$identity_mobile"]
+    )
     csv_path = os.path.join(output_dir, "user_identity_map.csv")
     with open(csv_path, "w", newline="", encoding="utf-8") as f:
         writer = csv.writer(f)
         writer.writerow(["user_pool_id"] + identity_names)
         for uid, idx in users:
             identities = generate_identities(identity_defs, uid, idx)
-            writer.writerow([f"user_{idx:04d}"] + [identities.get(n, "") for n in identity_names])
+            writer.writerow(
+                [f"user_{idx:04d}"] + [identities.get(n, "") for n in identity_names]
+            )
     return csv_path
 
 
@@ -405,6 +489,7 @@ def write_outputs(records: list, output_dir: str, prefix: str):
 # Rules-driven mode
 # ---------------------------------------------------------------------------
 
+
 def run_rules_mode(args):
     """规则驱动模式：从 YAML 规则文件 + 埋点方案 Excel 生成结构化测试数据。"""
     if not _RULES_MODE_AVAILABLE:
@@ -420,9 +505,13 @@ def run_rules_mode(args):
     xlsx_path = args.tracking_plan
     if not xlsx_path:
         # 交互式选择：扫描 refrences/ 目录下的 xlsx 文件
-        xlsx_files = list(Path("refrences").glob("*.xlsx")) if Path("refrences").exists() else []
+        xlsx_files = (
+            list(Path("refrences").glob("*.xlsx")) if Path("refrences").exists() else []
+        )
         # 优先选 Annex 6（Mini Program）
-        mp_files = [f for f in xlsx_files if "Mini Program" in f.name or "Annex 6" in f.name]
+        mp_files = [
+            f for f in xlsx_files if "Mini Program" in f.name or "Annex 6" in f.name
+        ]
         if mp_files:
             xlsx_path = str(mp_files[0])
             print(f"自动选择埋点方案: {xlsx_path}")
@@ -444,23 +533,31 @@ def run_rules_mode(args):
     plan = TrackingPlan(xlsx_path)
 
     # 4. 生成用户
-    mode = args.mode or "fixed-accounts"
-    if mode == "fixed-accounts":
+    if args.users:
+        gen = BatchUserGenerator(engine)
+        users = gen.generate(args.users)
+    else:
         gen = FixedAccountGenerator(engine)
         users = gen.generate_accounts()
-    else:
-        print("batch 模式暂未实现")
-        sys.exit(1)
 
     # 5. 生成事件
     sequencer = EventSequencer(engine, plan)
-    start_ms = int(datetime(2026, 5, 1, 9, 0).timestamp() * 1000)
+    days = args.days or 1
+    # Spread user start times across the day window (days ago → now)
+    window_start_ms = int((datetime.now() - timedelta(days=days)).timestamp() * 1000)
+    window_end_ms = int(datetime.now().timestamp() * 1000)
     events_by_user = {}
     all_records = []
     identity_defs = engine.get_identity_priority()
 
     for user in users:
-        events = sequencer.generate_all_events(user, start_ms)
+        start_ms = random.randint(window_start_ms, window_end_ms)
+        events = sequencer.generate_all_events(
+            user,
+            start_ms,
+            sessions_per_day=args.sessions_per_day,
+            days=days,
+        )
         events_by_user[user.user_id] = events
         for event in events:
             all_records.append(event.to_track_record(SA_PROJECT, identity_defs))
@@ -471,11 +568,21 @@ def run_rules_mode(args):
         u.user_id: validator.validate_all(u, events_by_user[u.user_id]) for u in users
     }
     id_violations = ConstraintValidator.validate_id_mapping(users)
-    total_violations = sum(len(v) for v in violations_by_user.values()) + len(id_violations)
+    total_violations = sum(len(v) for v in violations_by_user.values()) + len(
+        id_violations
+    )
 
     # 7. 输出
     output_dir = args.output or str(Path(__file__).parent.parent / "mock_data")
     os.makedirs(output_dir, exist_ok=True)
+
+    # Add batch metadata to each record
+    batch_id = f"{prefix}_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    for record in all_records:
+        record["properties"]["$batch_id"] = batch_id
+        record["properties"]["$import_timestamp"] = int(
+            datetime.now().timestamp() * 1000
+        )
 
     jsonl_path, batch_path = write_outputs(all_records, output_dir, prefix)
 
@@ -493,13 +600,19 @@ def run_rules_mode(args):
 
     # 验证报告
     reporter = ReportGenerator(engine, xlsx_path, output_dir)
-    report_path = reporter.generate(users, events_by_user, violations_by_user, id_violations)
+    report_path = reporter.generate(
+        users, events_by_user, violations_by_user, id_violations
+    )
 
     # 8. 打印摘要
-    print(f"\n=== 规则驱动模式 ({mode}) ===")
+    mode_label = f"batch ({args.users} 用户)" if args.users else "fixed-accounts"
+    print(f"\n=== 规则驱动模式 ({mode_label}) ===")
     print(f"规则文件: {args.rules}")
     print(f"埋点方案: {xlsx_path}")
-    print(f"用户数: {len(users)}  事件数: {len(all_records)}  违规数: {total_violations}")
+    print(f"时间窗口: 最近 {days} 天  每日 session 数: {args.sessions_per_day}")
+    print(
+        f"用户数: {len(users)}  事件数: {len(all_records)}  违规数: {total_violations}"
+    )
     print(f"\n输出文件:")
     print(f"  JSONL:         {jsonl_path}")
     print(f"  Batch (b64):   {batch_path}")
@@ -513,20 +626,59 @@ def run_rules_mode(args):
 # Main
 # ---------------------------------------------------------------------------
 
+
 def main():
     parser = argparse.ArgumentParser(description="从埋点方案 Excel 生成模拟数据")
-    parser.add_argument("--count", type=int, default=None, help="每个事件生成的记录数（简单模式）")
-    parser.add_argument("--users", type=int, default=None, help="模拟用户总数")
-    parser.add_argument("--days", type=int, default=None, help="覆盖天数（时序模式）")
-    parser.add_argument("--daily-users", type=int, default=None, help="每天活跃用户数（时序模式，需配合 --days）")
-    parser.add_argument("--daily-count", type=int, default=None, help="每用户每天每事件记录数（时序模式，默认 100）")
-    parser.add_argument("--output", default=None, help="输出目录（默认：脚本所在目录的 ../mock_data）")
+    parser.add_argument(
+        "--count", type=int, default=None, help="每个事件生成的记录数（简单模式）"
+    )
+    parser.add_argument(
+        "--users",
+        type=int,
+        default=None,
+        help="模拟用户总数（规则模式：随机生成 N 个用户；简单模式：用户池大小）",
+    )
+    parser.add_argument(
+        "--days",
+        type=int,
+        default=None,
+        help="事件时间窗口天数（规则模式默认 1；简单模式启用时序模式）",
+    )
+    parser.add_argument(
+        "--sessions-per-day",
+        type=int,
+        default=1,
+        dest="sessions_per_day",
+        help="每用户每天的日活 session 数（规则模式，默认 1）",
+    )
+    parser.add_argument(
+        "--daily-users",
+        type=int,
+        default=None,
+        help="每天活跃用户数（简单时序模式，需配合 --days）",
+    )
+    parser.add_argument(
+        "--daily-count",
+        type=int,
+        default=None,
+        help="每用户每天每事件记录数（简单时序模式，默认 100）",
+    )
+    parser.add_argument(
+        "--output", default=None, help="输出目录（默认：脚本所在目录的 ../mock_data）"
+    )
     # 规则驱动模式参数
     parser.add_argument("--rules", default=None, help="规则文件路径（规则驱动模式）")
-    parser.add_argument("--tracking-plan", default=None, dest="tracking_plan", help="埋点方案 Excel（规则模式下可选）")
-    parser.add_argument("--mode", default="fixed-accounts", choices=["fixed-accounts", "batch"],
-                        help="规则驱动模式：fixed-accounts | batch（默认 fixed-accounts）")
-    parser.add_argument("--prefix", default=None, help="输出文件名前缀（默认从规则文件 meta.project 提取）")
+    parser.add_argument(
+        "--tracking-plan",
+        default=None,
+        dest="tracking_plan",
+        help="埋点方案 Excel（规则模式下可选）",
+    )
+    parser.add_argument(
+        "--prefix",
+        default=None,
+        help="输出文件名前缀（默认从规则文件 meta.project 提取）",
+    )
     args = parser.parse_args()
 
     if args.rules:
@@ -563,19 +715,25 @@ def main():
     # User profile records
     if user_attrs:
         for uid, idx in users:
-            all_records.append(build_profile_record(user_attrs, uid, idx, SA_PROJECT, identity_defs))
+            all_records.append(
+                build_profile_record(user_attrs, uid, idx, SA_PROJECT, identity_defs)
+            )
 
     use_time_series = args.days is not None or args.daily_users is not None
 
     if use_time_series:
         # 时序模式：每天选 daily_users 个活跃用户，每人每事件生成 daily_count 条
         days = args.days if args.days is not None else 30
-        daily_users_n = args.daily_users if args.daily_users is not None else min(20, users_n)
+        daily_users_n = (
+            args.daily_users if args.daily_users is not None else min(20, users_n)
+        )
         daily_count = args.daily_count if args.daily_count is not None else 100
 
         print(f"=== 模拟数据生成（时序模式）===")
         print(f"文件: {excel_path.name}")
-        print(f"项目: {SA_PROJECT}  用户池: {users_n}  每日活跃: {daily_users_n}  天数: {days}  每用户每事件: {daily_count}\n")
+        print(
+            f"项目: {SA_PROJECT}  用户池: {users_n}  每日活跃: {daily_users_n}  天数: {days}  每用户每事件: {daily_count}\n"
+        )
         print(f"发现 {len(events)} 个事件，{len(user_attrs)} 个用户属性")
 
         for day_offset in range(days):
@@ -584,7 +742,11 @@ def main():
                 for uid, idx in daily_active:
                     for _ in range(daily_count):
                         ts = _timestamp_for_day(day_offset)
-                        all_records.append(build_track_record(event, uid, ts, idx, SA_PROJECT, identity_defs))
+                        all_records.append(
+                            build_track_record(
+                                event, uid, ts, idx, SA_PROJECT, identity_defs
+                            )
+                        )
     else:
         # 简单模式：每事件生成 count 条，随机时间
         count = args.count if args.count is not None else 50
@@ -598,7 +760,9 @@ def main():
             for _ in range(count):
                 uid, idx = random.choice(users)
                 ts = _random_timestamp_ms()
-                all_records.append(build_track_record(event, uid, ts, idx, SA_PROJECT, identity_defs))
+                all_records.append(
+                    build_track_record(event, uid, ts, idx, SA_PROJECT, identity_defs)
+                )
 
     random.shuffle(all_records)
 
@@ -610,7 +774,7 @@ def main():
     print(f"  Batch (b64):      {batch_path}")
     print(f"  Identity map CSV: {identity_map_path}  ← 用于校验 ID-Mapping 合并结果")
     print(f"\n导入命令（需要 SA_TOKEN）：")
-    print(f"  curl -X POST \"$SA_HOST/sa?token=$SA_TOKEN\" \\")
+    print(f'  curl -X POST "$SA_HOST/sa?token=$SA_TOKEN" \\')
     print(f"       -d 'data='$(cat {batch_path})")
 
 

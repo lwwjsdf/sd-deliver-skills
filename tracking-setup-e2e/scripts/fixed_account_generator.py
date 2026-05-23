@@ -1,18 +1,49 @@
 from dataclasses import dataclass, field
 from typing import Dict, Any, Optional, List
 from datetime import datetime
+import random
+import string
 
 
 @dataclass
 class User:
-    user_id: str                     # 内部标识，固定账号用 account.id（如 UAT-X01）
-    segment: str                     # L0-L4
-    region: str                      # mainland / hongkong / overseas
-    identities: Dict[str, str]       # {crm_master_id: ..., email: ..., mobile: ..., unionid: ..., cookie_id: ...}
-                                     # 只包含该账号实际有的 ID，None 值不包含
-    profile: Dict[str, Any]          # 用户属性（初始为空，由 EventSequencer 填充）
+    user_id: str
+    segment: str
+    region: str
+    identities: Dict[str, str]
+    profile: Dict[str, Any]
     created_at: datetime
-    account_id: Optional[str] = None # 原始 fixed_account id（如 UAT-X01），split 时保留
+    account_id: Optional[str] = None
+
+
+def _rand_str(n=8):
+    return "".join(random.choices(string.ascii_lowercase + string.digits, k=n))
+
+
+def _make_identities(segment: str, region: str, idx: int) -> Dict[str, str]:
+    """根据 segment 和 region 生成合理的 identity 集合。"""
+    ids: Dict[str, str] = {}
+
+    # L0: 只有匿名 ID
+    if segment == "L0":
+        ids["unionid"] = f"wxu_{idx:06d}"
+        ids["cookie_id"] = f"ck_{idx:06d}"
+        return ids
+
+    # L1+: 有注册，根据地区决定 mobile 还是 email
+    if region == "mainland":
+        ids["mobile"] = f"+86 138{idx:08d}"[:16]
+    else:
+        ids["email"] = f"user_{idx:06d}@test.example.com"
+
+    ids["unionid"] = f"wxu_{idx:06d}"
+    ids["cookie_id"] = f"ck_{idx:06d}"
+
+    # L2+: 有 CRM ID
+    if segment in ("L2", "L3", "L4"):
+        ids["crm_master_id"] = f"CRM-{idx:08d}"
+
+    return ids
 
 
 class FixedAccountGenerator:
@@ -20,24 +51,14 @@ class FixedAccountGenerator:
         self.rule_engine = rule_engine
 
     def generate_accounts(self) -> List[User]:
-        """
-        生成所有固定测试账号。
-        - split_identity=False：每个 FixedAccount 生成1个 User
-        - split_identity=True：按 split_groups 生成多个 User，每组独立 user_id
-          UAT-X07 示例：split_groups=[{mobile:..., unionid:...}, {email:..., cookie_id:...}]
-          → 生成2个 User，user_id 分别为 UAT-X07-1, UAT-X07-2
-        """
         users = []
         for account in self.rule_engine.get_fixed_accounts():
             if account.split_identity and account.split_groups:
                 for i, group in enumerate(account.split_groups, start=1):
-                    suffix = f"-{i}"
-                    user = self._build_user(account, group, suffix=suffix)
+                    user = self._build_user(account, group, suffix=f"-{i}")
                     users.append(user)
             else:
-                # Build identities from account.identities, handling cookie_ids specially
                 identities = dict(account.identities)
-                # cookie_ids list → use first as cookie_id, drop the rest
                 if "cookie_ids" in identities:
                     cookie_ids = identities.pop("cookie_ids")
                     if isinstance(cookie_ids, list) and cookie_ids:
@@ -46,15 +67,8 @@ class FixedAccountGenerator:
                 users.append(user)
         return users
 
-    def _build_user(self, account, identities: Dict, suffix: str = "") -> "User":
-        """
-        从 FixedAccount 构建 User。
-        - user_id = account.id + suffix（suffix 为空时直接用 account.id）
-        - identities 只包含非 None 值
-        - created_at = datetime.now()
-        """
+    def _build_user(self, account, identities: Dict, suffix: str = "") -> User:
         user_id = account.id + suffix
-        # Filter out None values
         clean_identities = {k: v for k, v in identities.items() if v is not None}
         return User(
             user_id=user_id,
@@ -65,6 +79,37 @@ class FixedAccountGenerator:
             created_at=datetime.now(),
             account_id=account.id,
         )
+
+
+class BatchUserGenerator:
+    """按 segment/region 比例随机生成 N 个用户。"""
+
+    def __init__(self, rule_engine):
+        self.rule_engine = rule_engine
+
+    def generate(self, n: int) -> List[User]:
+        segments = self.rule_engine.get_user_segments()
+        region_dist = self.rule_engine.get_region_distribution()
+
+        seg_names = [s.name for s in segments]
+        seg_weights = [s.ratio for s in segments]
+        region_names = list(region_dist.keys())
+        region_weights = list(region_dist.values())
+
+        users = []
+        for i in range(1, n + 1):
+            segment = random.choices(seg_names, weights=seg_weights, k=1)[0]
+            region = random.choices(region_names, weights=region_weights, k=1)[0]
+            identities = _make_identities(segment, region, i)
+            users.append(User(
+                user_id=f"user_{i:06d}",
+                segment=segment,
+                region=region,
+                identities=identities,
+                profile={},
+                created_at=datetime.now(),
+            ))
+        return users
 
 
 if __name__ == "__main__":

@@ -17,11 +17,13 @@ from typing import Any, Dict, List, Optional
 from rule_engine import RuleEngine, EventSequence, EventDef, IdentityDef
 from tracking_plan import TrackingPlan
 from fixed_account_generator import User
+from mp_preset_builder import MpPresetBuilder
 
 
 # ---------------------------------------------------------------------------
 # Event dataclass
 # ---------------------------------------------------------------------------
+
 
 @dataclass
 class Event:
@@ -54,9 +56,8 @@ class Event:
             props["failureReason"] = self.failure_reason
 
         # distinct_id: prefer crm_master_id, then first available identity
-        distinct_id = (
-            self.user.identities.get("crm_master_id")
-            or next(iter(self.user.identities.values()), self.user.user_id)
+        distinct_id = self.user.identities.get("crm_master_id") or next(
+            iter(self.user.identities.values()), self.user.user_id
         )
 
         return {
@@ -82,7 +83,7 @@ _MEMBERSHIP_PREFIX = "membership_"
 
 # Regex to extract a field-reference from EventDef.repeat, e.g.
 # "{Product_Order_Payment.ticketsQuantity}"
-_REPEAT_REF_RE = re.compile(r'^\{([^}]+)\}$')
+_REPEAT_REF_RE = re.compile(r"^\{([^}]+)\}$")
 
 
 class EventSequencer:
@@ -90,22 +91,35 @@ class EventSequencer:
         self.rule_engine = rule_engine
         self.tracking_plan = tracking_plan
 
+        # Initialise MpPresetBuilder from optional preset_events config in YAML
+        preset_cfg = rule_engine.get_preset_events()
+        self._mp_builder = MpPresetBuilder(
+            page_routes=preset_cfg.get("page_routes"),
+            utm_campaigns=preset_cfg.get("utm_campaigns"),
+            scene_weights=preset_cfg.get("scene_distribution"),
+        )
+
     # ------------------------------------------------------------------
     # Public API
     # ------------------------------------------------------------------
 
-    def generate_all_events(self, user: User, start_time_ms: int) -> List[Event]:
+    def generate_all_events(
+        self,
+        user: User,
+        start_time_ms: int,
+        sessions_per_day: int = 1,
+        days: int = 1,
+    ) -> List[Event]:
         """
         Generate the complete ordered event sequence for a user.
 
         Steps:
-          1. Iterate all EventSequences from the rule engine.
-          2. Evaluate seq.condition against the running context.
+          1. Run non-repeatable sequences once (lifecycle, purchase, membership).
+          2. Run repeatable sequences (daily_activity, daily_search) once per session.
+             Total sessions = sessions_per_day × days, spread across the time window.
           3. Handle membership_* sequences as a mutually-exclusive group.
-          4. For non-membership sequences apply conversion_rate probability.
-          5. Generate events for each selected sequence, accumulating
-             completed_events and field_values in context.
-          6. Append a terminal-state event when seq.terminal_states is set.
+          4. Apply conversion_rate probability for non-mandatory sequences.
+          5. Append terminal-state events where configured.
 
         Returns events sorted by timestamp_ms.
         """
@@ -120,35 +134,32 @@ class EventSequencer:
 
         sequences = self.rule_engine.get_event_sequences()
 
-        # Separate membership sequences from the rest
+        # Partition sequences
         membership_seqs: List[EventSequence] = []
+        repeatable_seqs: List[EventSequence] = []
         other_seqs: List[EventSequence] = []
         for seq in sequences:
             if seq.name.startswith(_MEMBERSHIP_PREFIX):
                 membership_seqs.append(seq)
+            elif seq.repeatable:
+                repeatable_seqs.append(seq)
             else:
                 other_seqs.append(seq)
 
-        # Process non-membership sequences in order
+        # --- Non-repeatable sequences (run once) ---
         for seq in other_seqs:
             if not self.rule_engine.evaluate_condition(seq.condition, context):
                 continue
-
-            # Optional conversion rate gate
             if seq.conversion_rate is not None:
                 if random.random() > seq.conversion_rate:
                     continue
-
             events = self._generate_sequence_events(seq, user, current_time_ms, context)
             if events:
                 all_events.extend(events)
                 current_time_ms = events[-1].timestamp_ms + 1
-                # Update completed_events in context
                 for e in events:
                     if e.event_name not in context["completed_events"]:
                         context["completed_events"].append(e.event_name)
-
-            # Terminal state
             if seq.terminal_states:
                 terminal_event = self._pick_terminal_state(
                     seq.terminal_states, user, current_time_ms
@@ -159,12 +170,12 @@ class EventSequencer:
                     if terminal_event.event_name not in context["completed_events"]:
                         context["completed_events"].append(terminal_event.event_name)
 
-        # Process membership sequences — pick at most one by weighted random
+        # --- Membership sequences (mutually exclusive, run once) ---
         applicable_membership: List[EventSequence] = [
-            seq for seq in membership_seqs
+            seq
+            for seq in membership_seqs
             if self.rule_engine.evaluate_condition(seq.condition, context)
         ]
-
         if applicable_membership:
             chosen = self._weighted_choice(applicable_membership)
             if chosen is not None:
@@ -177,13 +188,37 @@ class EventSequencer:
                     for e in events:
                         if e.event_name not in context["completed_events"]:
                             context["completed_events"].append(e.event_name)
-
                 if chosen.terminal_states:
                     terminal_event = self._pick_terminal_state(
                         chosen.terminal_states, user, current_time_ms
                     )
                     if terminal_event:
                         all_events.append(terminal_event)
+
+        # --- Repeatable sequences (run sessions_per_day × days times) ---
+        if repeatable_seqs:
+            total_sessions = sessions_per_day * days
+            window_ms = days * 86_400_000
+            for session_idx in range(total_sessions):
+                # Spread sessions evenly across the window with jitter
+                slot_ms = window_ms // total_sessions
+                session_base_ms = (
+                    start_time_ms + session_idx * slot_ms + random.randint(0, slot_ms)
+                )
+                session_time_ms = session_base_ms
+
+                for seq in repeatable_seqs:
+                    if not self.rule_engine.evaluate_condition(seq.condition, context):
+                        continue
+                    if seq.conversion_rate is not None:
+                        if random.random() > seq.conversion_rate:
+                            continue
+                    events = self._generate_sequence_events(
+                        seq, user, session_time_ms, context
+                    )
+                    if events:
+                        all_events.extend(events)
+                        session_time_ms = events[-1].timestamp_ms + 1
 
         all_events.sort(key=lambda e: e.timestamp_ms)
         return all_events
@@ -270,15 +305,40 @@ class EventSequencer:
 
         Priority:
           1. Fixed values from edef.fields
-          2. Schema-driven generated values for remaining properties
+          2. Preset event properties for $MP* events (scene, UTM, url, etc.)
+          3. Schema-driven generated values for remaining properties
         """
         props: Dict[str, Any] = {}
 
-        # 1. Fixed fields
+        # 1. Fixed fields from YAML
         if edef.fields:
             props.update(edef.fields)
 
-        # 2. Fill remaining schema properties
+        # 2. Preset properties for $MP* events
+        if edef.event.startswith("$MP"):
+            current_url = context.get("current_url", "")
+            referrer = context.get("referrer", "")
+            preset = self._mp_builder.build_props_for_event(
+                edef.event, current_url=current_url, referrer=referrer
+            )
+            for k, v in preset.items():
+                if k not in props:
+                    props[k] = v
+            # Inherit scene from current session for events that don't generate their own
+            if "$scene" not in props or not props["$scene"]:
+                session_scene = context.get("session_scene", "")
+                if session_scene:
+                    props["$scene"] = session_scene
+            # Update page context for subsequent events
+            new_url = props.get("$url", "")
+            if new_url and edef.event not in ("$MPHide", "$MPPageLeave"):
+                context["referrer"] = context.get("current_url", "")
+                context["current_url"] = new_url
+            # Track session scene for inheritance
+            if "$scene" in props and props["$scene"]:
+                context["session_scene"] = props["$scene"]
+
+        # 3. Fill remaining schema properties
         schema = self.tracking_plan.get_event_schema(edef.event)
         if schema:
             for prop_def in schema.properties:
@@ -326,8 +386,10 @@ class EventSequencer:
         if not sequences:
             return None
 
-        weights = [seq.conversion_rate if seq.conversion_rate is not None else 1.0
-                   for seq in sequences]
+        weights = [
+            seq.conversion_rate if seq.conversion_rate is not None else 1.0
+            for seq in sequences
+        ]
         total = sum(weights)
 
         # Roll against total weight; if total < 1 there's a chance of no selection

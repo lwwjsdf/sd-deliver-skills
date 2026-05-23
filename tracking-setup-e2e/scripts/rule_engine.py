@@ -41,6 +41,7 @@ class EventSequence:
     condition: Optional[str] = None
     conversion_rate: Optional[float] = None
     terminal_states: Optional[List[str]] = None
+    repeatable: bool = False
 
 
 @dataclass
@@ -128,6 +129,7 @@ class RuleEngine:
                 condition=seq.get("condition"),
                 conversion_rate=seq.get("conversion_rate"),
                 terminal_states=seq.get("terminal_states"),
+                repeatable=seq.get("repeatable", False),
             ))
         return sequences
 
@@ -173,6 +175,9 @@ class RuleEngine:
 
     def get_failure_rate(self) -> float:
         return float(self._data.get("failure_rate", 0.0))
+
+    def get_preset_events(self) -> Dict[str, Any]:
+        return dict(self._data.get("preset_events", {}))
 
     def get_meta(self) -> Dict[str, Any]:
         return dict(self._data.get("meta", {}))

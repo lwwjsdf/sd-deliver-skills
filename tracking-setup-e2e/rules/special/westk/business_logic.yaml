@@ -88,6 +88,7 @@ identity_priority:
 event_sequences:
 - name: user_lifecycle
   condition: null
+  repeatable: false
   events:
   - event: $MPShow
     required: true
@@ -101,8 +102,55 @@ event_sequences:
     time_after_prev: {min: 5, max: 30}
     fields: {isSuccess: true, loginMethod: WeChat}
 
+- name: daily_activity
+  condition: null
+  repeatable: true
+  events:
+  - event: $MPLaunch
+    required: true
+  - event: $MPShow
+    required: true
+    time_after_prev: {min: 1, max: 3}
+  - event: Event_LandingPage_View
+    required: true
+    time_after_prev: {min: 2, max: 10}
+  - event: Navigation_Click
+    required: false
+    time_after_prev: {min: 3, max: 15}
+  - event: Product_ListPage_View
+    required: true
+    time_after_prev: {min: 5, max: 30}
+  - event: Product_DetailPage_View
+    required: true
+    time_after_prev: {min: 5, max: 60}
+  - event: $MPPageLeave
+    required: true
+    time_after_prev: {min: 30, max: 300}
+  - event: $MPHide
+    required: true
+    time_after_prev: {min: 1, max: 5}
+
+- name: daily_search
+  condition: null
+  repeatable: true
+  conversion_rate: 0.4
+  events:
+  - event: Search_Start
+    required: true
+    time_after_prev: {min: 10, max: 60}
+  - event: Search_Result
+    required: true
+    time_after_prev: {min: 2, max: 10}
+  - event: Search_Result_Click
+    required: false
+    time_after_prev: {min: 2, max: 15}
+  - event: Product_DetailPage_View
+    required: false
+    time_after_prev: {min: 3, max: 30}
+
 - name: ticket_purchase
   condition: segment in [L2, L3, L4]
+  repeatable: false
   terminal_states:
   - Ticket_Transfer
   - Ticket_Refund
@@ -128,6 +176,7 @@ event_sequences:
 
 - name: membership_normal_activation
   condition: segment in [L3, L4]
+  repeatable: false
   conversion_rate: 0.8
   events:
   - event: Membership_Purchase
@@ -143,10 +192,10 @@ event_sequences:
   - event: Membership_Activation
     required: true
     time_after_prev: {min: 86400, max: 432000}
-    fields: {isSuccess: true}
 
 - name: membership_late_activation
   condition: segment in [L3, L4]
+  repeatable: false
   conversion_rate: 0.1
   events:
   - event: Membership_Purchase
@@ -162,10 +211,10 @@ event_sequences:
   - event: Membership_Activation
     required: true
     time_after_prev: {min: 518400, max: 604800}
-    fields: {isSuccess: true}
 
 - name: membership_expired
   condition: segment in [L3, L4]
+  repeatable: false
   conversion_rate: 0.1
   events:
   - event: Membership_Purchase
@@ -182,7 +231,6 @@ event_sequences:
     required: true
     time_after_prev: {min: 604800, max: 691200}
     fields:
-      refundType: 系统作废
       refundAmount: 500.0
       refundGapAmount: 0.0
 constraints:
