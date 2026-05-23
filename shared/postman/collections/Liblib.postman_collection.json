@@ -1,0 +1,123 @@
+{
+  "info": {
+    "_postman_id": "78a31cb0-50d1-465e-9bbb-6855401f0824",
+    "name": "Liblib",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "文生图",
+      "id": "d4efc343-775e-452c-8547-3cfcab134613",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\"templateUuid\": \"e10adc3949ba59abbe56e057f20f883e\", \"generateParams\": {\"checkPointId\": \"e9c122e21ff041b2a7dac9da4b76b810\", \"prompt\": \"undefined\\ncinematic lighting, shallow depth of field, ultra realistic\\nvertical composition, full body\", \"negativePrompt\": \"low quality, blurry, distorted, extra fingers, bad anatomy\", \"sampler\": 15, \"steps\": 28, \"cfgScale\": 7, \"width\": 512, \"height\": 768, \"imgCount\": 1, \"randnSource\": 0, \"seed\": -1, \"restoreFaces\": 0, \"additionalNetwork\": [{\"modelId\": \"6d0a798b9cb34fc9951a9c155b40935c\", \"weight\": 0.6}], \"hiResFixInfo\": {\"hiresSteps\": 20, \"hiresDenoisingStrength\": 0.75, \"upscaler\": 10, \"resizedWidth\": 1024, \"resizedHeight\": 1536}}}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://openapi.liblibai.cloud/api/generate/webui/text2img?AccessKey=vS6WYANfyVOgiCuHxtdywg&Signature=dxjBNHc0LDXf6b7FHhoCe7WKnlE&Timestamp=1766504934077&SignatureNonce=tesplszieoo",
+          "protocol": "https",
+          "host": [
+            "openapi",
+            "liblibai",
+            "cloud"
+          ],
+          "path": [
+            "api",
+            "generate",
+            "webui",
+            "text2img"
+          ],
+          "query": [
+            {
+              "key": "AccessKey",
+              "value": "vS6WYANfyVOgiCuHxtdywg"
+            },
+            {
+              "key": "Signature",
+              "value": "dxjBNHc0LDXf6b7FHhoCe7WKnlE"
+            },
+            {
+              "key": "Timestamp",
+              "value": "1766504934077"
+            },
+            {
+              "key": "SignatureNonce",
+              "value": "tesplszieoo"
+            }
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "获取结果",
+      "id": "1b9891b5-a7ab-4cec-a912-070a359d74c4",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "\n{\n\"generateUuid\": \"e59227af1fc74f098f2b47c0adbd426f\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://openapi.liblibai.cloud/api/generate/webui/status?AccessKey=vS6WYANfyVOgiCuHxtdywg&Signature=2KP1c3l5gPci04D6YAprHZ12g9w&Timestamp=1766505014966&SignatureNonce=k3i7k9gz3o",
+          "protocol": "https",
+          "host": [
+            "openapi",
+            "liblibai",
+            "cloud"
+          ],
+          "path": [
+            "api",
+            "generate",
+            "webui",
+            "status"
+          ],
+          "query": [
+            {
+              "key": "AccessKey",
+              "value": "vS6WYANfyVOgiCuHxtdywg"
+            },
+            {
+              "key": "Signature",
+              "value": "2KP1c3l5gPci04D6YAprHZ12g9w"
+            },
+            {
+              "key": "Timestamp",
+              "value": "1766505014966"
+            },
+            {
+              "key": "SignatureNonce",
+              "value": "k3i7k9gz3o"
+            }
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

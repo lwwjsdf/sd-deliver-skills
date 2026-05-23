@@ -1,0 +1,49 @@
+{
+  "info": {
+    "_postman_id": "72890210-57ee-40ca-95d4-d691cc6d3f99",
+    "name": "N8N-Webhooks",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "WebhookTest",
+      "id": "2d7d0331-46ba-4d2b-a3ce-ac96bb155fbb",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"email\": \"lwwjsdf@163.com\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://photoemissive-zingy-ozell.ngrok-free.dev/webhook/862c1964-b661-4d34-a537-4b5196087fea",
+          "protocol": "https",
+          "host": [
+            "photoemissive-zingy-ozell",
+            "ngrok-free",
+            "dev"
+          ],
+          "path": [
+            "webhook",
+            "862c1964-b661-4d34-a537-4b5196087fea"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "AutoAudio",
+      "id": "320b3cf1-d922-4c30-ad83-350d97f282a2",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    }
+  ]
+}

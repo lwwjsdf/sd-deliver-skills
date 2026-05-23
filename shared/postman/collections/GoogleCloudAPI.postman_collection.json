@@ -1,0 +1,56 @@
+{
+  "info": {
+    "_postman_id": "4eb906aa-e60e-4bf0-a31c-923d2020907d",
+    "name": "GoogleCloudAPI",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "Gemeni 视频分析",
+      "id": "6ffc8948-5135-45a4-994d-96222b94bffb",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Accept",
+            "value": "application/json",
+            "type": "text"
+          },
+          {
+            "key": "Authorization",
+            "value": "sk-Os06bMHKgmbRiQMUVOjHCsrgB66lXNyUp5QzdqLF9ar26Zg4",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"model\": \"gemini-3-pro-preview\",\n    \"stream\": true,\n    \"messages\": [\n        {\n            \"role\": \"user\",\n            \"content\": [\n                {\n                    \"type\": \"text\",\n                    \"text\": \"这个视频讲了什么？\"\n                },\n                {\n                    \"type\": \"image_url\",\n                    \"image_url\": {\n                        \"url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/videoplayback.mp4\"\n                    }\n                }\n            ]\n        }\n    ],\n    \"max_tokens\": 4000\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://kg-api.cloud/v1/chat/completions",
+          "protocol": "https",
+          "host": [
+            "kg-api",
+            "cloud"
+          ],
+          "path": [
+            "v1",
+            "chat",
+            "completions"
+          ]
+        }
+      },
+      "response": []
+    }
+  ]
+}

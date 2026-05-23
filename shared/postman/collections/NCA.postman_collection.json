@@ -1,0 +1,428 @@
+{
+  "info": {
+    "_postman_id": "e6505489-50ff-49a1-ae1a-8288e7e73a16",
+    "name": "NCA",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "ffmpeg",
+      "item": [
+        {
+          "name": "✅ 视频合并 ffmpeg_compose",
+          "id": "5c138f92-0fac-4d91-befd-dca84eec73e4",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "lwwjsdf-123",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inputs\": [\n    { \"file_url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/ffmpeg.mp4\" },\n    { \"file_url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/ffmpeg_audio.mp4\" }\n  ],\n  \"outputs\": [\n    {\n      \"options\": [\n        { \"option\": \"-map\", \"argument\": \"0:v:0\" },\n        { \"option\": \"-map\", \"argument\": \"1:a:0\" },\n        { \"option\": \"-c:v\", \"argument\": \"copy\" },\n        { \"option\": \"-c:a\", \"argument\": \"aac\" },\n        { \"option\": \"-shortest\" }\n      ]\n    }\n  ],\n  \"id\": \"video-merge-01\"\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://no-code-architects-toolkit-816441864162.us-west1.run.app/v1/ffmpeg/compose",
+              "protocol": "https",
+              "host": [
+                "no-code-architects-toolkit-816441864162",
+                "us-west1",
+                "run",
+                "app"
+              ],
+              "path": [
+                "v1",
+                "ffmpeg",
+                "compose"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "✅ 视频片段剪切 ffmpeg_compose",
+          "id": "db03c33e-c60c-45d7-9055-1df202d91027",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "lwwjsdf-123",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inputs\": [ {\"file_url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/video2.mp4\"} ],\n  \"filters\": [\n    {\"filter\": \"[0:v]trim=start=10:end=20,setpts=PTS-STARTPTS[vout];[0:a]atrim=start=10:end=15,asetpts=PTS-STARTPTS[aout]\"}\n  ],\n  \"outputs\": [\n    {\"options\": [\n        {\"option\": \"-map\", \"argument\": \"[vout]\"},\n        {\"option\": \"-map\", \"argument\": \"[aout]\"},\n        {\"option\": \"-c:v\", \"argument\": \"libx264\"},\n        {\"option\": \"-c:a\", \"argument\": \"aac\"}\n    ]}\n  ],\n  \"id\": \"clip-10-15s\",\n  \"metadata\": { \"thumbnail\": true, \"duration\": true }\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://no-code-architects-toolkit-816441864162.us-west1.run.app/v1/ffmpeg/compose",
+              "protocol": "https",
+              "host": [
+                "no-code-architects-toolkit-816441864162",
+                "us-west1",
+                "run",
+                "app"
+              ],
+              "path": [
+                "v1",
+                "ffmpeg",
+                "compose"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "✅ 视频+字幕 /v1/ffmpeg/compose(no audio)",
+          "id": "bbabcfc0-937e-46d5-8f9a-ab7fccdd8a5a",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "lwwjsdf-123",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inputs\": [\n    {\n      \"file_url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/c0883753-d9cd-43b8-a927-6c2c1227cbf3_output_0.mp4\"\n    },\n    {\n      \"file_url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/ffmpeg_audio_srt.srt\"\n    }\n  ],\n  \"outputs\": [\n    {\n      \"options\": [\n        { \"option\": \"-map\", \"argument\": \"[vout]\" },\n        { \"option\": \"-c:v\", \"argument\": \"libx264\" }\n      ]\n    }\n  ],\n  \"filters\": [\n    {\n      \"filter\": \"[0:v]subtitles='https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/ffmpeg_audio_srt.srt'[vout]\"\n    }\n  ]\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://no-code-architects-toolkit-816441864162.us-west1.run.app/v1/ffmpeg/compose",
+              "protocol": "https",
+              "host": [
+                "no-code-architects-toolkit-816441864162",
+                "us-west1",
+                "run",
+                "app"
+              ],
+              "path": [
+                "v1",
+                "ffmpeg",
+                "compose"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "✅ 视频+音频+字幕 /v1/ffmpeg/compose",
+          "id": "54fe14a4-dcda-4521-9572-e3de0ff6bd7f",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "lwwjsdf-123",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"inputs\": [\n    {\n      \"file_url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/short_video.mp4\"\n    },\n    {\n      \"file_url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/shrot_audio.mp4\"\n    },\n    {\n      \"file_url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/shrot_audio.srt\"\n    }\n  ],\n  \"outputs\": [\n    {\n      \"options\": [\n        { \"option\": \"-map\", \"argument\": \"[vout]\" },\n        { \"option\": \"-map\", \"argument\": \"1:a:0\" },        \n        { \"option\": \"-c:v\", \"argument\": \"libx264\" },\n        { \"option\": \"-c:a\", \"argument\": \"copy\" }\n      ]\n    }\n  ],\n  \"filters\": [\n    {\n      \"filter\": \"[0:v]subtitles='https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/shrot_audio.srt'[vout]\"\n    }\n  ]\n}\n",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://no-code-architects-toolkit-816441864162.us-west1.run.app/v1/ffmpeg/compose",
+              "protocol": "https",
+              "host": [
+                "no-code-architects-toolkit-816441864162",
+                "us-west1",
+                "run",
+                "app"
+              ],
+              "path": [
+                "v1",
+                "ffmpeg",
+                "compose"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "6a6fe4b3-dc4a-4b0c-8110-33d4ce5d03ce"
+    },
+    {
+      "name": "video",
+      "item": [
+        {
+          "name": "✅ 裁剪视频时段 /v1/video/trim",
+          "id": "a9530daa-98a5-4ffe-9d8b-27848aa01b24",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "lwwjsdf-123",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"video_url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/ffmpeg.mp4\",\n    \"start\": \"00:01:00\",\n    \"end\": \"00:03:00\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://no-code-architects-toolkit-816441864162.us-west1.run.app/v1/video/trim",
+              "protocol": "https",
+              "host": [
+                "no-code-architects-toolkit-816441864162",
+                "us-west1",
+                "run",
+                "app"
+              ],
+              "path": [
+                "v1",
+                "video",
+                "trim"
+              ]
+            }
+          },
+          "response": []
+        },
+        {
+          "name": "给视频加字幕 /v1/video/caption",
+          "id": "c67b9759-63d1-47f5-9ed6-5913711caf31",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "apikey",
+                "value": "lwwjsdf-123",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"video_url\": \"...\",\n  \"subtitle_url\": \"https://<bucket>/episode-10-subs.srt\",\n  \"settings\": { ... 样式参数 ... },\n  \"id\": \"episode-10-captioned\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://no-code-architects-toolkit-816441864162.us-west1.run.app/v1/video/caption",
+              "protocol": "https",
+              "host": [
+                "no-code-architects-toolkit-816441864162",
+                "us-west1",
+                "run",
+                "app"
+              ],
+              "path": [
+                "v1",
+                "video",
+                "caption"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "918bad20-ea4a-4831-83cd-2b6913933251"
+    },
+    {
+      "name": "audio",
+      "item": [
+        {
+          "name": "音频拼接 /v1/audio/concatenate",
+          "id": "f1b48f81-fbd6-4981-a6f1-88aaae09e977",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "x-api-key",
+                "value": "lwwjsdf-123",
+                "type": "text"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n    \"audio_urls\": [\n        {\"audio_url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/ffmpeg_audio.mp4\"},\n        {\"audio_url\": \"https://storage.googleapis.com/lwwjsdf-n8n-storage/auto_video/ffmpeg_audio.mp4\"}\n    ],\n    \"id\": \"podcast-episode-001\"\n}",
+              "options": {
+                "raw": {
+                  "language": "json"
+                }
+              }
+            },
+            "url": {
+              "raw": "https://no-code-architects-toolkit-816441864162.us-west1.run.app/v1/audio/concatenate",
+              "protocol": "https",
+              "host": [
+                "no-code-architects-toolkit-816441864162",
+                "us-west1",
+                "run",
+                "app"
+              ],
+              "path": [
+                "v1",
+                "audio",
+                "concatenate"
+              ]
+            }
+          },
+          "response": []
+        }
+      ],
+      "id": "65c59a99-0dbd-4e55-8ed8-16aad0ec85f5"
+    },
+    {
+      "name": "✅ 远程执行 Python /v1/code/execute/python",
+      "id": "e017af93-4b6f-41e3-b709-d8d84b757dae",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "lwwjsdf-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"code\": \"fib = [0,1]\\nfor i in range(2,10): fib.append(fib[i-1]+fib[i-2])\\nprint(fib)\",\n    \"id\": \"compute-fib-10\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://no-code-architects-toolkit-816441864162.us-west1.run.app/v1/code/execute/python",
+          "protocol": "https",
+          "host": [
+            "no-code-architects-toolkit-816441864162",
+            "us-west1",
+            "run",
+            "app"
+          ],
+          "path": [
+            "v1",
+            "code",
+            "execute",
+            "python"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "✅ 任务状态查询 /v1/toolkit/job/status",
+      "id": "70a77c6e-10f9-472a-b914-35dab4ed98ce",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "lwwjsdf-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n    \"job_id\": \"1995329f-2c7a-46c6-89f2-21ef70aa5648\"\n}   ",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://no-code-architects-toolkit-816441864162.us-west1.run.app/v1/toolkit/job/status",
+          "protocol": "https",
+          "host": [
+            "no-code-architects-toolkit-816441864162",
+            "us-west1",
+            "run",
+            "app"
+          ],
+          "path": [
+            "v1",
+            "toolkit",
+            "job",
+            "status"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "视频下载  /v1/media/download",
+      "id": "3a8d644b-7e39-46db-8f61-14adfc72f583",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "x-api-key",
+            "value": "lwwjsdf-123",
+            "type": "text"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"source_url\": \"https://www.youtube.com/watch?v=N9Dwbm8wzZQ\",\n  \"id\": \"episode-10-video\"\n}",
+          "options": {
+            "raw": {
+              "language": "json"
+            }
+          }
+        },
+        "url": {
+          "raw": "https://no-code-architects-toolkit-816441864162.us-west1.run.app/v1/media/download",
+          "protocol": "https",
+          "host": [
+            "no-code-architects-toolkit-816441864162",
+            "us-west1",
+            "run",
+            "app"
+          ],
+          "path": [
+            "v1",
+            "media",
+            "download"
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "New Request",
+      "id": "83eb96de-1992-4878-84f8-4dd783c0c836",
+      "request": {
+        "method": "GET",
+        "header": []
+      },
+      "response": []
+    }
+  ]
+}
