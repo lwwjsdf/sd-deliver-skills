@@ -91,13 +91,15 @@ class EventSequencer:
         self.rule_engine = rule_engine
         self.tracking_plan = tracking_plan
 
-        # Initialise MpPresetBuilder from optional preset_events config in YAML
-        preset_cfg = rule_engine.get_preset_events()
-        self._mp_builder = MpPresetBuilder(
-            page_routes=preset_cfg.get("page_routes"),
-            utm_campaigns=preset_cfg.get("utm_campaigns"),
-            scene_weights=preset_cfg.get("scene_distribution"),
-        )
+        # Only initialise MpPresetBuilder if the tracking plan contains MP events
+        self._mp_builder = None
+        if tracking_plan.has_mp_events():
+            preset_cfg = rule_engine.get_preset_events()
+            self._mp_builder = MpPresetBuilder(
+                page_routes=preset_cfg.get("page_routes"),
+                utm_campaigns=preset_cfg.get("utm_campaigns"),
+                scene_weights=preset_cfg.get("scene_distribution"),
+            )
 
     # ------------------------------------------------------------------
     # Public API
@@ -314,8 +316,8 @@ class EventSequencer:
         if edef.fields:
             props.update(edef.fields)
 
-        # 2. Preset properties for $MP* events
-        if edef.event.startswith("$MP"):
+        # 2. Preset properties for $MP* events (only if MP preset builder is active)
+        if edef.event.startswith("$") and self._mp_builder is not None:
             current_url = context.get("current_url", "")
             referrer = context.get("referrer", "")
             preset = self._mp_builder.build_props_for_event(
