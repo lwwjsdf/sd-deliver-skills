@@ -19,13 +19,14 @@ import openpyxl
 # Data classes
 # ---------------------------------------------------------------------------
 
+
 @dataclass
 class PropertyDef:
     name: str
     required: bool = False
-    value_type: str = "string"       # string / boolean / number / list / bool / datetime
-    trigger: str = "MP"              # MP / Server / Web / Mini program
-    enum_values: Optional[List[str]] = None   # non-empty when enum constraint exists
+    value_type: str = "string"  # string / boolean / number / list / bool / datetime
+    trigger: str = "MP"  # MP / Server / Web / Mini program
+    enum_values: Optional[List[str]] = None  # non-empty when enum constraint exists
     description: str = ""
 
 
@@ -39,6 +40,7 @@ class EventSchema:
 # ---------------------------------------------------------------------------
 # Helpers
 # ---------------------------------------------------------------------------
+
 
 def _normalise_type(raw: Optional[str]) -> str:
     """Map Excel type strings to canonical value_type tokens."""
@@ -70,29 +72,29 @@ def _extract_enum_values(text: Optional[str]) -> Optional[List[str]]:
     text = text.strip()
 
     # Fixed value pattern: "Fixed value: X" or "Fixed value: X or Y"
-    fixed_match = re.match(r'[Ff]ixed\s+value[：:]\s*(.+)', text)
+    fixed_match = re.match(r"[Ff]ixed\s+value[：:]\s*(.+)", text)
     if fixed_match:
         raw = fixed_match.group(1)
         # Split on " or " and strip quotes
-        parts = re.split(r'\s+or\s+', raw)
+        parts = re.split(r"\s+or\s+", raw)
         values = [p.strip().strip('"').strip('"').strip('"').strip() for p in parts]
         values = [v for v in values if v]
         if values:
             return values
 
     # Chinese-semicolon separated list
-    if '；' in text:
-        parts = text.split('；')
+    if "；" in text:
+        parts = text.split("；")
         values = [p.strip().strip('"').strip('"').strip('"').strip() for p in parts]
         values = [v for v in values if v and len(v) < 60]
         if 2 <= len(values) <= 20:
             return values
 
     # ASCII semicolon separated (but not prose sentences)
-    if ';' in text and text.count(';') >= 1:
-        parts = text.split(';')
+    if ";" in text and text.count(";") >= 1:
+        parts = text.split(";")
         values = [p.strip().strip('"').strip('"').strip('"').strip() for p in parts]
-        values = [v for v in values if v and len(v) < 60 and ' ' not in v.strip()]
+        values = [v for v in values if v and len(v) < 60 and " " not in v.strip()]
         if 2 <= len(values) <= 20:
             return values
 
@@ -105,12 +107,13 @@ def _extract_enum_values(text: Optional[str]) -> Optional[List[str]]:
 
 
 def _rand_string(length: int = 8) -> str:
-    return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
+    return "".join(random.choices(string.ascii_letters + string.digits, k=length))
 
 
 # ---------------------------------------------------------------------------
 # TrackingPlan
 # ---------------------------------------------------------------------------
+
 
 class TrackingPlan:
     """
@@ -140,14 +143,31 @@ class TrackingPlan:
     # Sheet parsers
     # ------------------------------------------------------------------
 
-    def _parse_public_property(self, wb: openpyxl.Workbook) -> None:
-        # Sheet name has a double space
-        sheet_name = None
+    # Sheet name mappings: canonical -> list of possible names
+    SHEET_MAPPINGS = {
+        "custom_event": ["custom event", "events", "event"],
+        "preset_event": ["preset event", "edm behavior preset events", "preset events"],
+        "public_property": [
+            "public property",
+            "public  property",
+            "details（event）",
+            "details",
+        ],
+        "user_attribute": ["user attribute", "users", "user traits", "user"],
+    }
+
+    def _find_sheet(self, wb: openpyxl.Workbook, sheet_type: str) -> Optional[str]:
+        """Find sheet by canonical type, supporting multiple naming conventions."""
+        candidates = self.SHEET_MAPPINGS.get(sheet_type, [sheet_type])
         for name in wb.sheetnames:
-            # Normalise internal whitespace to handle "Public  Property" (double space)
-            if re.sub(r'\s+', ' ', name.strip().lower()) == "public property":
-                sheet_name = name
-                break
+            normalized = re.sub(r"[\s（）()]+", " ", name.strip().lower()).strip()
+            for candidate in candidates:
+                if normalized == candidate or normalized.startswith(candidate):
+                    return name
+        return None
+
+    def _parse_public_property(self, wb: openpyxl.Workbook) -> None:
+        sheet_name = self._find_sheet(wb, "public_property")
         if sheet_name is None:
             return
 
@@ -157,13 +177,17 @@ class TrackingPlan:
         # Find the header row (contains "Attribute English variable name")
         header_idx = None
         for i, row in enumerate(rows):
-            if row and row[0] and "attribute english variable name" in str(row[0]).lower():
+            if (
+                row
+                and row[0]
+                and "attribute english variable name" in str(row[0]).lower()
+            ):
                 header_idx = i
                 break
         if header_idx is None:
             return
 
-        for row in rows[header_idx + 1:]:
+        for row in rows[header_idx + 1 :]:
             attr_name = row[0] if row[0] else None
             if not attr_name:
                 continue
@@ -186,10 +210,11 @@ class TrackingPlan:
             self._public_props.append(prop)
 
     def _parse_custom_events(self, wb: openpyxl.Workbook) -> None:
-        if "Custom Event" not in wb.sheetnames:
+        sheet_name = self._find_sheet(wb, "custom_event")
+        if sheet_name is None:
             return
 
-        ws = wb["Custom Event"]
+        ws = wb[sheet_name]
         rows = list(ws.iter_rows(values_only=True))
 
         # Row 0 is the header; data starts at row 1
@@ -219,7 +244,7 @@ class TrackingPlan:
                 continue
             attr_name = str(attr_name).strip()
             # Some cells have newlines (multiple aliases); take the first token
-            attr_name = attr_name.split('\n')[0].strip()
+            attr_name = attr_name.split("\n")[0].strip()
             if not attr_name:
                 continue
 
@@ -237,10 +262,11 @@ class TrackingPlan:
             self._custom_events[current_event].properties.append(prop)
 
     def _parse_preset_events(self, wb: openpyxl.Workbook) -> None:
-        if "Preset Event" not in wb.sheetnames:
+        sheet_name = self._find_sheet(wb, "preset_event")
+        if sheet_name is None:
             return
 
-        ws = wb["Preset Event"]
+        ws = wb[sheet_name]
         rows = list(ws.iter_rows(values_only=True))
 
         # Row 0: section title, Row 1: header, data from row 2
@@ -284,10 +310,11 @@ class TrackingPlan:
             self._preset_events[current_event].properties.append(prop)
 
     def _parse_user_attributes(self, wb: openpyxl.Workbook) -> None:
-        if "User Attribute" not in wb.sheetnames:
+        sheet_name = self._find_sheet(wb, "user_attribute")
+        if sheet_name is None:
             return
 
-        ws = wb["User Attribute"]
+        ws = wb[sheet_name]
         rows = list(ws.iter_rows(values_only=True))
 
         # Row 0 is the header
@@ -319,7 +346,9 @@ class TrackingPlan:
 
     def get_event_schema(self, event_name: str) -> Optional[EventSchema]:
         """Return the full event schema (event props + public props), or None."""
-        schema = self._custom_events.get(event_name) or self._preset_events.get(event_name)
+        schema = self._custom_events.get(event_name) or self._preset_events.get(
+            event_name
+        )
         if schema is None:
             return None
 
@@ -346,7 +375,9 @@ class TrackingPlan:
 
     def list_events(self) -> List[str]:
         """Return all defined event names (custom + preset)."""
-        return sorted(list(self._custom_events.keys()) + list(self._preset_events.keys()))
+        return sorted(
+            list(self._custom_events.keys()) + list(self._preset_events.keys())
+        )
 
     def generate_value(self, prop: PropertyDef) -> object:
         """
@@ -378,8 +409,11 @@ class TrackingPlan:
 
         if vt == "datetime":
             import datetime
+
             base = datetime.datetime(2024, 1, 1)
-            delta = datetime.timedelta(days=random.randint(0, 365), seconds=random.randint(0, 86400))
+            delta = datetime.timedelta(
+                days=random.randint(0, 365), seconds=random.randint(0, 86400)
+            )
             return (base + delta).strftime("%Y-%m-%dT%H:%M:%S")
 
         # default: random alphanumeric string

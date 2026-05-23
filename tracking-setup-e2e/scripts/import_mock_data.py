@@ -46,7 +46,10 @@ SA_PROJECT = os.getenv("SA_PROJECT", "default")
 
 def validate_env():
     if not SA_TRACK_URL:
-        print("错误：缺少 SA_TRACK_URL 配置，请在 .env 中设置")
+        print("❌ 错误：缺少 SA_TRACK_URL 配置，请在 .env 中设置")
+        print("\n获取方式：")
+        print("  神策后台 → 数据接入 → HTTP API → 复制接入地址")
+        print("  格式如：https://<host>/sa?project=<project>")
         sys.exit(1)
 
 
