@@ -56,8 +56,39 @@ def validate_env():
         if not os.getenv(k)
     ]
     if missing:
-        print(f"错误：缺少必要配置，请在 .env 中设置：{', '.join(missing)}")
+        print(f"❌ 错误：缺少必要配置，请在 .env 中设置：{', '.join(missing)}")
+        print("\n获取方式：")
+        print("  SA_HOST:      神策 CDP 地址，如 https://demo.sensorsdata.cn")
+        print("  SA_PROJECT:   项目 ID，登录后 URL 中 project= 的值")
+        print("  API_KEY:      神策后台 → 系统管理 → API 密钥 → 创建密钥")
+        print("  TRACKING_PLAN_PATH: 埋点方案 Excel 文件路径")
         sys.exit(1)
+
+
+def test_api_connection():
+    """Test API connectivity before import to fail fast."""
+    try:
+        api = SAOpenAPI(SA_HOST, API_KEY, SA_PROJECT)
+        # Try to list events as a connectivity test
+        events = api.list_events()
+        print(f"✓ API 连接成功，系统中已有 {len(events)} 个事件")
+        return True
+    except Exception as e:
+        print(f"\n❌ API 连接失败: {e}")
+        print("\n可能原因：")
+        print("  1. API_KEY 错误 - 请确认使用的是 Open API 密钥（不是数据接入 token）")
+        print("     获取位置：神策后台 → 系统管理 → API 密钥")
+        print("  2. SA_HOST 错误 - 请确认是 CDP 地址（不是数据接入地址）")
+        print("  3. 网络问题 - 请检查能否访问神策环境")
+        print("\n当前配置：")
+        print(f"  SA_HOST: {SA_HOST}")
+        print(f"  SA_PROJECT: {SA_PROJECT}")
+        print(
+            f"  API_KEY: {API_KEY[:10]}..."
+            if len(API_KEY) > 10
+            else f"  API_KEY: {API_KEY}"
+        )
+        return False
 
 
 def import_events(api: SAOpenAPI, plan: TrackingPlan) -> list:
@@ -196,15 +227,42 @@ def main():
 
     excel_path = Path(TRACKING_PLAN_PATH)
     if not excel_path.exists():
-        print(f"错误：找不到埋点方案文件：{excel_path}")
+        print(f"❌ 错误：找不到埋点方案文件：{excel_path}")
         sys.exit(1)
 
     print(f"=== 神策 CDP 元数据导入 ===")
 
-    api = SAOpenAPI(SA_HOST, API_KEY, SA_PROJECT)
+    # Step 1: Test API connectivity first
+    print("\n🔍 检查 API 连接...")
+    if not test_api_connection():
+        sys.exit(1)
+
+    # Step 2: Parse tracking plan
+    print("\n📖 解析埋点方案...")
     plan = TrackingPlan(str(excel_path))
 
-    # 二次确认
+    event_names = plan.list_events()
+    custom_events = [n for n in event_names if not n.startswith("$")]
+    user_attrs = plan.get_user_attributes()
+
+    print(f"  发现 {len(custom_events)} 个自定义事件")
+    print(f"  发现 {len(user_attrs)} 个用户属性")
+
+    if not custom_events and not user_attrs:
+        print("\n❌ 错误：未能从 Excel 中解析到任何事件或属性")
+        print("可能原因：")
+        print("  1. Sheet 名称不匹配 - 请检查 Excel 中的 sheet 名是否为以下之一：")
+        print("     自定义事件: Events / Custom Event / Event")
+        print("     用户属性: Users / User Attribute / User Traits")
+        print("  2. Excel 格式错误 - 请确认是标准的埋点方案模板")
+        print(
+            f"\n实际 sheet 名称: {', '.join(openpyxl.load_workbook(excel_path, data_only=True).sheetnames)}"
+        )
+        sys.exit(1)
+
+    api = SAOpenAPI(SA_HOST, API_KEY, SA_PROJECT)
+
+    # Step 3: Confirm import
     if not confirm_import(excel_path, plan):
         sys.exit(0)
 
