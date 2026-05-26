@@ -108,6 +108,8 @@ class PropertyEnumResolver:
             return None
 
         if isinstance(spec, list):
+            if not spec:
+                return None
             return random.choice(spec)
 
         if isinstance(spec, dict):
@@ -115,6 +117,7 @@ class PropertyEnumResolver:
 
             if t == "date_range":
                 date_fmt = spec.get("date_format", "%Y.%m.%d")
+                fmt = spec.get("format", "{start} - {end}")
                 start_range = spec.get("start_range", ["2025-01-01", "2025-06-01"])
                 duration_days = spec.get("duration_days", [60, 90])
 
@@ -124,7 +127,7 @@ class PropertyEnumResolver:
                 random_start = start_date + _dt.timedelta(days=random.randint(0, max(range_days, 0)))
                 duration = random.randint(duration_days[0], duration_days[1])
                 random_end = random_start + _dt.timedelta(days=duration)
-                return f"{random_start.strftime(date_fmt)} - {random_end.strftime(date_fmt)}"
+                return fmt.format(start=random_start.strftime(date_fmt), end=random_end.strftime(date_fmt))
 
             if t == "datetime":
                 fmt = spec.get("format", "%Y/%m/%d %H:%M:%S")
