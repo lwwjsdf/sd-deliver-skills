@@ -19,7 +19,6 @@ import_mock_data.py — 将生成的模拟数据导入神策 CDP（使用官方 
 """
 
 import argparse
-import getpass
 import json
 import os
 import sys
@@ -28,74 +27,13 @@ from collections import Counter
 from pathlib import Path
 
 try:
-    from dotenv import load_dotenv
     import sensorsanalytics
 except ImportError:
     print("缺少依赖，请先运行: pip install python-dotenv SensorsAnalyticsSDK")
     sys.exit(1)
 
-# .env 查找顺序：当前目录 → 父目录 → 祖父目录 → 脚本所在目录的父目录
-for _p in [
-    Path.cwd(),
-    Path.cwd().parent,
-    Path.cwd().parent.parent,
-    Path(__file__).parent.parent,
-]:
-    env_file = _p / ".env"
-    if env_file.exists():
-        load_dotenv(env_file, override=True)
-        break
-
-
-# ---------------------------------------------------------------------------
-# Configuration helpers
-# ---------------------------------------------------------------------------
-
-CONFIG_PROMPTS = {
-    "data_url": {
-        "env_key": "SA_TRACK_URL",
-        "prompt": "数据接收地址",
-        "example": "https://demo.sensorsdata.cn/sa?project=default",
-        "help": "神策后台 → 数据接入 → HTTP API → 复制接入地址",
-    },
-}
-
-
-def get_config_value(key: str, args_value: str = "", interactive: bool = True) -> str:
-    """Get config value with priority: args > env > interactive prompt > error"""
-    config = CONFIG_PROMPTS[key]
-    env_key = config["env_key"]
-
-    # Priority 1: command line argument
-    if args_value:
-        return args_value
-
-    # Priority 2: environment variable
-    env_value = os.getenv(env_key, "")
-    if env_value:
-        return env_value
-
-    # Priority 3: interactive prompt
-    if interactive and sys.stdin.isatty():
-        print(f"\n{config['prompt']}:")
-        print(f"  示例: {config['example']}")
-        print(f"  获取: {config['help']}")
-
-        value = input("  请输入: ").strip()
-
-        if value:
-            return value
-
-    # Priority 4: error
-    print(f"\n❌ 错误：缺少 {config['prompt']}")
-    print(f"  请通过以下方式之一提供：")
-    print(f"  1. 命令行参数: --{key.replace('_', '-')} <值>")
-    print(f"  2. 环境变量: {env_key}=<值>")
-    print(f"  3. .env 文件: {env_key}=<值>")
-    print(f"  4. 交互式提示（直接运行脚本）")
-    print(f"\n  示例值: {config['example']}")
-    print(f"  获取方式: {config['help']}")
-    sys.exit(1)
+sys.path.insert(0, os.path.dirname(__file__))
+from config_helper import get_config
 
 
 # ---------------------------------------------------------------------------
@@ -292,7 +230,7 @@ def main():
     args = parser.parse_args()
 
     # Get configuration
-    data_url = get_config_value("data_url", args.data_url)
+    data_url = get_config("data_url", args.data_url)
 
     # Find jsonl file
     if args.jsonl:

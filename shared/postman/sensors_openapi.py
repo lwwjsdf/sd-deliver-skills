@@ -10,8 +10,35 @@ sensors_openapi.py — 神策 OpenAPI 通用客户端
     events = api.get_all_event_properties()
 """
 
+import logging
+import time
 import requests
 from typing import Dict, List, Optional, Any
+
+logger = logging.getLogger(__name__)
+
+
+class SensorsOpenAPIError(Exception):
+    def __init__(self, message: str, code: str = None, request_id: str = None):
+        self.code = code
+        self.request_id = request_id
+        super().__init__(message)
+
+
+# v3 data_type 映射
+DATA_TYPE_MAP = {
+    "String":   {"type": "STRING"},
+    "Number":   {"type": "NUMBER"},
+    "Bool":     {"type": "BOOL"},
+    "Datetime": {"type": "DATETIME"},
+    "List":     {"type": "LIST", "element_data_types": "STRING"},
+}
+
+
+def map_data_type(value_type: str) -> dict:
+    """将 Excel 类型字符串映射为 v3 data_type 对象"""
+    key = (value_type or "String").strip().capitalize()
+    return DATA_TYPE_MAP.get(key, {"type": "STRING"})
 
 
 class SensorsOpenAPI:
@@ -30,15 +57,31 @@ class SensorsOpenAPI:
             }
         )
 
-    def _request(self, method: str, path: str, json_data: dict = None) -> dict:
-        """发送请求并处理响应"""
+    def _request(self, method: str, path: str, json_data: dict = None, max_retries: int = 3) -> dict:
+        """发送请求，含重试（指数退避）和客户端错误直通"""
         url = f"{self.host}{path}"
-        resp = self.session.request(method, url, json=json_data)
-        resp.raise_for_status()
-        data = resp.json()
-        if data.get("code") != "SUCCESS":
-            raise Exception(f"API Error: {data}")
-        return data.get("data", {})
+        for attempt in range(max_retries):
+            try:
+                resp = self.session.request(method, url, json=json_data, timeout=30)
+                resp.raise_for_status()
+                return resp.json()
+            except requests.exceptions.HTTPError as e:
+                if e.response is not None and e.response.status_code < 500:
+                    try:
+                        return e.response.json()
+                    except Exception:
+                        raise SensorsOpenAPIError(str(e))
+                if attempt == max_retries - 1:
+                    raise SensorsOpenAPIError(str(e))
+                time.sleep(2 * (attempt + 1))
+            except requests.exceptions.RequestException as e:
+                if attempt == max_retries - 1:
+                    raise SensorsOpenAPIError(str(e))
+                time.sleep(2 * (attempt + 1))
+        return {}
+
+    def _ok(self, resp: dict) -> bool:
+        return resp.get("code") == "SUCCESS"
 
     # ── SDH 模块 (Schema/Data Hub) ──
 
@@ -64,22 +107,37 @@ class SensorsOpenAPI:
             {"schema_name": schema_name, "field_name": field_name},
         )
 
-    def create_event(self, original_name: str, display_name: str, **kwargs) -> dict:
-        """创建事件"""
-        return self._request(
-            "POST",
-            "/api/v3/horizon/v1/schema/event/create",
-            {
-                "physical_schema_name": "events",
-                "schemas": [
-                    {
-                        "original_name": original_name,
-                        "display_name": display_name,
-                        **kwargs,
-                    }
-                ],
-            },
-        )
+    def create_event(
+        self,
+        original_name: str,
+        display_name: str,
+        physical_schema: str = "events",
+        track_platforms: list = None,
+        **kwargs,
+    ) -> bool:
+        """创建元事件。已存在时视为成功。"""
+        if track_platforms is None:
+            track_platforms = [{"platform": "MINI_APP", "has_data": False}]
+        body = {
+            "physical_schema_name": physical_schema,
+            "schemas": [
+                {
+                    "original_name": original_name,
+                    "display_name": display_name,
+                    "statistics": {"track_platforms": track_platforms},
+                    **kwargs,
+                }
+            ],
+        }
+        resp = self._request("POST", "/api/v3/horizon/v1/schema/event/create", body)
+        if self._ok(resp):
+            return True
+        code = resp.get("code", "")
+        if "ALREADY_EXISTS" in code or "already" in str(resp.get("message", "")).lower():
+            logger.debug("事件已存在，跳过: %s", original_name)
+            return True
+        logger.error("创建事件失败 [%s]: %s %s", original_name, code, resp.get("message", ""))
+        return False
 
     def get_event(self, original_name: str) -> dict:
         """获取事件详情"""
@@ -97,19 +155,103 @@ class SensorsOpenAPI:
             {"schema": {"name": schema_name, **updates}, "update_mask": update_mask},
         )
 
-    def list_events(self, page_size: int = 100) -> list:
+    def list_events(self, physical_schema: str = "events", page_size: int = 200) -> list:
         """事件列表"""
-        return self._request(
+        resp = self._request(
             "POST",
             "/api/v3/horizon/v1/schema/event/list",
-            {"physical_schema_name": "events", "page_size": page_size},
+            {"physical_schema_name": physical_schema, "page_size": page_size},
         )
+        if not self._ok(resp):
+            return []
+        return resp.get("data", {}).get("schemas", [])
+
+    def create_field(
+        self,
+        schema_name: str,
+        name: str,
+        display_name: str,
+        data_type: dict,
+        remark: str = "",
+    ) -> bool:
+        """创建单个属性。已存在时视为成功。"""
+        body = {
+            "fields": [
+                {
+                    "schema_name": schema_name,
+                    "field": {
+                        "name": name,
+                        "display_name": display_name,
+                        "data_type": data_type,
+                        "data_mapping": {"source_type": "MAIN_TABLE_COLUMN"},
+                        "custom_params": {"meta_desc": remark} if remark else {},
+                    },
+                }
+            ]
+        }
+        resp = self._request("POST", "/api/v3/horizon/v1/schema/field/batch-create", body)
+        if self._ok(resp):
+            return True
+        code = resp.get("code", "")
+        msg = str(resp.get("message", ""))
+        if "ALREADY_EXISTS" in code or "already" in msg.lower():
+            logger.debug("属性已存在，跳过: %s.%s", schema_name, name)
+            return True
+        logger.error("创建属性失败 [%s.%s]: %s %s", schema_name, name, code, msg)
+        return False
 
     def batch_create_fields(self, fields: list) -> dict:
-        """批量创建属性"""
-        return self._request(
-            "POST", "/api/v3/horizon/v1/schema/field/batch-create", {"fields": fields}
+        """批量创建属性（逐个，避免单个失败影响全部）。
+
+        fields 格式: [{"schema_name": ..., "name": ..., "display_name": ..., "data_type": ...}]
+        返回: {"ok": [...], "skipped": [...], "failed": [...]}
+        """
+        ok, skipped, failed = [], [], []
+        for f in fields:
+            schema_name = f["schema_name"]
+            name = f["name"]
+            try:
+                success = self.create_field(
+                    schema_name=schema_name,
+                    name=name,
+                    display_name=f.get("display_name", name),
+                    data_type=f["data_type"],
+                    remark=f.get("remark", ""),
+                )
+            except SensorsOpenAPIError as e:
+                logger.error("属性创建异常 [%s.%s]: %s", schema_name, name, e)
+                success = False
+            if success:
+                ok.append(name)
+            else:
+                failed.append(name)
+            time.sleep(0.2)
+        return {"ok": ok, "skipped": skipped, "failed": failed}
+
+    def create_user_field(
+        self,
+        name: str,
+        display_name: str,
+        data_type: dict,
+        remark: str = "",
+    ) -> bool:
+        """创建用户属性（schema_name 固定为 'users'）"""
+        return self.create_field(
+            schema_name="users",
+            name=name,
+            display_name=display_name,
+            data_type=data_type,
+            remark=remark,
         )
+
+    def list_user_fields(self) -> list:
+        """获取用户属性列表"""
+        resp = self._request(
+            "POST", "/api/v3/horizon/v1/schema/field/list", {"schema_name": "users"}
+        )
+        if not self._ok(resp):
+            return []
+        return resp.get("data", {}).get("fields", [])
 
     # ── 分群管理 ──
 
@@ -257,19 +399,9 @@ class SensorsOpenAPI:
 
 # 使用示例
 if __name__ == "__main__":
-    # 初始化客户端
     api = SensorsOpenAPI(
         host="https://demo.sensorsdata.cn", api_key="your-api-key", project="default"
     )
-
-    # 示例1: 获取事件列表
     # events = api.list_events()
     # print(events)
 
-    # 示例2: 获取分群列表
-    # segments = api.list_segments()
-    # print(segments)
-
-    # 示例3: 获取运营计划列表
-    # plans = api.list_plans()
-    # print(plans)

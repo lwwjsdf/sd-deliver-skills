@@ -236,7 +236,25 @@ def create_event(self, original_name: str, display_name: str, **kwargs) -> bool:
 import os
 import sys
 import getpass
+from pathlib import Path
 from typing import Optional
+
+try:
+    from dotenv import load_dotenv
+except ImportError:
+    load_dotenv = None
+
+# .env 查找顺序：当前目录 → 父目录 → 祖父目录 → 脚本所在目录的父目录
+def _load_dotenv():
+    if load_dotenv is None:
+        return
+    for _p in [Path.cwd(), Path.cwd().parent, Path.cwd().parent.parent,
+               Path(__file__).parent.parent]:
+        if (_p / ".env").exists():
+            load_dotenv(_p / ".env")
+            break
+
+_load_dotenv()
 
 CONFIG_SCHEMA = {
     "cdp_url": {
@@ -267,7 +285,7 @@ CONFIG_SCHEMA = {
     "tracking_plan": {
         "env_key": "TRACKING_PLAN_PATH",
         "prompt": "埋点方案路径",
-        "example": "./refrences/tracking-plan.xlsx",
+        "example": "./references/tracking-plan.xlsx",
         "help": "埋点方案 Excel 文件的路径",
     },
 }
@@ -329,7 +347,7 @@ api_key = get_config("api_key", args.api_key)
      --cdp-url https://westkdemo.sensorsdata.cn \
      --project default \
      --api-key xxx \
-     --tracking-plan "refrences/Annex 6.xlsx"
+     --tracking-plan "references/Annex 6.xlsx"
    ```
 
 2. **交互式提示模式**
@@ -355,13 +373,12 @@ api_key = get_config("api_key", args.api_key)
 ### 新增文件
 | 文件 | 说明 |
 |------|------|
-| `shared/postman/sensors_openapi.py` | 通用 OpenAPI SDK（已创建，需增强） |
 | `tracking-setup-e2e/scripts/config_helper.py` | 公共配置获取模块 |
 
 ### 修改文件
 | 文件 | 修改内容 |
 |------|---------|
-| `shared/postman/sensors_openapi.py` | 添加重试、错误处理、日志 |
+| `shared/postman/sensors_openapi.py` | 添加重试、错误处理、日志（已创建，需增强） |
 | `tracking-setup-e2e/scripts/import_meta_data.py` | 使用 shared SDK 和 config_helper |
 | `tracking-setup-e2e/scripts/import_mock_data.py` | 使用 config_helper |
 | `tracking-setup-e2e/scripts/generate_mock_data.py` | 添加命令行参数支持 |
@@ -391,6 +408,27 @@ api_key = get_config("api_key", args.api_key)
 - [ ] 包含小程序事件时生成 `$scene` 等属性
 - [ ] 不包含小程序事件时不生成预置属性
 - [ ] 所有脚本错误提示明确，Agent 不会绕过
+
+**验证命令**:
+```bash
+# 1. 验证 import_meta_data.py 使用 shared SDK（无 sa_openapi 导入）
+grep -n "from sa_openapi\|import sa_openapi" tracking-setup-e2e/scripts/import_meta_data.py
+# 期望：无输出
+
+# 2. 验证三种配置方式均可运行
+python3 tracking-setup-e2e/scripts/import_meta_data.py --help
+
+# 3. 验证 generate_mock_data.py 支持命令行参数
+python3 tracking-setup-e2e/scripts/generate_mock_data.py --help | grep tracking-plan
+
+# 4. 验证小程序条件触发（需要实际埋点方案文件）
+python3 -c "
+import sys; sys.path.insert(0, 'tracking-setup-e2e/scripts')
+from tracking_plan import TrackingPlan
+plan = TrackingPlan('references/Annex 6.xlsx')
+print('has_mp_events:', plan.has_mp_events())
+"
+```
 
 ---
 
