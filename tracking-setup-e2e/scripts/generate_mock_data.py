@@ -558,7 +558,7 @@ def run_rules_mode(args):
         )
         events_by_user[user.user_id] = events
         for event in events:
-            all_records.append(event.to_track_record(SA_PROJECT, identity_defs))
+            all_records.append(event.to_track_record(prefix, identity_defs))
 
     # 6. 验证
     validator = ConstraintValidator()

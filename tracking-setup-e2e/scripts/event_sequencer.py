@@ -10,6 +10,7 @@ Depends on:
 from __future__ import annotations
 
 import random
+import datetime as _dt
 import re
 from dataclasses import dataclass, field
 from typing import Any, Dict, List, Optional
@@ -86,6 +87,63 @@ _MEMBERSHIP_PREFIX = "membership_"
 _REPEAT_REF_RE = re.compile(r"^\{([^}]+)\}$")
 
 
+class PropertyEnumResolver:
+    """Resolve property values from business_logic.yaml property_enums."""
+
+    def __init__(self, enums: dict):
+        self._enums = enums
+
+    def resolve(self, name: str):
+        """
+        Return a business-compliant value for the given property name.
+        Returns None if no enum is defined for this property.
+
+        Supported formats:
+          - list: random.choice(list)
+          - {type: date_range, ...}: "YYYY.MM.DD - YYYY.MM.DD" string
+          - {type: datetime, ...}: "YYYY/MM/DD HH:MM:SS" string
+        """
+        spec = self._enums.get(name)
+        if spec is None:
+            return None
+
+        if isinstance(spec, list):
+            if not spec:
+                return None
+            return random.choice(spec)
+
+        if isinstance(spec, dict):
+            t = spec.get("type")
+
+            if t == "date_range":
+                date_fmt = spec.get("date_format", "%Y.%m.%d")
+                fmt = spec.get("format", "{start} - {end}")
+                start_range = spec.get("start_range", ["2025-01-01", "2025-06-01"])
+                duration_days = spec.get("duration_days", [60, 90])
+
+                start_date = _dt.date.fromisoformat(start_range[0])
+                end_start_date = _dt.date.fromisoformat(start_range[1])
+                range_days = (end_start_date - start_date).days
+                random_start = start_date + _dt.timedelta(days=random.randint(0, max(range_days, 0)))
+                duration = random.randint(duration_days[0], duration_days[1])
+                random_end = random_start + _dt.timedelta(days=duration)
+                return fmt.format(start=random_start.strftime(date_fmt), end=random_end.strftime(date_fmt))
+
+            if t == "datetime":
+                fmt = spec.get("format", "%Y/%m/%d %H:%M:%S")
+                date_range = spec.get("range", ["2025-01-01", "2025-12-31"])
+                start = _dt.datetime.fromisoformat(date_range[0])
+                end = _dt.datetime.fromisoformat(date_range[1])
+                delta = end - start
+                random_seconds = random.randint(0, int(delta.total_seconds()))
+                # Round to nearest 15 minutes for realistic show times
+                random_seconds = (random_seconds // 900) * 900
+                result = start + _dt.timedelta(seconds=random_seconds)
+                return result.strftime(fmt)
+
+        return None
+
+
 class EventSequencer:
     def __init__(self, rule_engine: RuleEngine, tracking_plan: TrackingPlan):
         self.rule_engine = rule_engine
@@ -100,6 +158,9 @@ class EventSequencer:
                 utm_campaigns=preset_cfg.get("utm_campaigns"),
                 scene_weights=preset_cfg.get("scene_distribution"),
             )
+
+        # Initialise property enum resolver from rule engine
+        self._prop_resolver = PropertyEnumResolver(rule_engine.get_property_enums())
 
     # ------------------------------------------------------------------
     # Public API
@@ -340,12 +401,17 @@ class EventSequencer:
             if "$scene" in props and props["$scene"]:
                 context["session_scene"] = props["$scene"]
 
-        # 3. Fill remaining schema properties
+        # 3. Fill remaining schema properties, with property_enums taking priority
         schema = self.tracking_plan.get_event_schema(edef.event)
         if schema:
             for prop_def in schema.properties:
                 if prop_def.name not in props:
-                    props[prop_def.name] = self.tracking_plan.generate_value(prop_def)
+                    # Try business enum resolver first
+                    resolved = self._prop_resolver.resolve(prop_def.name)
+                    if resolved is not None:
+                        props[prop_def.name] = resolved
+                    else:
+                        props[prop_def.name] = self.tracking_plan.generate_value(prop_def)
 
         return props
 

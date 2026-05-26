@@ -179,6 +179,10 @@ class RuleEngine:
     def get_preset_events(self) -> Dict[str, Any]:
         return dict(self._data.get("preset_events", {}))
 
+    def get_property_enums(self) -> Dict[str, Any]:
+        """Return the property_enums block, or empty dict if not defined."""
+        return dict(self._data.get("property_enums", {}))
+
     def get_meta(self) -> Dict[str, Any]:
         return dict(self._data.get("meta", {}))
 
