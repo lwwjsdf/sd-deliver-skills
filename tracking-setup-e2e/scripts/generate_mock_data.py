@@ -5,8 +5,9 @@ generate_mock_data.py — 从埋点方案 Excel 生成模拟数据
 用法：
     python3 tracking-setup-e2e/scripts/generate_mock_data.py
     python3 tracking-setup-e2e/scripts/generate_mock_data.py --count 100 --users 30
+    python3 tracking-setup-e2e/scripts/generate_mock_data.py --tracking-plan ./plan.xlsx --project default
 
-前置条件（在项目根目录的 .env 中配置）：
+前置条件（在项目根目录的 .env 中配置，或通过命令行参数传入）：
     SA_PROJECT          项目 ID
     TRACKING_PLAN_PATH  埋点方案 Excel 路径
 
@@ -42,6 +43,7 @@ try:
     from event_sequencer import EventSequencer
     from constraint_validator import ConstraintValidator
     from report_generator import ReportGenerator
+    from config_helper import get_config
 
     _RULES_MODE_AVAILABLE = True
 except ImportError:
@@ -52,10 +54,6 @@ for _p in [Path.cwd(), Path.cwd().parent, Path.cwd().parent.parent]:
     if (_p / ".env").exists():
         load_dotenv(_p / ".env")
         break
-
-SA_PROJECT = os.getenv("SA_PROJECT", "default")
-TRACKING_PLAN_PATH = os.getenv("TRACKING_PLAN_PATH", "")
-
 
 # ---------------------------------------------------------------------------
 # Excel parsing
@@ -672,12 +670,18 @@ def main():
         "--tracking-plan",
         default=None,
         dest="tracking_plan",
-        help="埋点方案 Excel（规则模式下可选）",
+        help="埋点方案 Excel 路径（规则模式和简单模式均可用，示例：./references/tracking-plan.xlsx）",
     )
     parser.add_argument(
         "--prefix",
         default=None,
         help="输出文件名前缀（默认从规则文件 meta.project 提取）",
+    )
+    parser.add_argument(
+        "--project",
+        default=None,
+        dest="project",
+        help="项目 ID（简单模式，示例：default）",
     )
     args = parser.parse_args()
 
@@ -685,12 +689,16 @@ def main():
         run_rules_mode(args)
         return
 
+    # 简单模式：支持命令行参数覆盖 .env
+    sa_project = args.project or os.getenv("SA_PROJECT", "default")
+    tracking_plan_path = args.tracking_plan or os.getenv("TRACKING_PLAN_PATH", "")
+
     # 验证必要配置
-    if not TRACKING_PLAN_PATH:
-        print("错误：缺少必要配置，请在 .env 中设置 TRACKING_PLAN_PATH")
+    if not tracking_plan_path:
+        print("错误：缺少必要配置，请通过 --tracking-plan 参数或在 .env 中设置 TRACKING_PLAN_PATH")
         sys.exit(1)
 
-    excel_path = Path(TRACKING_PLAN_PATH)
+    excel_path = Path(tracking_plan_path)
     if not excel_path.exists():
         print(f"错误：找不到埋点方案文件：{excel_path}")
         sys.exit(1)
@@ -716,7 +724,7 @@ def main():
     if user_attrs:
         for uid, idx in users:
             all_records.append(
-                build_profile_record(user_attrs, uid, idx, SA_PROJECT, identity_defs)
+                build_profile_record(user_attrs, uid, idx, sa_project, identity_defs)
             )
 
     use_time_series = args.days is not None or args.daily_users is not None
@@ -732,7 +740,7 @@ def main():
         print(f"=== 模拟数据生成（时序模式）===")
         print(f"文件: {excel_path.name}")
         print(
-            f"项目: {SA_PROJECT}  用户池: {users_n}  每日活跃: {daily_users_n}  天数: {days}  每用户每事件: {daily_count}\n"
+            f"项目: {sa_project}  用户池: {users_n}  每日活跃: {daily_users_n}  天数: {days}  每用户每事件: {daily_count}\n"
         )
         print(f"发现 {len(events)} 个事件，{len(user_attrs)} 个用户属性")
 
@@ -744,7 +752,7 @@ def main():
                         ts = _timestamp_for_day(day_offset)
                         all_records.append(
                             build_track_record(
-                                event, uid, ts, idx, SA_PROJECT, identity_defs
+                                event, uid, ts, idx, sa_project, identity_defs
                             )
                         )
     else:
@@ -753,7 +761,7 @@ def main():
 
         print(f"=== 模拟数据生成 ===")
         print(f"文件: {excel_path.name}")
-        print(f"项目: {SA_PROJECT}  每事件记录数: {count}  模拟用户数: {users_n}\n")
+        print(f"项目: {sa_project}  每事件记录数: {count}  模拟用户数: {users_n}\n")
         print(f"发现 {len(events)} 个事件，{len(user_attrs)} 个用户属性")
 
         for event in events:
@@ -761,7 +769,7 @@ def main():
                 uid, idx = random.choice(users)
                 ts = _random_timestamp_ms()
                 all_records.append(
-                    build_track_record(event, uid, ts, idx, SA_PROJECT, identity_defs)
+                    build_track_record(event, uid, ts, idx, sa_project, identity_defs)
                 )
 
     random.shuffle(all_records)
