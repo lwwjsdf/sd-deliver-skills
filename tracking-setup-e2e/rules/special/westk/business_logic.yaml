@@ -263,6 +263,21 @@ enums:
   - 香港故宫文化博物馆(S)
   - 西九演艺(P)
   - 西九文化区(D)
+property_enums:
+  seatArea: ["Stalls", "Balcony"]
+  seatRow: ["A", "B", "C", "D", "E", "F", "G", "H"]
+  seatCol: [27, 28, 29, 30, 31, 32, 33, 34, 35, 36, 37, 38, 39, 40]
+  ticketType: ["标准票", "全馆通行票"]
+  productOperatingSchedule:
+    type: date_range
+    format: "{start} - {end}"
+    date_format: "%Y.%m.%d"
+    start_range: ["2025-06-01", "2025-09-01"]
+    duration_days: [60, 120]
+  productShowSchedule:
+    type: datetime
+    format: "%Y/%m/%d %H:%M:%S"
+    range: ["2025-06-01", "2025-12-31"]
 failure_rate: 0.05
 fixed_accounts:
 - id: UAT-X01
