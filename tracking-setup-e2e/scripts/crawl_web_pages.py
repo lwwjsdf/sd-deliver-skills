@@ -14,7 +14,7 @@ import sys
 import time
 from collections import deque
 from datetime import date
-from typing import List, Optional
+from typing import List
 from urllib.parse import urljoin, urlparse
 
 import requests
@@ -31,6 +31,16 @@ _HEADERS = {
         "+https://github.com/anthropics/claude-code)"
     )
 }
+
+
+# ---------------------------------------------------------------------------
+# Helpers
+# ---------------------------------------------------------------------------
+
+
+def _dedupe(seq: list) -> list:
+    seen = set()
+    return [x for x in seq if not (x in seen or seen.add(x))]
 
 
 # ---------------------------------------------------------------------------
@@ -68,8 +78,9 @@ def crawl(
     while queue and len(pages) < max_pages:
         url, depth = queue.popleft()
 
-        # Normalise: strip fragment
-        url = url.split("#")[0].rstrip("/") or url
+        # Normalise: strip fragment, keep unstripped copy for urljoin
+        url_for_join = url.split("#")[0]
+        url = url_for_join.rstrip("/") or url_for_join
         if url in visited:
             continue
         visited.add(url)
@@ -87,7 +98,7 @@ def crawl(
 
         soup = BeautifulSoup(resp.text, "html.parser")
         title_tag = soup.find("title")
-        title = title_tag.get_text(strip=True) if title_tag else ""
+        title = " ".join(title_tag.get_text().split()) if title_tag else ""
         path = urlparse(url).path
 
         pages.append({"url": url, "title": title, "path": path})
@@ -98,8 +109,11 @@ def crawl(
                 href = a["href"].strip()
                 if not href or href.startswith("javascript:"):
                     continue
-                abs_url = urljoin(url, href).split("#")[0].rstrip("/")
-                if _is_internal(base_netloc, abs_url) and abs_url not in visited:
+                abs_url = urljoin(url_for_join, href).split("#")[0].rstrip("/")
+                parsed_abs = urlparse(abs_url)
+                if (parsed_abs.scheme in {"http", "https"}
+                        and _is_internal(base_netloc, abs_url)
+                        and abs_url not in visited):
                     queue.append((abs_url, depth + 1))
 
         if delay > 0:
@@ -116,8 +130,8 @@ def crawl(
 def _build_yaml_fragment(pages: List[dict], start_url: str) -> str:
     """Return a YAML string with $url, $title, $url_path lists."""
     urls = [p["url"] for p in pages]
-    titles = [p["title"] for p in pages if p["title"]]
-    paths = [p["path"] for p in pages]
+    titles = _dedupe([p["title"] for p in pages if p["title"]])
+    paths = _dedupe([p["path"] for p in pages])
 
     lines = [
         f"# 由 crawl_web_pages.py 生成，来源：{start_url}",
@@ -139,7 +153,7 @@ def _build_yaml_fragment(pages: List[dict], start_url: str) -> str:
 
 def _merge_into_yaml(yaml_path: str, pages: List[dict], start_url: str) -> None:
     """
-    Merge $url/$title/$url_path into the property_enums block of yaml_path.
+    Replace $url/$title/$url_path in the property_enums block of yaml_path.
     Uses ruamel.yaml to preserve comments and formatting.
     Only updates the three web keys; all other keys are untouched.
     """
@@ -159,9 +173,9 @@ def _merge_into_yaml(yaml_path: str, pages: List[dict], start_url: str) -> None:
         data["property_enums"] = {}
 
     pe = data["property_enums"]
-    pe["$url"] = [p["url"] for p in pages]
-    pe["$title"] = [p["title"] for p in pages if p["title"]]
-    pe["$url_path"] = [p["path"] for p in pages]
+    pe["$url"] = _dedupe([p["url"] for p in pages])
+    pe["$title"] = _dedupe([p["title"] for p in pages if p["title"]])
+    pe["$url_path"] = _dedupe([p["path"] for p in pages])
 
     keys_updated = ["$url", "$title", "$url_path"]
     print(f"Updating keys in property_enums: {keys_updated}", file=sys.stderr)
