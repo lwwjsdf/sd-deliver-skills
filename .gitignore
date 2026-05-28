@@ -15,3 +15,6 @@ __pycache__/
 
 # gstack browse 日志
 .gstack/
+
+.agents/
+temp
