@@ -1,6 +1,6 @@
 ---
 name: sd-tech-design
-version: 0.3.0
+version: 0.4.0
 description: 根据项目背景和需求，生成 LLD PPT 框架、架构图（draw.io XML）和 Technical Specification 文档
 allowed-tools:
   - Bash
@@ -303,115 +303,150 @@ $SKILL_REPO/tech-design/diagram-templates/DIAGRAM_GUIDE.md
 
 ### Phase 4：Technical Specification 文档生成
 
-**在 LLD PPT 框架确认后，生成对应的 Technical Specification Markdown 文档。**
+**在 LLD PPT 框架确认后，生成对应的 Technical Specification Word 文档。**
 
-Tech Spec 是 LLD 的技术实施细化版本，面向开发和运维团队，包含 LLD 中没有的实施细节。
+Tech Spec 是 LLD 的技术实施细化版本，面向开发和运维团队。
 
-#### Tech Spec 与 LLD 的关系
+#### LLD 与 Tech Spec 的精确分工
 
-| LLD（客户审批用） | Tech Spec（实施参考用） |
-|-----------------|----------------------|
-| 架构决策和理由 | 具体配置参数和命令 |
-| 组件列表和版本 | 安装步骤和依赖关系 |
-| 性能指标要求 | 调优参数和基准测试方法 |
-| 安全要求 | 具体安全配置（防火墙规则、加密密钥管理） |
-| 接口系统列表 | API 端点、认证方式、数据格式 |
-| 运维要求 | 监控告警规则、备份脚本、故障处理流程 |
+基于 Westk TP1 实战经验，两份文档的内容边界如下：
 
-#### Tech Spec 章节结构
+| 章节 | LLD 写什么 | Tech Spec 写什么 |
+|------|-----------|----------------|
+| 加密方案 | 临时/中期方案决策、AES-256 + KMS 选型理由 | DEK 存储格式（`<version>::<IV>::<ciphertext>`）、RAM 角色权限配置、加密/解密点（含端口号）、异常处理流程 |
+| 数据流 | 架构图 + Scenario A-E 场景描述 | 接口目录（INT-ID/协议/频率/触发时间/字段清单）、PII 标注 |
+| 备份恢复 | RTO/RPO 数字、备份频率 | 8步恢复流程、各组件恢复时间估算、DR 演练计划、合规标准（如 GB/T 20988-2007）对照表 |
+| 数据保留 | 无（LLD 不涉及） | 每类数据的在线保留期和清理方式（完整表格） |
+| 性能 | 指标要求（响应时间/吞吐量） | ALB 监听规则（端口/调度算法）、加密方案查询性能对比测试结果 |
+| 系统组件 | 组件列表（C1-C9）+ 关键功能 | 每个组件的子模块、技术实现（如 Flink/Netty/Kafka 的具体用途） |
+| 数据转换 | 无（LLD 不涉及） | CRM 七张表的同步策略（Override/Delta append）、ETL 处理时间窗口、文件格式规范 |
+| 安全配置 | 安全要求和合规框架 | Nginx TLS 配置要求（密钥长度/有效期/禁用密码套件/HSTS）、VPC 流量加密实施步骤 |
 
-```markdown
-# [项目名] Technical Specification
+#### Tech Spec 完整章节结构
 
-**版本：** vX.X
-**日期：** YYYY-MM-DD
-**基于 LLD 版本：** vX.X（YYYY-MM-DD）
+基于 Westk TP1 实战版本：
 
-## 1. 文档目的与范围
-
-## 2. 系统组件详细规格
-  ### 2.1 CDP 集群
-    - 节点规格（CPU/内存/磁盘）
-    - 操作系统和内核版本
-    - 网络配置（IP 段、安全组规则）
-  ### 2.2 MAE 集群
-  ### 2.3 ETL 集群
-  ### 2.4 数据库（RDS）
-  ### 2.5 网络组件（LB/WAF/Firewall）
-
-## 3. 数据采集规格
-  ### 3.1 SDK 集成规格（前端）
-    - SDK 版本、初始化参数
-    - 事件命名规范
-    - 用户标识规范（ID 类型优先级）
-  ### 3.2 API 集成规格（后端）
-    - 端点地址、认证方式
-    - 请求格式、字段映射
-    - 错误处理和重试策略
-  ### 3.3 SFTP 批量导入规格
-    - 文件格式、字段定义
-    - 传输时间窗口、文件命名规范
-    - 数据质量校验规则
-
-## 4. 身份解析规格
-  - ID 类型定义和优先级
-  - 合并规则和冲突处理
-  - 隐私合规处理（匿名化、删除）
-
-## 5. 数据加密实施规格
-  ### 5.1 传输加密
-    - TLS 版本要求
-    - 证书管理（颁发机构、轮换周期）
-    - VPC 内部加密配置
-  ### 5.2 静态加密
-    - PII 字段清单（需加密的字段列表）
-    - 加密算法（AES-256）和密钥管理（KMS）
-    - 豁免字段清单及理由（需正式审批）
-
-## 6. 接口规格
-  ### 6.x [接口系统名]
-    - 接口方式（API/SDK/SFTP）
-    - 认证方式
-    - 数据格式和字段映射
-    - 频率限制和错误处理
-
-## 7. 安全配置规格
-  ### 7.1 网络访问控制
-    - 安全组规则（入站/出站）
-    - IP 白名单
-    - WAF 规则集
-  ### 7.2 身份认证
-    - SSO 配置（Azure AD / Entra ID）
-    - 角色权限矩阵
-  ### 7.3 审计日志
-    - 日志类型和保留策略
-    - SIEM 集成配置
-
-## 8. 监控告警规格
-  - 监控指标清单（含阈值）
-  - 告警规则和通知渠道
-  - Dashboard 配置
-
-## 9. 备份与恢复规格
-  - 备份策略（频率/保留期/存储位置）
-  - 恢复流程（RTO/RPO 验证步骤）
-  - DR 切换操作手册
-
-## 10. 部署流程
-  - 环境准备检查清单
-  - 部署顺序（依赖关系）
-  - 验证测试步骤
-
-## 11. 已知限制和风险
-  - 当前方案的技术限制
-  - 待解决的技术债务
-  - 升级路径
-
-## Appendix
-  - 配置文件模板
-  - 网络拓扑详图
-  - 数据字典
 ```
+封面 + 版本历史
+
+1. Introduction
+   1.1 Document Purpose（文档目的：作为实施蓝图，确保各方共同理解）
+
+2. Solution Description
+   2.1 Platform Capabilities Overview（能力域表格：Portal/数据接入/身份解析/分群/活动/渠道/旅程）
+   2.2 Integration with External Systems（PoC 阶段已完成的集成清单）
+   2.3 Data Sources & Channel Rollout Plan（数据源表 + 触达渠道表，含上线时间）
+
+3. Solution Design Principle
+   3.1 Design Considerations
+       3.1.1 Scalability（水平扩展/HA/负载均衡 + ALB 监听规则表）
+       3.1.2 Extensibility（4种集成模式：API/SFTP/SDK/Webhook）
+       3.1.3 Performance（批处理/实时查询/QPS 限速）
+       3.1.4 Upgradability（产品原生方法/配置优于定制/依赖管理）
+       3.1.5 Security
+           3.1.5.1 Data Encryption Strategy（加密原则 + CDP 功能影响评估表）
+           3.1.5.2 Encryption Architecture（KMS 信封加密 + 密钥层级表 + DEK 存储格式）
+           3.1.5.3 Encryption and Decryption Points（加密点表 + 解密点表 + IAM 角色配置表）
+           3.1.5.4 ID-Mapping Field Treatment（哈希 + 加密双重方法）
+           3.1.5.5 Exception Handling（异常场景处理表）
+           3.1.5.6 Compliance Position
+   3.2 Assumptions（数据量估算 + 资源供应 + 外部系统假设）
+   3.3 Constraints（网络/存储/外部依赖/安全约束）
+
+4. Business Architecture Design
+   4.1 Business Capability / Functions（业务能力矩阵：能力/描述/对应平台功能/对应业务目标）
+   4.2 Business Process Diagrams（Scenario A/B/C/D 详细描述）
+   4.3 System Flow - End User（9步流程）
+   4.4 System Flow - Business User
+   4.5 Solution Design for Data Encryption
+       4.5.1 Background & Goal
+       4.5.2 Query Performance Comparison（三种加密方案对比表）
+       4.5.3 Real-World Performance（实测数据）
+       4.5.4 Actual Business Impact by Functional Module（各模块影响表）
+   4.6 Security Architecture Design
+       4.6.1 Nginx HTTP → HTTPS Migration（实施步骤表 + 性能影响）
+       4.6.2 VPC Traffic Encryption Solution（两层加密架构 + 实施步骤表）
+   4.7 Application-Level Field Encryption（批量/实时加密模块详细流程）
+
+5. Components Catalogue
+   5.1 Core CDP Layer（Portal/数据接入/身份解析/分群/分析 详细描述）
+   5.2 Core MAE Layer（活动规划/旅程编排/渠道管理 详细描述）
+
+6. Logical Architecture Design
+   6.1 Logical Architecture Diagram（引用图）
+   6.2 Components（每个组件的技术实现细节）
+       6.2.1 Portal（SSO + RBAC）
+       6.2.2 Data Ingestion & ETL（Nginx + Edge + Flink + Kafka 四子组件）
+       6.2.3 Identity Resolution（跨渠道 ID 映射规则）
+       6.2.4 Segmentation & Tagging（多条件组合 + 自动标签触发规则）
+       6.2.5 Analytics & Dashboard（10种分析模型）
+       6.2.6 Campaign Planning（时间触发 + 事件触发两种模式）
+       6.2.7 Journey Orchestration（触发判断/定时控制/DND/重入控制）
+       6.2.8 Channel Management（预设渠道 + Webhook 自定义渠道）
+
+7. Data Architecture Design
+   7.1 Application Data Flow Diagram（接口表：源/目标/方法/协议/实时批量/数据类型/PII字段）
+   7.2 Data Specification（数据模型字段映射，引用 Tracking Plan）
+   7.3 Data Retention and Archive（完整数据保留表：每类数据/在线保留期/清理方式）
+
+8. Backup and Restore
+   8.1 Backup
+       8.1.1 Regular Backup（CDP Image Backup + MAE DTS 跨区域同步）
+           - 备份范围表（Kafka/Kudu/HDFS/SKV/MySQL/系统级）
+           - 备份保留策略表（每日/每周/每月/最新）
+           - 备份传输机制
+           - 备份验证和失败处理
+       8.1.2 Backup Component Summary（汇总表：组件/方法/频率/RPO/存储位置）
+   8.2 Restore
+       8.2.1 DR 模式（冷备 vs 热备对比表 + 选择理由）
+       8.2.2 RTO/RPO Targets（含 GB/T 20988-2007 合规性对照表）
+       8.2.3 Disaster Scenario Definition（触发条件 + 范围外说明）
+       8.2.4 Restore Procedure（8步顺序流程 + CDP 各组件恢复时间表）
+       8.2.5 Recovery Time Breakdown（各阶段时间估算表）
+       8.2.6 Failback Procedure（回切步骤 + 预计时间）
+       8.2.7 DR Drill Plan（演练频率/范围/环境/参与人）
+       8.2.8 Constraints and Risk Factors（风险/影响/缓解措施表）
+
+9. Data Conversion Architecture
+   9.1 Inclusion（CRM 七张表同步策略表 + SDK 实时采集 + 大陆数据导出）
+   9.2 Exclusion（PII 最小化原则 + 排除的数据类型）
+   9.3 Conversion Approach（ETL 时间窗口/文件格式/加密流程/错误处理）
+
+10. Interface Catalogue
+    接口表（INT-ID/标题/描述/发送方/接收方/触发/频率/接口方式/关键数据）
+
+11. Cloud Infrastructure Design
+    （云资源拓扑、VPC 配置、安全组规则等）
+
+Appendix
+    - Annex 1: Glossary（术语表）
+    - Annex 2: Reference Documents
+    - Annex 3: Tracking Plan（数据字典，字段映射详情）
+```
+
+#### 生成 Tech Spec 的工作流
+
+1. **从 LLD 直接复用的内容**（不需要重写，引用或简化）：
+   - Section 1 背景目标 → Tech Spec Chapter 1/2
+   - Section 3.1 组件表 → Tech Spec Chapter 5
+   - Section 3.3 逻辑架构图 → Tech Spec Chapter 6.1
+   - Section 3.6 数据流 → Tech Spec Chapter 7.1（补充接口 ID 和字段）
+   - Section 5.1 硬件资源表 → Tech Spec Chapter 11
+   - Section 6/7 HA/SLA → Tech Spec Chapter 8.2.2
+
+2. **Tech Spec 独有内容**（需要额外收集信息）：
+   - 加密实施细节（DEK 格式、端口号、RAM 角色）
+   - 数据保留策略（每类数据的具体保留期）
+   - 接口目录（INT-ID 编号、触发时间、文件格式）
+   - DR 恢复流程（8步流程、各组件恢复时间）
+   - 数据转换架构（CRM 表同步策略、ETL 时间窗口）
+   - 业务能力矩阵（能力/功能/业务目标对应关系）
+
+3. **需要客户/实施团队确认的内容**：
+   - 数据量估算（DAU/日事件量/历史数据量）
+   - 外部系统接口参数（SFTP 路径、API 端点、GPG 密钥管理方式）
+   - 合规标准（适用的法规：PDPO/PIPL/GDPR/GB/T 20988）
+   - DR 演练计划（频率、参与人）
 
 ---
 
