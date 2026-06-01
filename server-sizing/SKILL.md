@@ -1,6 +1,6 @@
 ---
 name: sd-server-sizing
-version: 0.7.0
+version: 0.8.0
 description: 新客户部署前或现有客户扩容时，评估 CDP（SA+SDH）和 MA（SF）的服务器资源需求，输出配置方案
 allowed-tools:
   - Bash
@@ -88,6 +88,49 @@ echo "CLIENT: ${_CLIENT:-unknown}"
 **DAU 估算事件量（无法提供时使用）：**
 - 普通 App：DAU × 50～100 事件/天
 - 电商/金融类 App：DAU × 100～200 事件/天
+
+### Phase 1.5：运行计算器（信息收集完成后立即执行）
+
+**所有涉及数字的计算必须通过脚本完成，禁止大模型自行推算。**
+
+收集完 Phase 1 的信息后，立即运行计算器脚本，获取计算结果，再进入后续 Phase。
+
+```bash
+python3 $SKILL_REPO/server-sizing/sizing_calc.py \
+  --daily-events  <日均事件量，如 5000万> \
+  --dau           <日活用户数，如 100万> \
+  --retention-days <保留天数，默认 365> \
+  --history-events <历史存量，无则填 0> \
+  --growth-multiplier <增长倍数，如 2> \
+  --arch          <x86 或 arm> \
+  --addons        <附加产品，逗号分隔：sf,abtest,saas_sat,report,data_import,jdbc_export> \
+  --data-nodes    <数据节点数，默认 3，标准集群按实际填写> \
+  [--sf-dau           <SF 日活，如 50万>] \
+  [--sf-daily-events  <SF 日事件量，如 3000万>] \
+  [--sf-audience      <SF 每天受众上限，如 2500万>]
+```
+
+**附加产品 key 对照：**
+
+| 产品 / 功能 | --addons 参数值 |
+|------------|----------------|
+| SF（MA/SFN） | `sf` |
+| Abtest | `abtest` |
+| SaaS SAT | `saas_sat` |
+| 报表 | `report` |
+| 数据导入（Hive/MySQL/Kafka 等） | `data_import` |
+| JDBC 导出 | `jdbc_export` |
+
+**计算器输出 review 要点（运行后逐项核查）：**
+
+1. **顺序盘**：`单块盘推荐规格` 是否在合理范围（500G～2T）；若 ≥2T 需考虑增加数据节点
+2. **CDP 档位**：`推荐档位` 是否与 Phase 3 配置规格表一致；`选型理由` 中的规划日事件量是否合理
+3. **附加资源**：`数据节点最终规格` 是否超出云厂商常见机型（如超过 64C/256G 需特别确认）
+4. **SF 档位**：`推荐档位` 是否与 Phase 8 集群档位表一致
+5. **警告**：所有 ⚠️ 警告必须在输出方案时向客户说明
+6. **ARM**：若 arch=arm，确认 CPU/内存/顺序盘均已 ×2
+
+review 通过后，将计算结果作为 Phase 2～8 的输入依据，不得修改计算数值。
 
 ### Phase 2：CDP 部署模式选择
 
@@ -193,6 +236,9 @@ echo "CLIENT: ${_CLIENT:-unknown}"
 - 针对以上这几类会增加资源开销的环境，目前很难给出量化的资源，请提前管理客户预期，避免后续扩容困难
 
 ### Phase 4：顺序盘容量计算
+
+> **此 Phase 的计算结果由 Phase 1.5 的计算器脚本输出，直接使用脚本结果，无需手动计算。**
+> 以下公式和说明供理解和 review 使用。
 
 顺序盘占用空间的数据来源：
 - **event 数据**：有基本评估方法，是计算主体
