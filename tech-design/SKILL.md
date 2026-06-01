@@ -1,6 +1,6 @@
 ---
 name: sd-tech-design
-version: 0.2.0
+version: 0.3.0
 description: 根据项目背景和需求，生成 LLD PPT 框架、架构图（draw.io XML）和 Technical Specification 文档
 allowed-tools:
   - Bash
@@ -195,61 +195,80 @@ Appendix
 
 ---
 
-### Phase 3：架构图生成（draw.io XML）
+### Phase 3：架构图生成（draw.io）
 
-**生成三类图，每类图输出 draw.io XML 格式，可直接导入 draw.io 编辑。**
+**使用模板快速生成，不从零手写 XML。**
 
-#### 3.1 逻辑架构图（Logical Architecture Diagram）
+#### 3.1 准备客户配置文件
 
-展示系统组件之间的逻辑关系：数据来源 → 采集层 → 处理层 → 存储层 → 应用层 → 下游系统。
+在项目目录创建 `diagram_config.json`，填写客户专有名词：
 
-**标准图层结构：**
-```
-[数据来源层]
-  前端渠道：小程序 / App / 网站（SDK 采集）
-  后端系统：CRM / 票务 / POS / RSVP（API/SFTP）
-
-[采集与处理层]
-  ETL 集群（批量处理）
-  实时采集（SDK → HTTP API）
-
-[CDP 核心层]
-  数据摄取 → 身份解析 → 统一档案 → 标签/细分 → 分析
-
-[MAE 层]
-  受众订阅（Kafka）→ 活动编排 → 渠道投递（SendCloud/Push/SMS）
-
-[用户访问层]
-  业务用户（CDP Portal + SSO）
-  运维用户（JumpServer）
-```
-
-**draw.io XML 模板（逻辑架构图骨架）：**
-```xml
-<mxfile>
-  <diagram name="Logical Architecture">
-    <mxGraphModel>
-      <root>
-        <mxCell id="0"/>
-        <mxCell id="1" parent="0"/>
-        <!-- 数据来源层 -->
-        <mxCell id="src1" value="Mini-program" style="rounded=1;fillColor=#dae8fc;" vertex="1" parent="1">
-          <mxGeometry x="40" y="40" width="120" height="40" as="geometry"/>
-        </mxCell>
-        <!-- 根据实际组件继续添加 -->
-      </root>
-    </mxGraphModel>
-  </diagram>
-</mxfile>
+```json
+{
+  "CLIENT": "客户简称",
+  "CLIENT_SYSTEMS": "客户系统总称（如 ACME Systems）",
+  "BUSINESS_USER": "业务用户称呼（如 ACME Employee）",
+  "EMAIL_SERVICE": "邮件服务商（如 SendCloud / Mailchimp）",
+  "FRONTEND_1": "主要前端渠道（如 Mini-Program）",
+  "FRONTEND_2": "次要前端渠道（如 Website）",
+  "FRONTEND_3": "第三前端渠道（如 Mobile App）",
+  "FRONTEND_4": "其他渠道（如 Other Channels）",
+  "SOCIAL_MEDIA": "社交媒体平台名称",
+  "SYSTEM_1": "核心业务系统1（如 CRM / Ticketing System）",
+  "SYSTEM_2": "核心业务系统2（如 ERP / Business Data）",
+  "SYSTEM_3": "核心业务系统3（如 CRM）",
+  "SYSTEM_4": "Future 系统1（如 RSVP）",
+  "SYSTEM_5": "Future 系统2（如 Retail System）",
+  "SYSTEM_6": "Future 系统3（如 POS）",
+  "SYSTEM_7": "Future 系统4",
+  "SYSTEM_8": "Future 系统5"
+}
 ```
 
-> 实际生成时，根据客户的具体组件列表填充完整 XML，包含所有节点、连线、分组框和图例。
+#### 3.2 运行生成脚本
 
-#### 3.2 基础设施架构图（Infrastructure Architecture Diagram）
+```bash
+python3 $SKILL_REPO/tech-design/diagram-templates/gen_diagrams.py \
+  --config diagram_config.json \
+  --output $PROJECT_DIR/tech-design/diagrams/
+```
 
-展示云资源部署拓扑：VPC 分区、子网、安全组件、负载均衡、跨区域连接。
+一次生成 6 个文件：
 
-**标准分区结构（以阿里云为例）：**
+| 文件 | 用途 | LLD 章节 |
+|------|------|---------|
+| `Logical_Architecture_<客户>.drawio` | 系统组件逻辑关系 | Section 3.3 |
+| `Data_Flow_<客户>.drawio` | CDP & MAE 数据流（含 PII 标注） | Section 3.6 |
+| `System_Flow_EndUser_<客户>.drawio` | 最终用户视角系统流 | Section 3.4 |
+| `System_Flow_Employee_<客户>.drawio` | 业务用户视角系统流 | Section 3.4 |
+| `System_Flow_Maintenance_<客户>.drawio` | 运维用户视角系统流 | Section 3.4 |
+| `Functional_Architecture_<客户>.drawio` | 系统内部功能模块详图 | Appendix |
+
+#### 3.3 生成后必做的调整
+
+生成的文件是 Westk 结构的通用化版本，需要根据客户实际情况调整：
+
+**必须调整：**
+- 删除客户不涉及的 Future 节点（灰色虚线节点）
+- 修改连线标签（数据字段名、协议、频率）
+- 更新地域标注（HK/SZ → 客户实际云区域）
+- 调整 Data Flow 图中的 PIPL/数据驻留标注（按客户合规要求）
+
+**可选调整：**
+- 增加客户特有的系统节点
+- 调整 CDP/MAE 内部模块（如客户不用 MAE，删除 MAE 相关节点）
+- 修改 Legend 中的颜色说明文字
+
+**设计规范参考：**
+```
+$SKILL_REPO/tech-design/diagram-templates/DIAGRAM_GUIDE.md
+```
+
+#### 3.4 基础设施架构图（Infrastructure Architecture）
+
+基础设施架构图（Section 3.5.1）与云厂商强相关，**不提供通用模板**，需根据客户云环境从头绘制。
+
+标准分区结构（以阿里云为例）：
 ```
 [互联网区]
   DNS / GTM / CDN
@@ -258,40 +277,27 @@ Appendix
   Cloud Firewall / WAF / ALB（公网）
   SFTP Server / JumpHost
 
-[应用区 - 主区域（如 HK）]
+[应用区 - 主区域]
   VPC
   ├── 公共子网：NAT Gateway / EIP
   ├── 应用子网：CDP 集群 / MAE 集群 / ETL 集群
   └── 数据子网：RDS（主备多可用区）
 
-[应用区 - DR 区域（如 SG）]
+[DR 区域]
   VPC（镜像结构）
 
 [跨区域连接]
-  CEN（Cloud Enterprise Network）
+  CEN / VPN
 
 [安全服务]
   KMS / Anti-DDoS / SecurityCenter
 ```
 
-#### 3.3 数据流图（Data Flow Diagram）
-
-展示数据从采集到消费的完整路径，区分 CDP 数据流和 MAE 数据流。
-
-**CDP 数据流关键节点：**
-```
-前端 SDK → HTTP API → CDP 摄取层
-后端系统 → API/SFTP → ETL → CDP 摄取层
-CDP 摄取层 → 身份解析 → 统一档案 → Kafka → MAE
-CDP 摄取层 → 数据存储（Kafka/Kudu/HDFS/SKV/MySQL）
-```
-
-**MAE 数据流关键节点：**
-```
-Kafka（CDP 输出）→ MAE 受众服务 → 活动逻辑
-活动逻辑 → SendCloud API → 最终用户（邮件）
-活动逻辑 → Push 服务 → 最终用户（App Push）
-```
+绘制要点：
+- 用虚线框划定 VPC 和子网边界
+- 用不同颜色区分 DMZ / 应用区 / 数据区
+- 标注流量路径（HK 用户流量 / 大陆用户流量 / 运维流量）
+- 标注加密方式（HTTPS / VPC Traffic Encryption / TLS）
 
 ---
 
