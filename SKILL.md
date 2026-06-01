@@ -117,7 +117,7 @@ echo "PENDING_FEEDBACK: $_PENDING_FEEDBACK"
 ```
 可用 skill：
   /sd-tracking-setup-e2e   埋点全链路交付（方案设计 → 造数 → 导入）
-  /sd-event-validation     埋点数据校验与异常排查
+  /sd-data-validation     数据校验（事件、用户属性、分群结果）
   /sd-server-sizing        服务器资源评估与扩容建议
   /sd-sit-uat              上线前 SIT/UAT 测试设计与执行
   /sd-tech-design          技术方案与架构图输出
@@ -336,7 +336,7 @@ DELIVERY.md 已生成，共 <N> 个交付物条目，与项目计划表里程碑
 | 用户描述 | 推荐 |
 |---------|------|
 | 埋点、数据采集、tracking、造数、模拟数据、元数据导入 | `/sd-tracking-setup-e2e` |
-| 数据异常、校验、验证、埋点上线后 | `/sd-event-validation` |
+| 数据异常、校验、验证、数据上线后、数据质量 | `/sd-data-validation` |
 | 服务器、资源评估、扩容、部署配置 | `/sd-server-sizing` |
 | SIT、UAT、测试、上线验收 | `/sd-sit-uat` |
 | 技术方案、架构图、评审材料 | `/sd-tech-design` |

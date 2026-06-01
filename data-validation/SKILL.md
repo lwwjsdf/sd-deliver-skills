@@ -1,7 +1,7 @@
 ---
-name: sd-event-validation
+name: sd-data-validation
 version: 0.1.0
-description: 埋点上线后验证数据正确性，或客户反馈数据异常时使用
+description: 数据上线后验证数据正确性，覆盖事件数据、用户属性、分群结果等多种校验场景，或客户反馈数据异常时使用
 allowed-tools:
   - Bash
   - Read
