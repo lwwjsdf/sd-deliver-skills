@@ -113,7 +113,7 @@ sdeliver check
 ```
 /sdeliver
 /sd-tracking-setup-e2e
-/sd-event-validation
+/sd-data-validation
 /sd-faq
 ```
 
@@ -123,7 +123,7 @@ sdeliver check
 |-------|----------|------------|
 | [sdeliver](./SKILL.md) | 项目状态感知、onboard、skill 调度入口 | 全自动 |
 | [tracking-setup-e2e](./tracking-setup-e2e/SKILL.md) | 客户新项目启动，需要完整的数据采集和分析能力 | Phase 3/4a/4b 全自动 |
-| [event-validation](./event-validation/SKILL.md) | 埋点上线后验证数据正确性，或数据异常排查 | 全自动 |
+| [data-validation](./data-validation/SKILL.md) | 数据上线后验证数据正确性，覆盖事件、用户属性、分群结果 | 全自动 |
 | [server-sizing](./server-sizing/SKILL.md) | 新客户部署前或扩容时评估服务器资源 | 全自动（纯计算） |
 | [sit-uat](./sit-uat/SKILL.md) | 项目上线前的系统集成测试或用户验收测试 | 文档生成 |
 | [tech-design](./tech-design/SKILL.md) | 项目启动前输出技术方案和架构图 | 文档生成 |
