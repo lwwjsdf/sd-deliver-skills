@@ -1,6 +1,6 @@
 ---
 name: sd-server-sizing
-version: 0.2.0
+version: 0.3.0
 description: 新客户部署前或现有客户扩容时，评估 CDP（SA+SDH）和 MA（SF）的服务器资源需求，输出配置方案
 allowed-tools:
   - Bash
@@ -199,17 +199,46 @@ echo "CLIENT: ${_CLIENT:-unknown}"
 - 云主机：磁盘可按需扩容，顺序盘可适当保守
 - 物理机：不便扩容，配置整体更高，参考 Excel 模板中的物理机配置
 
-### Phase 6：云厂商磁盘类型映射
+### Phase 6：硬件性能标准核查
 
-| 云厂商 | 系统盘 | 元数据盘/随机数据盘（SSD） | 顺序数据盘/暂存盘（高性能） |
-|--------|--------|--------------------------|--------------------------|
-| 阿里云 | 高效云盘 | SSD云盘 | 高效云盘 |
-| 腾讯云 | 高性能云盘 | 通用型SSD | 高性能云盘 |
-| 华为云 | 高IO盘 | 通用型SSD | 高IO盘 |
-| AWS | SSD云盘 | SSD云盘 | 高性能云盘 |
-| Google Cloud | Balanced persistent disk | Performance(SSD) persistent disk | Balanced persistent disk |
-| Azure | 标准HDD | 标准SSD | 标准HDD |
-| UCloud | 普通云硬盘 | RSSD云硬盘 | 普通云硬盘 |
+在输出配置方案前，需确认客户所选硬件满足以下最低性能要求。
+
+#### 磁盘性能要求
+
+| 磁盘类型 | 吞吐标准 | IOPS 标准 | 用途说明 |
+|---------|---------|----------|---------|
+| 系统盘 | ≥120MB/s | ≥120 | 安装操作系统，存放少量临时日志 |
+| 顺序数据盘 | ≥120MB/s | ≥120 | HDFS、Kafka、Yarn、Impala 大数据组件数据 |
+| 数据接入暂存盘 | ≥120MB/s | ≥120 | 接收 Nginx 埋点数据 |
+| 元数据盘 | ≥150MB/s | ≥5000 | 安装神策组件，存储元数据；需频繁读写 |
+| 随机数据盘 | ≥150MB/s | ≥5000 | 存放 Kudu、SKV 数据（用户数据相关）；需频繁读写 |
+| 混合数据盘（单机） | ≥150MB/s | ≥5000 | 兼顾顺序+随机角色，存放 Nginx 埋点、HDFS、Kafka、Kudu、SKV 等；需频繁读写 |
+
+**云厂商磁盘类型推荐（满足要求且性价比较高的型号）：**
+
+| 盘用途 | 阿里云 | 腾讯云 | 华为云 | AWS | UCloud | Google Cloud | Azure |
+|--------|--------|--------|--------|-----|--------|--------------|-------|
+| 系统盘 / 顺序盘 / 暂存盘 | 高效云盘 | 高性能云盘 | 高IO盘 | GP3 | 普通云硬盘 | Balanced persistent disk | 标准HDD |
+| 元数据盘 / 随机盘 / 混合盘 | SSD云盘 / ESSD云盘 | 通用型SSD云硬盘 | 通用型SSD | GP3（IOPS>3000 需额外付费） | RSSD云硬盘 | Performance(SSD) persistent disks | 高级SSD |
+
+**重要注意事项：**
+- **AWS GP3**：默认 IOPS 为 3000，不满足元数据盘/随机盘/混合盘 ≥5000 的要求，需要额外付费提升 IOPS
+- **阿里云**：U1 机型和 R6 机型的 IO 限制不符合标准；R7 及更高机型的随机盘/元数据盘/混合盘只能选 ESSD 云盘（ESSD PL0 满足要求且价格相对较低）
+- **当前策略**：可按默认配置购买，后续使用中如监控发现 IOPS 瓶颈，再要求客户付费购买更高 IOPS（需提前告知客户）
+- 无论何种磁盘类型，最终均需满足上述吞吐和 IOPS 标准
+
+#### CPU 性能要求
+
+| 最低核数 | events per second（sysbench 素数计算） |
+|---------|--------------------------------------|
+| ≥8C | ≥14000 |
+
+- **events per second**：每秒处理的事件数量，用 sysbench 工具测试 CPU 每秒的素数计算能力
+- CPU 核数 <8C，或 event 计算能力 <14000 时，属于不符合标准，该 CPU 型号性能过低，会影响神策集群服务
+- **必须支持的 CPU 指令集**：avx2, avx, ssse3, sse4, sse4_2, popcnt, bmi1, bmi2, pclmulqdq
+- 参考链接：https://zhuanlan.zhihu.com/p/642590764
+
+**ARM 架构补充**：ARM CPU 需满足等效计算能力，且所有存储配置 double（见 Phase 5）。
 
 ### Phase 7：输出配置方案
 
