@@ -46,12 +46,15 @@ class Event:
 
         props: Dict[str, Any] = {}
         props.update(self.properties)
-        # 公共属性固定值，覆盖 schema 随机生成的值
+        # 公共属性默认值 — 仅在 property_enums 未覆盖时生效
         props["$lib"] = "python"
         props["$lib_version"] = "1.0.0"
-        props["platformType"] = self.platform
-        props["applicationName"] = "WeChat" if self.platform == "MP" else "Web"
-        props["version"] = "1.0.0"
+        if "platformType" not in props:
+            props["platformType"] = self.platform
+        if "applicationName" not in props:
+            props["applicationName"] = "WeChat" if self.platform == "MP" else "Web"
+        if "version" not in props:
+            props["version"] = "1.0.0"
         props["isSuccess"] = self.is_success
         if not self.is_success and self.failure_reason:
             props["failureReason"] = self.failure_reason
@@ -106,6 +109,10 @@ class PropertyEnumResolver:
         spec = self._enums.get(name)
         if spec is None:
             return None
+
+        # Scalar value (e.g. applicationName: WestK)
+        if not isinstance(spec, (list, dict)):
+            return spec
 
         if isinstance(spec, list):
             if not spec:
@@ -335,7 +342,7 @@ class EventSequencer:
             for rep_idx in range(repeat_count):
                 ts = current_time_ms + rep_idx * 30_000  # 30 s between repeats
 
-                props = self._build_properties(edef, user, context)
+                props = self._build_properties(edef, user, context, ts=ts)
 
                 event = Event(
                     event_name=edef.event,
@@ -361,7 +368,7 @@ class EventSequencer:
         return events
 
     def _build_properties(
-        self, edef: EventDef, user: User, context: dict
+        self, edef: EventDef, user: User, context: dict, ts: int = 0
     ) -> Dict[str, Any]:
         """
         Build the properties dict for a single event.
@@ -402,6 +409,8 @@ class EventSequencer:
                 context["session_scene"] = props["$scene"]
 
         # 3. Fill remaining schema properties, with property_enums taking priority
+        from datetime import datetime as _datetime
+        event_dt = _datetime.fromtimestamp(ts / 1000) if ts else None
         schema = self.tracking_plan.get_event_schema(edef.event)
         if schema:
             for prop_def in schema.properties:
@@ -411,7 +420,13 @@ class EventSequencer:
                     if resolved is not None:
                         props[prop_def.name] = resolved
                     else:
-                        props[prop_def.name] = self.tracking_plan.generate_value(prop_def)
+                        props[prop_def.name] = self.tracking_plan.generate_value(prop_def, event_dt)
+
+        # 4. Allow property_enums to override hardcoded public fields (e.g. applicationName)
+        for override_key in ("applicationName", "version", "platformType"):
+            resolved = self._prop_resolver.resolve(override_key)
+            if resolved is not None:
+                props[override_key] = resolved
 
         return props
 
@@ -430,11 +445,17 @@ class EventSequencer:
         gap_ms = random.randint(60, 300) * 1000
         ts = last_time_ms + gap_ms
 
+        from datetime import datetime as _datetime
+        event_dt = _datetime.fromtimestamp(ts / 1000)
         schema = self.tracking_plan.get_event_schema(event_name)
         props: Dict[str, Any] = {}
         if schema:
             for prop_def in schema.properties:
-                props[prop_def.name] = self.tracking_plan.generate_value(prop_def)
+                resolved = self._prop_resolver.resolve(prop_def.name)
+                if resolved is not None:
+                    props[prop_def.name] = resolved
+                else:
+                    props[prop_def.name] = self.tracking_plan.generate_value(prop_def, event_dt)
 
         return Event(
             event_name=event_name,

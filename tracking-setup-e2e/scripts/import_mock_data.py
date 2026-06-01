@@ -103,7 +103,7 @@ def confirm_import(batch_info: dict, batch_file: str, data_url: str) -> bool:
             print("请输入 y 或 n")
 
 
-def import_data(batch_file: str, data_url: str):
+def import_data(batch_file: str, data_url: str, skip_confirm: bool = False):
     """导入 batch 数据到神策"""
     if not Path(batch_file).exists():
         print(f"错误：找不到数据文件：{batch_file}")
@@ -126,7 +126,7 @@ def import_data(batch_file: str, data_url: str):
         print(f"    {event}: {count}")
 
     # 二次确认
-    if not confirm_import(batch_info, batch_file, data_url):
+    if not skip_confirm and not confirm_import(batch_info, batch_file, data_url):
         sys.exit(0)
 
     # 使用 BatchConsumer 批量发送（每 100 条批量发送）
@@ -250,7 +250,7 @@ def main():
 
         batch_file = str(jsonl_files[0])
 
-    import_data(batch_file, data_url)
+    import_data(batch_file, data_url, skip_confirm=args.yes)
 
 
 if __name__ == "__main__":

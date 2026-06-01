@@ -396,6 +396,52 @@ class SensorsOpenAPI:
         """获取执行中的任务详情列表"""
         return self._request("POST", "/api/v3/resource-management/query/task/executing")
 
+    # ── 自定义查询 ──
+
+    def custom_query(self, sql: str, timeout: int = 60) -> dict:
+        """执行自定义 SQL 查询（神策「自定义查询」功能）。
+
+        sql: 标准 SQL，表名为 events / users，时间字段为 date（DATE 类型）。
+        返回: {"columns": [...], "rows": [[...], ...]} 或错误信息。
+        """
+        return self._request(
+            "POST",
+            "/api/v3/analytics/v1/custom-query/query",
+            {"sql": sql},
+        )
+
+    def query_event_counts(self, event_names: list, start_date: str, end_date: str) -> dict:
+        """查询指定事件在日期范围内的总条数。
+
+        event_names: 事件名列表
+        start_date / end_date: 'YYYY-MM-DD'
+        返回: {event_name: count, ...}，查询失败时返回空 dict。
+        """
+        if not event_names:
+            return {}
+        names_sql = ", ".join(f"'{n}'" for n in event_names)
+        sql = (
+            f"SELECT event, count(*) AS cnt FROM events "
+            f"WHERE date >= '{start_date}' AND date <= '{end_date}' "
+            f"AND event IN ({names_sql}) "
+            f"GROUP BY event"
+        )
+        try:
+            resp = self.custom_query(sql)
+            if not self._ok(resp):
+                logger.warning("自定义查询失败: %s", resp.get("message", ""))
+                return {}
+            rows = resp.get("data", {}).get("rows", [])
+            cols = resp.get("data", {}).get("columns", [])
+            if not rows or not cols:
+                return {}
+            event_idx = next((i for i, c in enumerate(cols) if c.get("name") == "event"), 0)
+            cnt_idx = next((i for i, c in enumerate(cols) if c.get("name") == "cnt"), 1)
+            return {row[event_idx]: int(row[cnt_idx]) for row in rows}
+        except Exception as e:
+            logger.warning("查询事件条数失败: %s", e)
+            return {}
+
 
 # 使用示例
 if __name__ == "__main__":
