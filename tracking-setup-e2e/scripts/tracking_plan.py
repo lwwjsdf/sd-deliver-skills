@@ -111,6 +111,126 @@ def _rand_string(length: int = 8) -> str:
 
 
 # ---------------------------------------------------------------------------
+# Semantic value generator — infers format from field name
+#
+# LAYERING PRINCIPLE:
+#   tracking_plan.py  → universal format rules (IDs, amounts, dates, contacts)
+#                        applies to any project without modification
+#   business_logic.yaml property_enums → industry/project-specific content
+#                        (product names, search keywords, app name, login methods)
+# ---------------------------------------------------------------------------
+
+import datetime as _dt
+
+# Patterns: (regex on field name, generator callable)
+# Checked in order; first match wins.
+_SEMANTIC_PATTERNS: list[tuple[re.Pattern, object]] = []
+
+
+def _reg(pattern: str, fn):
+    _SEMANTIC_PATTERNS.append((re.compile(pattern, re.IGNORECASE), fn))
+
+
+# ── ID / Code formats (universal) ────────────────────────────────────────────
+_reg(r"orderid|refundid|ordernum",
+     lambda: f"ORD-{random.randint(100000, 999999)}")
+_reg(r"productid|productcode",
+     lambda: f"P{random.randint(10000, 99999):05d}")
+_reg(r"ticketid(?!list)|ticketid$",
+     lambda: f"TK-{random.randint(100000, 999999)}")
+_reg(r"membershipcardid|membershipnumber",
+     lambda: f"M-{_dt.date.today().year}-{random.randint(100000, 999999):06d}")
+_reg(r"voucherid(?!list)|voucherid$",
+     lambda: f"VC-{random.randint(10000, 99999)}")
+_reg(r"\bid\b|_id$|id$",
+     lambda: f"ID-{random.randint(10000, 99999)}")
+_reg(r"code$",
+     lambda: f"C{random.randint(1000, 9999)}")
+
+# ── Page / URL (universal format, project overrides paths via property_enums) ─
+_reg(r"pagename|landingpagename",
+     lambda: random.choice(["首页", "列表页", "详情页", "搜索结果页", "个人中心"]))
+_reg(r"url|pageurl|landingpageurl",
+     lambda: random.choice([
+         "/pages/index/index", "/pages/list/index",
+         "/pages/detail/index", "/pages/search/result",
+         "/pages/profile/index",
+     ]))
+
+# ── Amounts (universal ranges) ────────────────────────────────────────────────
+_reg(r"discountamount|promotionamount",
+     lambda: round(random.uniform(0, 200), 2))
+_reg(r"paidamount|refundamount",
+     lambda: round(random.uniform(100, 2000), 2))
+_reg(r"price|amount|value",
+     lambda: round(random.uniform(50, 3000), 2))
+
+# ── Quantities / rankings (universal) ────────────────────────────────────────
+_reg(r"quantity|numer|number(?!$)",
+     lambda: random.randint(1, 5))
+_reg(r"sort|rank|depth",
+     lambda: random.randint(1, 20))
+_reg(r"duration",
+     lambda: round(random.uniform(5, 300), 1))
+
+# ── Dates (universal formats, anchored to event timestamp) ───────────────────
+# These lambdas accept an optional base_date; _semantic_value injects it.
+_reg(r"calendar",
+     lambda base=None: (
+         (base or _dt.date.today()) + _dt.timedelta(days=random.randint(1, 180))
+     ).strftime("%Y.%m.%d"))
+_reg(r"expirationdate|expiry",
+     lambda base=None: (
+         _dt.datetime.combine(base or _dt.date.today(), _dt.time()) +
+         _dt.timedelta(days=random.randint(30, 730))
+     ).strftime("%Y-%m-%dT%H:%M:%S"))
+
+# ── Contact / identity (universal formats) ───────────────────────────────────
+_reg(r"email",
+     lambda: f"user{random.randint(100, 999)}@example.com")
+_reg(r"mobile|phone",
+     lambda: f"+86 138-{random.randint(1000,9999)}-{random.randint(1000,9999)}")
+_reg(r"residence",
+     lambda: random.choice(["中国 香港", "中国 北京市", "中国 上海市", "中国 广州市", "海外"]))
+_reg(r"transferperson",
+     lambda: f"1{random.randint(30,99)}****{random.randint(1000,9999)}")
+
+# ── UTM (universal channel names) ────────────────────────────────────────────
+_reg(r"utm_source",
+     lambda: random.choice(["wechat", "weibo", "xiaohongshu", "douyin", "direct"]))
+_reg(r"utm_medium",
+     lambda: random.choice(["social", "cpc", "email", "organic"]))
+
+# ── Version (universal format) ───────────────────────────────────────────────
+_reg(r"^version$",
+     lambda: random.choice(["1.0.0", "1.0.1", "1.1.0"]))
+
+# ── List fields fallback (universal) ─────────────────────────────────────────
+# Project-specific list content should be set via property_enums in business_logic.yaml
+_reg(r"idlist$|typelist$|namelist$",
+     lambda: _rand_string(8))
+
+
+def _semantic_value(prop_name: str, ref_dt: "_dt.datetime | None" = None) -> "object | None":
+    """Return a semantically appropriate value based on field name, or None if no pattern matches.
+
+    ref_dt: the event timestamp to use as reference for date/time generation.
+            Defaults to now() when None.
+    """
+    name = prop_name.lstrip("$")
+    base = ref_dt or _dt.datetime.now()
+    base_date = base.date()
+
+    for pattern, fn in _SEMANTIC_PATTERNS:
+        if pattern.search(name):
+            # Inject ref date into date-sensitive lambdas
+            if pattern.pattern in (r"calendar", r"expirationdate|expiry"):
+                return fn(base_date)
+            return fn()
+    return None
+
+
+# ---------------------------------------------------------------------------
 # TrackingPlan
 # ---------------------------------------------------------------------------
 
@@ -383,17 +503,21 @@ class TrackingPlan:
         """Check if the tracking plan contains any Mini Program preset events ($MP*)."""
         return any(name.startswith("$") for name in self.list_events())
 
-    def generate_value(self, prop: PropertyDef) -> object:
+    def generate_value(self, prop: PropertyDef, event_ts: "_dt.datetime | None" = None) -> object:
         """
         Generate a plausible mock value for a property.
+
+        event_ts: event timestamp used as reference for date/time generation.
+                  Defaults to now() when None.
 
         Rules (in priority order):
           1. enum_values present → random.choice(enum_values)
           2. value_type == boolean/bool → random.choice([True, False])
-          3. value_type == number/int/float/double → round(random.uniform(1, 10000), 2)
-          4. value_type == list → random.choice(enum_values) if enum_values else "Option_A"
-          5. value_type == datetime → ISO-8601 string
-          6. default → random 8-char alphanumeric string
+          3. value_type == list → random.choice(enum_values) if enum_values else _rand_string
+          4. value_type == datetime → ISO-8601 string anchored to event_ts
+          5. Semantic pattern match on field name → domain-appropriate value
+          6. value_type == number → round(random.uniform(1, 1000), 2)
+          7. default → random 8-char alphanumeric string
         """
         vt = prop.value_type.lower()
 
@@ -403,24 +527,27 @@ class TrackingPlan:
         if vt in ("boolean", "bool"):
             return random.choice([True, False])
 
-        if vt in ("number", "int", "integer", "float", "double"):
-            return round(random.uniform(1, 10000), 2)
-
         if vt == "list":
             if prop.enum_values:
                 return random.choice(prop.enum_values)
-            return "Option_A"
+            semantic = _semantic_value(prop.name, event_ts)
+            return semantic if semantic is not None else _rand_string(8)
 
         if vt == "datetime":
-            import datetime
-
-            base = datetime.datetime(2024, 1, 1)
-            delta = datetime.timedelta(
+            base = event_ts or _dt.datetime.now()
+            delta = _dt.timedelta(
                 days=random.randint(0, 365), seconds=random.randint(0, 86400)
             )
             return (base + delta).strftime("%Y-%m-%dT%H:%M:%S")
 
-        # default: random alphanumeric string
+        # Semantic match covers both string and number fields
+        semantic = _semantic_value(prop.name, event_ts)
+        if semantic is not None:
+            return semantic
+
+        if vt in ("number", "int", "integer", "float", "double"):
+            return round(random.uniform(1, 1000), 2)
+
         return _rand_string(8)
 
 

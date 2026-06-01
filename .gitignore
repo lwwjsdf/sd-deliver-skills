@@ -2,11 +2,15 @@
 .env
 
 # 客户文件（不提交到仓库）
+# 这些文件属于客户项目目录，不属于 skill repo
 *.xlsx
 *.xls
+*.docx
 *.jsonl
 *.jmx
 mock_data/
+references/
+rules/special/
 
 # Python
 __pycache__/

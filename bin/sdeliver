@@ -1,0 +1,193 @@
+#!/usr/bin/env bash
+# sdeliver — 神策数据交付 Skill 集合 CLI
+set -e
+
+SDELIVER_VERSION="0.1.0"
+REPO_DIR="$(cd "$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")/.." && pwd -P)"
+ENV_EXAMPLE="$REPO_DIR/.env.example"
+
+usage() {
+  cat <<EOF
+sdeliver v$SDELIVER_VERSION — 神策数据交付 Skill 集合
+
+用法:
+  sdeliver <command> [options]
+
+命令:
+  init <client-name> [dir]        初始化新客户项目目录
+  check                           检查当前项目配置是否完整
+  config <get|set|list> [k] [v]   读写持久化配置
+  version                         显示版本号
+
+示例:
+  sdeliver init westk ~/projects/westk
+  sdeliver check
+  sdeliver config list
+  sdeliver config set proactive false
+
+EOF
+}
+
+err() { echo "❌ $1" >&2; exit 1; }
+log() { echo "$1"; }
+
+# ── init ──────────────────────────────────────────────────────────────────────
+cmd_init() {
+  local client_name="$1"
+  local project_dir="$2"
+
+  [ -z "$client_name" ] && { echo "❌ 缺少参数"; echo ""; echo "用法: sdeliver init <client-name> [dir]"; echo "      sdeliver init <dir>"; exit 1; }
+
+  # If client_name looks like a path (contains / or starts with ~), treat it as
+  # project_dir and derive client_name from the last path component
+  if [[ "$client_name" == */* ]] || [[ "$client_name" == ~* ]]; then
+    project_dir="$client_name"
+    client_name="$(basename "$project_dir")"
+  fi
+
+  # Resolve project directory
+  if [ -z "$project_dir" ]; then
+    project_dir="$(pwd)/$client_name"
+  fi
+  project_dir="$(mkdir -p "$project_dir" && cd "$project_dir" && pwd -P)"
+
+  log ""
+  log "=== sdeliver init ==="
+  log ""
+  log "客户名称: $client_name"
+  log "项目目录: $project_dir"
+  log ""
+
+  # Check if already initialized
+  if [ -f "$project_dir/.env" ]; then
+    log "⚠️  目录已存在 .env，跳过初始化（不覆盖已有配置）"
+    log "   如需重新初始化，请手动删除 $project_dir/.env"
+    exit 0
+  fi
+
+  # Create directory structure
+  mkdir -p \
+    "$project_dir/references" \
+    "$project_dir/rules" \
+    "$project_dir/mock_data"
+
+  # Generate .env from template, pre-fill CLIENT_NAME
+  if [ ! -f "$ENV_EXAMPLE" ]; then
+    err "找不到 .env.example 模板: $ENV_EXAMPLE"
+  fi
+  sed "s|^CLIENT_NAME=.*|CLIENT_NAME=$client_name|" "$ENV_EXAMPLE" > "$project_dir/.env"
+
+  # Write .gitignore to protect sensitive files
+  cat > "$project_dir/.gitignore" <<'GITIGNORE'
+# 环境变量（含敏感信息）
+.env
+
+# 客户原始文件
+references/
+
+# 生成的数据文件
+mock_data/*.jsonl
+mock_data/*.txt
+mock_data/*.csv
+GITIGNORE
+
+  log "✅ 项目初始化完成:"
+  log ""
+  log "   $project_dir/"
+  log "   ├── .env                  ← 填写 CDP 连接信息"
+  log "   ├── references/           ← 放入 SOW、技术方案等项目文档"
+  log "   ├── PROJECT.md            ← onboard 后自动生成（项目档案）"
+  log "   ├── CLARIFICATION.md      ← onboard 后自动生成（信息澄清跟踪）"
+  log "   ├── rules/                ← business_logic.yaml 生成位置"
+  log "   └── mock_data/            ← 模拟数据生成位置"
+  log ""
+  log "下一步："
+  log "   1. cd $project_dir"
+  log "   2. 编辑 .env，填写 SA_HOST、SA_PROJECT、API_KEY"
+  log "   3. 将 SOW、技术方案等文档放入 references/"
+  log "   4. 在 Claude Code 中调用 /sdeliver"
+  log "      → 自动读取文档，生成项目档案 PROJECT.md"
+  log "      → 感知当前交付阶段，推荐下一步操作"
+}
+
+# ── check ─────────────────────────────────────────────────────────────────────
+cmd_check() {
+  # Find .env by walking up from cwd
+  local env_file=""
+  local dir="$(pwd)"
+  while [ "$dir" != "/" ]; do
+    if [ -f "$dir/.env" ]; then
+      env_file="$dir/.env"
+      break
+    fi
+    dir="$(dirname "$dir")"
+  done
+
+  if [ -z "$env_file" ]; then
+    err "未找到 .env 文件\n   请先运行: sdeliver init <client-name>"
+  fi
+
+  log "=== 项目配置检查 ==="
+  log "配置文件: $env_file"
+  log ""
+
+  # Source .env
+  set -a; . "$env_file"; set +a
+
+  local ok=1
+  _check_var() {
+    local var="$1" label="$2"
+    local val="${!var}"
+    if [ -z "$val" ]; then
+      log "  ❌ $label ($var) — 未填写"
+      ok=0
+    else
+      # Mask secrets
+      case "$var" in
+        API_KEY) log "  ✅ $label = ${val:0:8}..." ;;
+        *)       log "  ✅ $label = $val" ;;
+      esac
+    fi
+  }
+
+  _check_var SA_HOST        "CDP 地址"
+  _check_var SA_PROJECT     "项目 ID"
+  _check_var CLIENT_NAME    "客户名称"
+
+  log ""
+  log "── 按需填写 ──"
+  _check_var TRACKING_PLAN_PATH "埋点方案路径"
+  _check_var API_KEY            "Open API 密钥"
+  _check_var SA_TRACK_URL       "数据接收地址"
+
+  log ""
+  if [ "$ok" -eq 1 ]; then
+    log "✅ 基础配置完整，可以开始交付流程"
+  else
+    log "⚠️  请补全上方缺失的配置项后继续"
+  fi
+}
+
+# ── config ────────────────────────────────────────────────────────────────────
+cmd_config() {
+  local config_bin
+  config_bin="$(dirname "$(readlink -f "$0" 2>/dev/null || echo "$0")")/sdeliver-config"
+  [ ! -x "$config_bin" ] && config_bin="$(command -v sdeliver-config 2>/dev/null)" || true
+  [ -z "$config_bin" ] && err "sdeliver-config 未找到，请重新运行 ./setup"
+  "$config_bin" "$@"
+}
+
+# ── version ───────────────────────────────────────────────────────────────────
+cmd_version() {
+  echo "sdeliver v$SDELIVER_VERSION"
+}
+
+# ── Dispatch ──────────────────────────────────────────────────────────────────
+case "${1:-}" in
+  init)    shift; cmd_init "$@" ;;
+  check)   shift; cmd_check "$@" ;;
+  config)  shift; cmd_config "$@" ;;
+  version) cmd_version ;;
+  ""|help|--help|-h) usage ;;
+  *) err "未知命令: $1\n\n运行 sdeliver help 查看用法" ;;
+esac

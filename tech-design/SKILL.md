@@ -1,7 +1,50 @@
 ---
-name: tech-design
+name: sd-tech-design
+version: 0.1.0
 description: 项目启动前需要输出技术方案，或客户需要架构评审材料时使用
+allowed-tools:
+  - Bash
+  - Read
+  - Write
+  - AskUserQuestion
 ---
+
+## Preamble（每次调用时先执行）
+
+```bash
+_SKILL_REPO=$(sdeliver-config get skill_repo_path 2>/dev/null || echo "")
+_PROACTIVE=$(sdeliver-config get proactive 2>/dev/null || echo "true")
+
+_ENV_FILE=""
+_DIR="$(pwd)"
+while [ "$_DIR" != "/" ]; do
+  [ -f "$_DIR/.env" ] && _ENV_FILE="$_DIR/.env" && break
+  _DIR="$(dirname "$_DIR")"
+done
+
+if [ -n "$_ENV_FILE" ]; then
+  _CLIENT=$(grep '^CLIENT_NAME=' "$_ENV_FILE" | cut -d= -f2-)
+  _SA_HOST=$(grep '^SA_HOST=' "$_ENV_FILE" | cut -d= -f2-)
+  _SA_PROJECT=$(grep '^SA_PROJECT=' "$_ENV_FILE" | cut -d= -f2-)
+  _PROJECT_DIR="$(dirname "$_ENV_FILE")"
+else
+  _PROJECT_DIR="$(pwd)"
+fi
+
+echo "SKILL_REPO: ${_SKILL_REPO:-(未设置)}"
+echo "ENV_FILE: ${_ENV_FILE:-none}"
+echo "PROJECT_DIR: $_PROJECT_DIR"
+echo "CLIENT: ${_CLIENT:-unknown}"
+echo "SA_HOST: ${_SA_HOST:-(未填写)}"
+echo "SA_PROJECT: ${_SA_PROJECT:-(未填写)}"
+```
+
+**Preamble 输出处理：**
+
+- `ENV_FILE: none` → 停止，提示用户先运行 `sdeliver init <客户名>`
+- `SKILL_REPO` 含"未设置" → 停止，提示重新运行 `./setup`
+- 否则，输出：`客户: <CLIENT> | 环境: <SA_HOST>/<SA_PROJECT>`
+
 
 # 技术方案设计
 
@@ -115,3 +158,7 @@ sequenceDiagram
 **客户要求非标准架构：** 评估可行性后，在方案中说明与标准架构的差异和额外风险。
 
 **Mermaid 图表太复杂：** 拆分为多个子图，每个子图聚焦一个关注点。
+
+## Feedback
+
+使用过程中发现问题或有改进建议，随时调用 `/sd-feedback <描述>` 记录，无需中断当前工作。

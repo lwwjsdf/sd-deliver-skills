@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# sdeliver-config — 读写 ~/.sdeliver/config.yaml
+#
+# 用法:
+#   sdeliver-config get <key>
+#   sdeliver-config set <key> <value>
+#   sdeliver-config list
+set -e
+
+CONFIG_FILE="$HOME/.sdeliver/config.yaml"
+
+_usage() {
+  echo "Usage: sdeliver-config <get|set|list> [key] [value]" >&2
+  exit 1
+}
+
+_get() {
+  local key="$1"
+  [ -z "$key" ] && _usage
+  [ ! -f "$CONFIG_FILE" ] && return 1
+  grep -m1 "^${key}:" "$CONFIG_FILE" 2>/dev/null | sed "s/^${key}:[[:space:]]*//" | tr -d "'\""
+}
+
+_set() {
+  local key="$1" value="$2"
+  [ -z "$key" ] && _usage
+  mkdir -p "$(dirname "$CONFIG_FILE")"
+  touch "$CONFIG_FILE"
+  if grep -q "^${key}:" "$CONFIG_FILE" 2>/dev/null; then
+    # Update existing key (macOS-compatible sed)
+    sed -i '' "s|^${key}:.*|${key}: ${value}|" "$CONFIG_FILE"
+  else
+    echo "${key}: ${value}" >> "$CONFIG_FILE"
+  fi
+}
+
+_list() {
+  [ ! -f "$CONFIG_FILE" ] && echo "(no config yet — run ./setup)" && return
+  cat "$CONFIG_FILE"
+}
+
+case "${1:-}" in
+  get)  _get "$2" ;;
+  set)  _set "$2" "$3" ;;
+  list) _list ;;
+  *)    _usage ;;
+esac

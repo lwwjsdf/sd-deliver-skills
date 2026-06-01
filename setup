@@ -1,0 +1,186 @@
+#!/usr/bin/env bash
+# sdeliver setup — register skills with agent frameworks and install sdeliver CLI
+#
+# Usage:
+#   ./setup              # auto-detect installed agents
+#   ./setup --host claude
+#   ./setup --host hermes
+#   ./setup --host cursor
+#   ./setup --host opencode
+#   ./setup --host all   # install to all detected agents
+set -e
+
+REPO_DIR="$(cd "$(dirname "$0")" && pwd -P)"
+BIN_DIR="$HOME/.local/bin"
+
+# Skills directories per agent framework
+CLAUDE_SKILLS="$HOME/.claude/skills"
+HERMES_SKILLS="$HOME/.hermes/skills"
+CURSOR_SKILLS="$HOME/.cursor/skills"
+OPENCODE_SKILLS="$HOME/.config/opencode/skills"
+
+log() { echo "$1"; }
+err() { echo "❌ $1" >&2; exit 1; }
+
+# ── Symlink helper ────────────────────────────────────────────────────────────
+_link() {
+  local src="$1" dst="$2"
+  mkdir -p "$(dirname "$dst")"
+  ln -snf "$src" "$dst"
+}
+
+# ── Register skills into a given skills directory ─────────────────────────────
+# Root skill: create a clean dir with only SKILL.md symlinked (not the whole repo).
+# Sub-skills: symlink the subdir, prefixed with "sd-" to avoid name collisions.
+register_skills_to() {
+  local skills_dir="$1"
+  local agent_name="$2"
+  mkdir -p "$skills_dir"
+  local linked=()
+
+  # Root skill — only expose SKILL.md, not the entire repo.
+  # If a previous setup left a directory symlink pointing at the whole repo,
+  # remove it first so mkdir -p creates a real directory.
+  if [ -f "$REPO_DIR/SKILL.md" ]; then
+    skill_name="$(grep -m1 '^name:' "$REPO_DIR/SKILL.md" 2>/dev/null \
+      | sed 's/^name:[[:space:]]*//' | tr -d '[:space:]')"
+    [ -z "$skill_name" ] && skill_name="sdeliver"
+    target_dir="$skills_dir/$skill_name"
+    # Remove stale symlink if it points to the repo root (not a real dir)
+    if [ -L "$target_dir" ]; then
+      rm "$target_dir"
+    fi
+    mkdir -p "$target_dir"
+    ln -snf "$REPO_DIR/SKILL.md" "$target_dir/SKILL.md"
+    linked+=("$skill_name")
+  fi
+
+  # Sub-skills — use name: field as directory name (already has sd- prefix)
+  for skill_dir in "$REPO_DIR"/*/; do
+    [ -f "$skill_dir/SKILL.md" ] || continue
+
+    skill_name="$(grep -m1 '^name:' "$skill_dir/SKILL.md" 2>/dev/null \
+      | sed 's/^name:[[:space:]]*//' | tr -d '[:space:]')"
+    [ -z "$skill_name" ] && skill_name="$(basename "$skill_dir")"
+
+    _link "${skill_dir%/}" "$skills_dir/$skill_name"
+    linked+=("$skill_name")
+  done
+
+  log "  [$agent_name] ${#linked[@]} skills → $skills_dir"
+}
+
+# ── Install sdeliver CLI ──────────────────────────────────────────────────────
+install_cli() {
+  mkdir -p "$BIN_DIR"
+  chmod +x "$REPO_DIR/bin/sdeliver"
+  _link "$REPO_DIR/bin/sdeliver" "$BIN_DIR/sdeliver"
+
+  case ":$PATH:" in
+    *":$BIN_DIR:"*) ;;
+    *)
+      log ""
+      log "  ⚠️  $BIN_DIR is not in PATH. Add it:"
+      log "     echo 'export PATH=\"\$HOME/.local/bin:\$PATH\"' >> ~/.zshrc && source ~/.zshrc"
+      ;;
+  esac
+}
+
+# ── Parse args ────────────────────────────────────────────────────────────────
+HOST="auto"
+while [ $# -gt 0 ]; do
+  case "$1" in
+    --host) HOST="$2"; shift 2 ;;
+    --host=*) HOST="${1#--host=}"; shift ;;
+    -h|--help)
+      echo "Usage: ./setup [--host claude|hermes|cursor|opencode|all|auto]"
+      exit 0 ;;
+    *) err "Unknown option: $1" ;;
+  esac
+done
+
+case "$HOST" in
+  claude|hermes|cursor|opencode|all|auto) ;;
+  *) err "Unknown --host value: $HOST (expected claude, hermes, cursor, opencode, all, auto)" ;;
+esac
+
+# ── Detect which agents are installed ─────────────────────────────────────────
+INSTALL_CLAUDE=0
+INSTALL_HERMES=0
+INSTALL_CURSOR=0
+INSTALL_OPENCODE=0
+
+if [ "$HOST" = "auto" ]; then
+  command -v claude    >/dev/null 2>&1 && INSTALL_CLAUDE=1
+  command -v hermes    >/dev/null 2>&1 && INSTALL_HERMES=1
+  command -v cursor    >/dev/null 2>&1 && INSTALL_CURSOR=1
+  command -v opencode  >/dev/null 2>&1 && INSTALL_OPENCODE=1
+  # Also detect by existing skills dirs
+  [ -d "$CLAUDE_SKILLS" ]   && INSTALL_CLAUDE=1
+  [ -d "$HERMES_SKILLS" ]   && INSTALL_HERMES=1
+  [ -d "$CURSOR_SKILLS" ]   && INSTALL_CURSOR=1
+  [ -d "$OPENCODE_SKILLS" ] && INSTALL_OPENCODE=1
+  # Default to claude if nothing detected
+  if [ "$INSTALL_CLAUDE" -eq 0 ] && [ "$INSTALL_HERMES" -eq 0 ] && \
+     [ "$INSTALL_CURSOR" -eq 0 ] && [ "$INSTALL_OPENCODE" -eq 0 ]; then
+    INSTALL_CLAUDE=1
+  fi
+elif [ "$HOST" = "all" ]; then
+  INSTALL_CLAUDE=1; INSTALL_HERMES=1; INSTALL_CURSOR=1; INSTALL_OPENCODE=1
+elif [ "$HOST" = "claude" ];   then INSTALL_CLAUDE=1
+elif [ "$HOST" = "hermes" ];   then INSTALL_HERMES=1
+elif [ "$HOST" = "cursor" ];   then INSTALL_CURSOR=1
+elif [ "$HOST" = "opencode" ]; then INSTALL_OPENCODE=1
+fi
+
+# ── Main ──────────────────────────────────────────────────────────────────────
+log "=== sdeliver setup ==="
+log "Repo: $REPO_DIR"
+log ""
+
+# Guard: if $REPO_DIR/SKILL.md is a broken/self-referential symlink, remove it.
+# This can happen when a previous setup version symlinked the whole repo dir.
+if [ -L "$REPO_DIR/SKILL.md" ]; then
+  real=$(readlink "$REPO_DIR/SKILL.md" 2>/dev/null || echo "")
+  if [ "$real" = "$REPO_DIR/SKILL.md" ] || [ ! -e "$REPO_DIR/SKILL.md" ]; then
+    log "⚠️  Removing stale self-referential symlink: $REPO_DIR/SKILL.md"
+    rm "$REPO_DIR/SKILL.md"
+    log "   Please re-run setup — SKILL.md was corrupted and has been removed."
+    log "   Restore it from git: git checkout SKILL.md"
+    log "   Or recreate it manually, then run ./setup again."
+    exit 1
+  fi
+fi
+
+log "→ Registering skills..."
+[ "$INSTALL_CLAUDE"   -eq 1 ] && register_skills_to "$CLAUDE_SKILLS"   "claude"
+[ "$INSTALL_HERMES"   -eq 1 ] && register_skills_to "$HERMES_SKILLS"   "hermes"
+[ "$INSTALL_CURSOR"   -eq 1 ] && register_skills_to "$CURSOR_SKILLS"   "cursor"
+[ "$INSTALL_OPENCODE" -eq 1 ] && register_skills_to "$OPENCODE_SKILLS" "opencode"
+
+log ""
+log "→ Installing sdeliver CLI → $BIN_DIR/sdeliver"
+install_cli
+
+log ""
+log "→ Initializing sdeliver config..."
+chmod +x "$REPO_DIR/bin/sdeliver-config"
+_link "$REPO_DIR/bin/sdeliver-config" "$BIN_DIR/sdeliver-config"
+mkdir -p "$HOME/.sdeliver/analytics"
+# Always update skill_repo_path (may change after git clone to new location)
+"$REPO_DIR/bin/sdeliver-config" set skill_repo_path "$REPO_DIR"
+# Set defaults only on first install
+"$REPO_DIR/bin/sdeliver-config" get version >/dev/null 2>&1 || \
+  "$REPO_DIR/bin/sdeliver-config" set version "0.1.0"
+"$REPO_DIR/bin/sdeliver-config" get proactive >/dev/null 2>&1 || \
+  "$REPO_DIR/bin/sdeliver-config" set proactive "true"
+log "  skill_repo_path = $REPO_DIR"
+
+log ""
+log "✅ Done."
+log ""
+log "Start a new client project:"
+log "   sdeliver init <client-name> [project-dir]"
+log ""
+log "Example:"
+log "   sdeliver init westk ~/projects/westk"
