@@ -118,10 +118,10 @@ echo "PENDING_FEEDBACK: $_PENDING_FEEDBACK"
 可用 skill：
   /sd-tracking-setup-e2e   埋点全链路交付（方案设计 → 造数 → 导入）
   /sd-event-validation     埋点数据校验与异常排查
-  /sd-cdp-operations       CDP 看板、分群、运营计划操作
   /sd-server-sizing        服务器资源评估与扩容建议
   /sd-sit-uat              上线前 SIT/UAT 测试设计与执行
   /sd-tech-design          技术方案与架构图输出
+  /sd-faq                  交付知识库（容量评估、信创、ID3、排查 SOP）
 
 你想做什么？
 ```
@@ -337,10 +337,10 @@ DELIVERY.md 已生成，共 <N> 个交付物条目，与项目计划表里程碑
 |---------|------|
 | 埋点、数据采集、tracking、造数、模拟数据、元数据导入 | `/sd-tracking-setup-e2e` |
 | 数据异常、校验、验证、埋点上线后 | `/sd-event-validation` |
-| CDP 操作、看板、分群、运营计划、标签 | `/sd-cdp-operations` |
 | 服务器、资源评估、扩容、部署配置 | `/sd-server-sizing` |
 | SIT、UAT、测试、上线验收 | `/sd-sit-uat` |
 | 技术方案、架构图、评审材料 | `/sd-tech-design` |
+| 容量评估、带宽、信创、ID3、排查 SOP | `/sd-faq` |
 
 如果 `PROACTIVE` 为 `false`，不主动推荐，等用户明确要求后再说。
 
