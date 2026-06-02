@@ -1,7 +1,7 @@
 ---
 name: sd-tech-design
-version: 0.4.0
-description: 根据项目背景和需求，生成 LLD PPT 框架、架构图（draw.io XML）和 Technical Specification 文档
+version: 0.5.0
+description: 根据项目背景和需求，生成 LLD PPT 框架、架构图（draw.io）和 Technical Specification 文档
 allowed-tools:
   - Bash
   - Read
@@ -13,7 +13,6 @@ allowed-tools:
 
 ```bash
 _SKILL_REPO=$(sdeliver-config get skill_repo_path 2>/dev/null || echo "")
-_PROACTIVE=$(sdeliver-config get proactive 2>/dev/null || echo "true")
 
 _ENV_FILE=""
 _DIR="$(pwd)"
@@ -37,26 +36,36 @@ echo "CLIENT: ${_CLIENT:-unknown}"
 
 **Preamble 输出处理：**
 - `SKILL_REPO` 含"未设置" → 停止，提示重新运行 `./setup`
-- `HAS_PROJECT_MD: yes` → 读取 `PROJECT.md` 了解项目背景，避免重复询问已知信息
+- `HAS_PROJECT_MD: yes` → 读取 `PROJECT.md` 了解项目背景，避免重复询问
 
 ---
 
 # 技术方案设计（LLD + Technical Specification）
 
-## 背景知识
+## 概览
 
-本 skill 覆盖三个核心交付物：
+本 skill 覆盖三个核心交付物，按顺序生成：
 
-| 交付物 | 格式 | 用途 |
-|--------|------|------|
-| **LLD PPT** | PowerPoint（基于参考模板） | 客户架构评审、IT 治理审批 |
-| **架构图** | draw.io XML | 嵌入 LLD PPT 或独立交付 |
-| **Technical Specification** | Markdown / Word | 开发团队实施参考文档 |
-
-**参考模板：**
 ```
-$SKILL_REPO/refrences/Architecture Low-Level Design_TP1_CDP_MAE_20260414.pptx
+Phase 1：信息收集
+    ↓
+Phase 2：LLD PPT 框架（先出骨架，逐节填充）
+    ↓
+Phase 3：架构图（draw.io，基于模板生成）
+    ↓
+Phase 4：Technical Specification（基于已确认的 LLD 生成）
 ```
+
+| 交付物 | 格式 | 面向对象 | 参考模板 |
+|--------|------|---------|---------|
+| LLD PPT | PowerPoint | 客户 IT 治理审批 | `$SKILL_REPO/refrences/Architecture Low-Level Design_TP1_CDP_MAE_20260414.pptx` |
+| 架构图 | draw.io XML | LLD 内嵌 / 独立交付 | `$SKILL_REPO/tech-design/diagram-templates/` |
+| Tech Spec | Word / Markdown | 开发团队实施参考 | `$SKILL_REPO/refrences/TP1_Technical Specification_V1.0.docx` |
+
+**LLD 与 Tech Spec 的根本区别：**
+- LLD 写**做什么和为什么**（架构决策、选型理由、合规要求）
+- Tech Spec 写**怎么做**（端口号、命令、配置参数、操作流程）
+- Tech Spec 内容从 LLD 派生，不独立收集信息；LLD 未覆盖的实施细节在 Tech Spec 中补充
 
 ---
 
@@ -64,32 +73,45 @@ $SKILL_REPO/refrences/Architecture Low-Level Design_TP1_CDP_MAE_20260414.pptx
 
 ### Phase 1：信息收集
 
-读取 PROJECT.md（如有），补充收集以下信息：
+读取 PROJECT.md（如有），补充收集以下信息。信息收集分两组：**LLD 所需**（必须在 Phase 2 前完成）和 **Tech Spec 补充**（Phase 4 前补充）。
 
-| 类别 | 收集项 | 说明 |
-|------|--------|------|
-| 项目基本信息 | 项目名称、客户名、IT PM、技术负责人、目标上线日期 | 用于封面和 Project Related Data |
-| 业务背景 | 客户现有系统现状、痛点、建设目标 | 用于 Section 1 |
-| 服务范围 | 部署哪些产品（CDP/MAE/ETL）、数据分类、业务归属 | 用于 Section 2 |
-| 系统组件 | 各组件 As-Is/To-be 状态 | 用于 Section 3.1 |
-| 架构约束 | 云厂商、区域、网络隔离要求、跨境数据要求 | 用于 Section 3.5 |
-| 用户类型 | 最终用户/业务用户/运维用户的访问方式 | 用于 Section 3.4 |
-| 数据流 | 数据来源、采集方式（SDK/API/SFTP）、下游系统 | 用于 Section 3.6 |
-| 加密要求 | 传输加密、静态加密、PII 处理方式 | 用于 Section 3.5.2 |
-| 技术选型 | Buy/Build/Reuse 决策、部署平台、认证方式 | 用于 Section 4 |
-| 资源规格 | 各环境（PRD/DR/UAT/DEV）节点数量 | 用于 Section 5.1 |
-| 软件版本 | 各组件版本号 | 用于 Section 5.2 |
-| 容量规划 | 日活、日事件量、性能指标要求 | 用于 Section 5.3 |
-| 可用性要求 | HA 设计、扩容方式、RTO/RPO | 用于 Section 6/7 |
-| 运维要求 | 监控指标、备份策略、维护窗口 | 用于 Section 8 |
-| 接口系统 | 外部集成系统列表、接口方式、数据内容 | 用于 Section 9 |
-| 安全合规 | 身份认证、数据安全、基础设施安全、合规要求 | 用于 Section 10 |
-| 假设与前提 | 已知假设、前置条件、待确认事项 | 用于 Section 11 |
+#### LLD 所需信息
+
+| 类别 | 收集项 | 对应 LLD 章节 |
+|------|--------|-------------|
+| 项目基本信息 | 项目名称、客户名、IT PM、技术负责人、目标上线日期 | 封面 + Project Related Data |
+| 业务背景 | 现有系统现状、痛点、建设目标、委托背景 | Section 1 |
+| 服务范围 | 部署产品（CDP/MAE/ETL）、数据分类、业务归属部门 | Section 2 |
+| 系统组件 | 各组件 As-Is/To-be 状态 | Section 3.1 |
+| 架构约束 | 云厂商、部署区域、跨境数据要求、网络隔离要求 | Section 3.5.1 |
+| 用户类型 | 最终用户/业务用户/运维用户的访问路径 | Section 3.4 |
+| 数据来源 | 数据来源系统、采集方式（SDK/API/SFTP）、是否含 PII | Section 3.6 |
+| 加密要求 | 传输加密方案、静态加密方案、PII 字段处理方式 | Section 3.5.2 |
+| 技术选型 | Buy/Build/Reuse 决策、部署平台、身份认证方式（SSO） | Section 4 |
+| 资源规格 | 各环境（PRD/DR/UAT/DEV）节点数量 | Section 5.1 |
+| 软件版本 | CDP/MAE/Kafka/MySQL 等各组件版本号 | Section 5.2 |
+| 容量规划 | 日活、日事件量、性能指标要求（响应时间/吞吐量） | Section 5.3 |
+| 可用性 | HA 设计、扩容方式、RTO/RPO 目标 | Section 6/7 |
+| 运维要求 | 监控工具、备份频率和保留期、维护窗口 | Section 8 |
+| 接口系统 | 外部集成系统列表、接口方式、传输的关键数据 | Section 9 |
+| 安全合规 | IAM 方案、数据安全要求、适用法规 | Section 10 |
+| 假设与前提 | 已知假设、前置条件、待确认事项 | Section 11 |
+
+#### Tech Spec 补充信息（Phase 4 前收集）
+
+| 类别 | 收集项 |
+|------|--------|
+| 数据量估算 | DAU/日事件量/历史数据量/预期增长率 |
+| 接口参数 | SFTP 路径、API 端点、文件格式、GPG 密钥管理方式 |
+| 加密实施细节 | PII 字段清单、豁免字段清单及审批人、DEK 轮换策略 |
+| 数据转换 | CRM 各表同步策略（全量/增量）、ETL 时间窗口 |
+| 数据保留 | 每类数据的在线保留期和归档/清理方式 |
+| DR 细节 | DR 触发条件、恢复顺序、演练频率和参与人 |
 
 **信息不完整时的处理原则：**
-- 有明确标准答案的（如神策软件版本）→ 直接填入，标注"待客户确认"
-- 客户特定信息（如节点 IP、项目 PM）→ 留占位符 `<TBD>`
-- 架构决策类（如加密方案）→ 先给出推荐方案，说明理由，请客户确认
+- 有神策标准答案的（软件版本、默认端口）→ 直接填入，标注"待客户确认"
+- 客户特定信息（节点 IP、PM 姓名）→ 留占位符 `<TBD>`
+- 架构决策类（加密方案、DR 模式）→ 给出推荐方案和理由，请客户确认
 
 ---
 
@@ -450,92 +472,79 @@ Appendix
 
 ---
 
-### Phase 5：输出与交付
-
-**输出顺序：**
-
-1. **LLD 框架确认**（Markdown 格式，逐节列出待填内容）
-   → 用户确认框架结构和各节重点
-
-2. **逐节填充 LLD 内容**
-   → 每次填充 2-3 节，用户 review 后继续
-
-3. **架构图生成**（draw.io XML）
-   → 输出可导入 draw.io 的 XML 文件
-   → 说明图中各元素含义和需要客户确认的部分
-
-4. **Tech Spec 生成**（Markdown）
-   → 基于已确认的 LLD 内容生成
-   → 标注需要实施团队补充的技术细节
-
-**文件输出位置：**
-```bash
-# LLD 内容（Markdown，用于转换为 PPT）
-$PROJECT_DIR/tech-design/LLD_<客户名>_<版本>_<日期>.md
-
-# 架构图 XML
-$PROJECT_DIR/tech-design/diagrams/logical_architecture.xml
-$PROJECT_DIR/tech-design/diagrams/infrastructure_architecture.xml
-$PROJECT_DIR/tech-design/diagrams/data_flow_cdp.xml
-$PROJECT_DIR/tech-design/diagrams/data_flow_mae.xml
-
-# Technical Specification
-$PROJECT_DIR/tech-design/TechSpec_<客户名>_<版本>_<日期>.md
-```
-
 ---
 
-## 关键设计原则
+## 关键设计原则（所有 Phase 通用）
 
-### 1. 非标设计必须显式记录
+执行任何 Phase 时，以下原则优先级高于具体步骤。
 
-任何偏离标准设计的决策，必须在 Section 4.5 Non-standard Design 中记录：
-- 标准设计是什么
-- 非标设计是什么
-- 为什么这样做（业务/技术理由）
-- 补救措施（如何降低风险）
+### 1. 非标设计必须显式记录（LLD Section 4.5）
+
+任何偏离标准设计的决策，必须在 Section 4.5 Non-standard Design 中记录四项：标准设计是什么、非标设计是什么、为什么这样做、补救措施。
 
 ### 2. 加密方案分阶段处理
 
-神策当前版本的端到端应用层加密有限制，标准处理方式：
-- **临时方案**：HTTPS/TLS 全链路 + VPC 内部加密
-- **中期方案**：应用层 PII 字段 AES-256 加密 + 非 PII 字段豁免（需正式审批）
-- **豁免字段**：必须文档化，列明字段名、理由、审批人
+神策应用层端到端加密有版本限制，标准分两阶段：
+- **临时方案**：HTTPS/TLS 全链路 + VPC 内部加密（立即可用）
+- **中期方案**：PII 字段 AES-256-GCM + KMS 信封加密；非 PII 字段豁免需正式审批并文档化
 
-### 3. 扩容路径必须说明
+豁免字段必须列明：字段名、理由、审批人。这是合规审查的核心材料。
 
-Section 6.2 必须说明：
-- 当前 3 节点集群的扩容上限（5 节点）
-- 超过 5 节点后的 3+N 架构迁移路径
-- 数据迁移成本和停机时间估算
+### 3. 扩容路径必须说明（LLD Section 6.2）
 
-### 4. 多环境资源表必须完整
+- 当前 3 节点集群上限：5 节点（水平扩展）
+- 超过 5 节点：需迁移至 3+N 架构（3 元数据节点 + N 数据节点），有数据迁移成本
+- 必须在文档中说明迁移触发条件和预估停机时间
 
-Section 5.1 必须覆盖 PRD / DR / UAT / DEV 四个环境，DR 环境的资源配置不能遗漏。
+### 4. 多环境资源表必须完整（LLD Section 5.1）
 
-### 5. 合规要求按客户所在地区填写
+PRD / DR / UAT / DEV 四个环境都要填，DR 环境节点数不能遗漏。
 
-Section 10.6 的监管要求根据客户业务地区选择：
-- 香港：PDPO（Cap. 486）
-- 中国大陆：PIPL / CSL / DSL
-- 欧盟：GDPR
-- 跨境数据：同时适用多个法规时全部列出
+### 5. 合规要求按客户所在地区填写（LLD Section 10.6）
+
+| 地区 | 适用法规 |
+|------|---------|
+| 香港 | PDPO（Cap. 486） |
+| 中国大陆 | PIPL / CSL / DSL |
+| 欧盟 | GDPR |
+| 跨境数据 | 以上全部列出 |
+
+---
+
+## 输出文件规范
+
+```bash
+$PROJECT_DIR/tech-design/
+├── LLD_<客户名>_v<N>_<日期>.md          # LLD 内容（Markdown，转 PPT 用）
+├── TechSpec_<客户名>_v<N>_<日期>.md     # Technical Specification
+└── diagrams/
+    ├── diagram_config.json               # 客户配置（gen_diagrams.py 输入）
+    ├── Logical_Architecture_<客户>.drawio
+    ├── Data_Flow_<客户>.drawio
+    ├── System_Flow_EndUser_<客户>.drawio
+    ├── System_Flow_Employee_<客户>.drawio
+    ├── System_Flow_Maintenance_<客户>.drawio
+    └── Functional_Architecture_<客户>.drawio
+```
 
 ---
 
 ## 常见问题
 
 **客户不提供节点 IP 等具体信息：**
-在 Section 5.1 填写节点数量，IP 等信息留 `<TBD>`，在 Section 11.2 Pre-requisites 中列为前置条件。
+Section 5.1 填节点数量，IP 留 `<TBD>`，在 Section 11.2 Pre-requisites 中列为前置条件。
 
-**客户要求简化 LLD（不需要所有章节）：**
-核心章节不可省略：Section 1/2/3/5/6/7/10/11。可以合并或简化的：Section 4（技术选型简单时）、Section 8（运维要求由厂商负责时）。
+**客户要求简化 LLD：**
+不可省略的核心章节：Section 1/2/3/5/6/7/10/11。可简化：Section 4（选型简单时）、Section 8（运维由厂商负责时）。
 
-**架构图客户要求用 PPT 内嵌图而非 draw.io：**
-先输出 draw.io XML，客户在 draw.io 中调整后导出为 PNG/SVG，再嵌入 PPT。
+**客户要求用 PPT 内嵌图而非独立 draw.io 文件：**
+先用模板生成 draw.io 文件，客户调整后导出 PNG/SVG 嵌入 PPT。
 
-**Tech Spec 和 LLD 内容重复：**
-LLD 写"做什么和为什么"，Tech Spec 写"怎么做"。重复的部分在 Tech Spec 中用"参见 LLD Section X.X"引用，不重复写。
+**Tech Spec 和 LLD 内容重复时：**
+Tech Spec 用"参见 LLD Section X.X"引用，不重复写正文，只补充 LLD 没有的实施细节。
+
+**客户对某节 LLD 反复修改：**
+每次修改在文档版本历史中记录（修改内容 + 修改原因 + 审批人），这是合规审计的证据链。
 
 ## Feedback
 
