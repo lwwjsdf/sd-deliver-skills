@@ -108,56 +108,123 @@ START_Y = 60
 
 def compute_layout(nodes: list, groups: list) -> dict:
     """
-    自动布局：
-    - 有 group 的节点：按 group 聚合成列
-    - 无 group 的节点：各自独立成列
-    返回 {node_id: (x, y, w, h)}
+    布局入口：
+    - 任何节点有 row 字段 → 使用行对齐布局（精确）
+    - 否则 → 线性列堆叠布局（fallback）
     """
-    # 建立 group → node 映射
+    if any(n.get("row") is not None for n in nodes):
+        return compute_layout_with_rows(nodes, groups)
+    return _linear_layout(nodes, groups)
+
+
+def _linear_layout(nodes: list, groups: list) -> dict:
+    """线性布局（fallback）：每列节点从顶部堆叠。"""
+    node_map = {n["id"]: n for n in nodes}
     group_nodes: dict[str, list] = {}
     ungrouped = []
-    node_map = {n["id"]: n for n in nodes}
-
     for n in nodes:
-        gid_val = n.get("group")
-        if gid_val:
-            group_nodes.setdefault(gid_val, []).append(n["id"])
+        gv = n.get("group")
+        if gv:
+            group_nodes.setdefault(gv, []).append(n["id"])
         else:
             ungrouped.append(n["id"])
-
-    # 列顺序：按 groups 定义顺序 + ungrouped 各自追加
     group_order = [g["id"] for g in groups]
-    # ungrouped 中每个 node 单独一列
     columns = [(g, group_nodes.get(g, [])) for g in group_order if g in group_nodes]
     for nid in ungrouped:
         columns.append((None, [nid]))
-
     positions = {}
     col_x = START_X
-
-    for group_id, node_ids in columns:
-        # 计算列宽
-        col_w = max(
-            (node_map[nid].get("props", {}).get("w") or DEFAULT_NODE_W for nid in node_ids),
-            default=DEFAULT_NODE_W
-        )
-
+    for _, node_ids in columns:
+        col_w = max((node_map[nid].get("props", {}).get("w") or DEFAULT_NODE_W for nid in node_ids), default=DEFAULT_NODE_W)
         node_y = START_Y + CONTAINER_PAD_Y
         for nid in node_ids:
             n = node_map[nid]
-            vtype = n.get("type", "client_system")
-            visual = NODE_VISUAL.get(vtype, NODE_VISUAL["client_system"])
+            visual = NODE_VISUAL.get(n.get("type", "client_system"), NODE_VISUAL["client_system"])
             w = n.get("props", {}).get("w") or visual.get("w") or DEFAULT_NODE_W
             h = n.get("props", {}).get("h") or visual.get("h") or DEFAULT_NODE_H
             positions[nid] = (col_x + CONTAINER_PAD_X, node_y, w, h)
             node_y += h + ROW_GAP
-
         col_x += col_w + CONTAINER_PAD_X * 2 + COL_GAP
+    return positions
+
+
+def compute_layout_with_rows(nodes: list, groups: list) -> dict:
+    """
+    行对齐布局：节点有 row 字段时使用。
+
+    arch.yaml 中每个节点可指定：
+      row: 2    # 所在逻辑行（1 起始，同行节点 Y 中心对齐）
+      col: 0    # 所在列（可选，优先于 group 顺序）
+
+    规则：
+    - 同列 + 同行有多个节点时，水平排列（目前按 group 定义顺序）
+    - 行高 = 该行最高节点的高度
+    - 同行节点 Y 中心对齐
+    - 未指定 row 的节点自动按列内出现顺序分配行号
+    """
+    node_map = {n["id"]: n for n in nodes}
+    group_col = {g["id"]: i for i, g in enumerate(groups)}
+
+    def get_col(nid):
+        n = node_map[nid]
+        if "col" in n:
+            return n["col"]
+        gid = n.get("group")
+        return group_col.get(gid, 99) if gid else 99
+
+    # 补全缺 row 的节点
+    col_row_counter = {}
+    node_rows = {}
+    for n in nodes:
+        nid = n["id"]
+        if n.get("row") is not None:
+            node_rows[nid] = n["row"]
+        else:
+            col = get_col(nid)
+            col_row_counter[col] = col_row_counter.get(col, 0) + 1
+            node_rows[nid] = col_row_counter[col]
+
+    # 每行最大高度
+    row_max_h = {}
+    for n in nodes:
+        row = node_rows[n["id"]]
+        visual = NODE_VISUAL.get(n.get("type", "client_system"), NODE_VISUAL["client_system"])
+        h = n.get("props", {}).get("h") or visual.get("h") or DEFAULT_NODE_H
+        row_max_h[row] = max(row_max_h.get(row, DEFAULT_NODE_H), h)
+
+    # 每行 Y 基准
+    row_y = {}
+    y = START_Y + CONTAINER_PAD_Y
+    for row in sorted(row_max_h.keys()):
+        row_y[row] = y
+        y += row_max_h[row] + ROW_GAP
+
+    # 每列 X（按列序排列）
+    all_cols = sorted(set(get_col(n["id"]) for n in nodes))
+    col_x_map = {}
+    x = START_X
+    for col in all_cols:
+        col_x_map[col] = x
+        col_nodes = [n for n in nodes if get_col(n["id"]) == col]
+        col_w = max((node_map[n["id"]].get("props", {}).get("w") or DEFAULT_NODE_W for n in col_nodes), default=DEFAULT_NODE_W)
+        x += col_w + CONTAINER_PAD_X * 2 + COL_GAP
+
+    # 生成最终坐标
+    positions = {}
+    for n in nodes:
+        nid = n["id"]
+        col = get_col(nid)
+        row = node_rows[nid]
+        visual = NODE_VISUAL.get(n.get("type", "client_system"), NODE_VISUAL["client_system"])
+        w = n.get("props", {}).get("w") or visual.get("w") or DEFAULT_NODE_W
+        h = n.get("props", {}).get("h") or visual.get("h") or DEFAULT_NODE_H
+        row_h = row_max_h.get(row, DEFAULT_NODE_H)
+        y_pos = row_y[row] + (row_h - h) / 2   # 同行内垂直居中
+        positions[nid] = (col_x_map[col] + CONTAINER_PAD_X, y_pos, w, h)
 
     return positions
 
 
-# ── 样式字符串构建 ────────────────────────────────────────────────────────────
 
 def node_style_str(vtype: str, is_future: bool, shape: str = None,
                    is_container: bool = False, font_size: int = 12) -> str:
