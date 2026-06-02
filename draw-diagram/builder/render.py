@@ -1,15 +1,19 @@
 #!/usr/bin/env python3
 """
-架构图渲染器：从 arch.yaml 严格生成 draw.io XML
-所有视觉决策（颜色/线型/坐标）由语义规则推导，不接受外部视觉指令
+架构图渲染器：从 arch.yaml（+ 可选 view.yaml）生成 draw.io XML
 
 用法：
-  python3 render.py --arch arch.yaml --output diagram.drawio [--view logical]
+  # 自动布局（初始生成）
+  python3 render.py --arch arch.yaml --output diagram.drawio
+
+  # 精确还原（完全幂等）
+  python3 render.py --arch arch.yaml --view view.yaml --output diagram.drawio
 """
 
 import yaml
 import uuid
 import argparse
+import re
 import sys
 from pathlib import Path
 
@@ -243,15 +247,40 @@ def legend_xml(x: float, y: float) -> str:
 
 # ── 主渲染函数 ────────────────────────────────────────────────────────────────
 
-def render(arch: dict, output_path: str):
+def render(arch: dict, output_path: str, view: dict = None):
+    """
+    arch: arch.yaml 内容
+    view: view.yaml 内容（可选）
+      - 提供 → 使用 view 中的精确坐标，实现完全幂等还原
+      - 不提供 → 使用自动布局算法，用于初始生成
+    """
     nodes  = arch.get("nodes", [])
     groups = arch.get("groups", [])
     edges  = arch.get("edges", [])
     title  = arch.get("meta", {}).get("title", "Architecture")
 
-    positions = compute_layout(nodes, groups)
+    # 坐标决策：view.yaml 优先，否则自动布局
+    view_nodes  = (view or {}).get("nodes", {})
+    view_groups = (view or {}).get("groups", {})
+    view_edges  = (view or {}).get("edges", {})
+    use_view    = bool(view_nodes)
+
+    if use_view:
+        # 从 view.yaml 读取精确坐标
+        positions = {}
+        for n in nodes:
+            nid = n["id"]
+            vn = view_nodes.get(nid, {})
+            visual = NODE_VISUAL.get(n.get("type","client_system"), NODE_VISUAL["client_system"])
+            x = float(vn.get("x", 0))
+            y = float(vn.get("y", 0))
+            w = float(vn.get("w", visual.get("w", DEFAULT_NODE_W)))
+            h = float(vn.get("h", visual.get("h", DEFAULT_NODE_H)))
+            positions[nid] = (x, y, w, h)
+    else:
+        positions = compute_layout(nodes, groups)
+
     node_map  = {n["id"]: n for n in nodes}
-    group_map = {g["id"]: g for g in groups}
 
     # node_id → draw.io cell_id
     id_map: dict[str, str] = {}
@@ -259,25 +288,29 @@ def render(arch: dict, output_path: str):
 
     # 渲染分组容器框
     for g in groups:
-        gid_str = g["id"]
         gtype   = g.get("type", "data_sources")
         members = g.get("contains", [])
         if not members:
             continue
 
-        # 计算容器边界（包住所有成员节点）
-        xs = [positions[nid][0] for nid in members if nid in positions]
-        ys = [positions[nid][1] for nid in members if nid in positions]
-        ws = [positions[nid][2] for nid in members if nid in positions]
-        hs = [positions[nid][3] for nid in members if nid in positions]
-        if not xs:
-            continue
-
-        pad = CONTAINER_PAD_X
-        cx  = min(xs) - pad
-        cy  = min(ys) - CONTAINER_PAD_Y
-        cw  = max(x + w for x, w in zip(xs, ws)) - cx + pad
-        ch  = max(y + h for y, h in zip(ys, hs)) - cy + pad + 10
+        if use_view and g["id"] in view_groups:
+            # view.yaml 提供了精确坐标
+            vg = view_groups[g["id"]]
+            cx = float(vg["x"]); cy = float(vg["y"])
+            cw = float(vg["w"]); ch = float(vg["h"])
+        else:
+            # 自动计算包围盒
+            xs = [positions[nid][0] for nid in members if nid in positions]
+            ys = [positions[nid][1] for nid in members if nid in positions]
+            ws = [positions[nid][2] for nid in members if nid in positions]
+            hs = [positions[nid][3] for nid in members if nid in positions]
+            if not xs:
+                continue
+            pad = CONTAINER_PAD_X
+            cx  = min(xs) - pad
+            cy  = min(ys) - CONTAINER_PAD_Y
+            cw  = max(x + w for x, w in zip(xs, ws)) - cx + pad
+            ch  = max(y + h for y, h in zip(ys, hs)) - cy + pad + 10
 
         c_id = gid()
         cells_xml += node_xml(c_id, f"<b>{g['name']}</b>",
@@ -295,7 +328,20 @@ def render(arch: dict, output_path: str):
             continue
         x, y, w, h = pos
 
-        style  = node_style_str(vtype, is_future, shape=shape)
+        # 检查 view.yaml 中是否有例外视觉 override
+        vn = view_nodes.get(nid, {})
+        override = vn.get("override", {})
+
+        style = node_style_str(vtype, is_future, shape=shape)
+        # 应用 override（只修改有 override 的属性）
+        if override:
+            if "stroke_color" in override:
+                style = re.sub(r'strokeColor=[^;]+', f'strokeColor={override["stroke_color"]}', style)
+            if "stroke_width" in override:
+                style = re.sub(r'strokeWidth=[^;]+', f'strokeWidth={override["stroke_width"]}', style)
+            if "fill_color" in override:
+                style = re.sub(r'fillColor=[^;]+', f'fillColor={override["fill_color"]}', style)
+
         cell_id = gid()
         id_map[nid] = cell_id
         cells_xml += node_xml(cell_id, n["name"], style, x, y, w, h)
@@ -345,14 +391,21 @@ def render(arch: dict, output_path: str):
 # ── CLI ───────────────────────────────────────────────────────────────────────
 
 def main():
-    p = argparse.ArgumentParser(description="从 arch.yaml 生成 draw.io 架构图")
+    p = argparse.ArgumentParser(description="从 arch.yaml（+ view.yaml）生成 draw.io 架构图")
     p.add_argument("--arch",   required=True, help="arch.yaml 路径")
+    p.add_argument("--view",   default=None,  help="view.yaml 路径（可选，提供则精确还原坐标）")
     p.add_argument("--output", required=True, help="输出 .drawio 文件路径")
     args = p.parse_args()
 
     with open(args.arch, encoding="utf-8") as f:
         arch = yaml.safe_load(f)
-    render(arch, args.output)
+
+    view = None
+    if args.view:
+        with open(args.view, encoding="utf-8") as f:
+            view = yaml.safe_load(f)
+
+    render(arch, args.output, view=view)
 
 
 if __name__ == "__main__":
