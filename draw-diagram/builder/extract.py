@@ -1,13 +1,16 @@
 #!/usr/bin/env python3
 """
-draw.io → arch.yaml 提取器（单向，有损）
+draw.io → arch.yaml + view.yaml 提取器
 
-将现有 drawio 文件的视觉结构反向提取为 arch.yaml 事实层。
-语义信息（type/rel/has_pii/frequency）由规则推断 + LLM 辅助填补。
+arch.yaml：语义事实（节点类型/关系类型/PII/frequency）—— 有损推断
+view.yaml：视觉信息（精确坐标/尺寸/例外样式）           —— 无损提取
+
+arch.yaml + view.yaml → render.py → drawio  完全幂等还原
 
 用法：
-  python3 extract.py --input diagram.drawio --output arch.yaml [--annotate]
-  --annotate  在输出的 yaml 中标注推断置信度，用于人工 review
+  python3 extract.py --input diagram.drawio --arch arch.yaml --view view.yaml
+  python3 extract.py --input diagram.drawio --arch arch.yaml  # 只提取语义
+  python3 extract.py --input diagram.drawio --arch arch.yaml --annotate
 """
 
 import xml.etree.ElementTree as ET
@@ -159,7 +162,8 @@ def normalize_id(label: str, existing_ids: set) -> str:
     return label_clean
 
 
-def extract(drawio_path: str, output_path: str, annotate: bool = False):
+def extract(drawio_path: str, arch_output: str, view_output: str = None,
+            annotate: bool = False):
     """主提取函数。"""
     with open(drawio_path, encoding="utf-8") as f:
         content = f.read()
@@ -207,9 +211,13 @@ def extract(drawio_path: str, output_path: str, annotate: bool = False):
         if any(k in label for k in ["Legend", "legend"]):
             skipped.append({"id": cell_id, "reason": "legend", "label": label})
             continue
-        # 过滤图例中的示意节点（label 是描述性文字）
-        if any(k in label.lower() for k in ["sd's product", "future scope", "data flow containing",
-                                              "batch data flow", "internal data flow", "kafka async"]):
+        # 过滤图例中的示意节点（label 是描述性文字或颜色示例）
+        if any(k in label.lower() for k in [
+            "sd's product", "future scope", "data flow containing",
+            "batch data flow", "internal data flow", "kafka async",
+            "pii realtime", "pii batch", "internal flow",          # render.py 图例
+            "sd product", "client system", "external saas",         # render.py 图例节点
+        ]):
             skipped.append({"id": cell_id, "reason": "legend_item", "label": label})
             continue
 
@@ -228,12 +236,18 @@ def extract(drawio_path: str, output_path: str, annotate: bool = False):
         used_ids.add(node_id)
         status = "future" if dashed and fill in ("#e8e8e8", "#f5f5f5") else "current"
 
+        # 记录坐标（用于 view.yaml）
+        geom = cell.find("mxGeometry")
+        x = float(geom.get("x", 0)) if geom is not None else 0
+        y = float(geom.get("y", 0)) if geom is not None else 0
+
         node_entry = {
             "id": node_id,
             "name": label.replace("<PLACEHOLDER>", "{{TBD}}"),
             "type": ntype,
             "status": status,
-            "_cell_id": cell_id,  # 内部用，最终输出时去掉
+            "_cell_id": cell_id,
+            "_x": x, "_y": y, "_w": w, "_h": h,  # 内部用于 view.yaml
         }
         if annotate and conf != "high":
             node_entry["_type_confidence"] = conf
@@ -296,6 +310,15 @@ def extract(drawio_path: str, output_path: str, annotate: bool = False):
 
         edges_out.append(edge_entry)
 
+    # 构建 view.yaml 数据（从节点坐标提取，无损）
+    view_nodes_data = {}
+    for n in nodes_out:
+        nid = n["id"]
+        vx = n.pop("_x", 0); vy = n.pop("_y", 0)
+        vw = n.pop("_w", 160); vh = n.pop("_h", 44)
+        view_nodes_data[nid] = {"x": round(vx), "y": round(vy),
+                                 "w": round(vw), "h": round(vh)}
+
     # 清理内部字段
     for n in nodes_out:
         n.pop("_cell_id", None)
@@ -306,8 +329,10 @@ def extract(drawio_path: str, output_path: str, annotate: bool = False):
             "client": "{{CLIENT}}",
             "version": "1.0",
             "date": "{{DATE}}",
-            "_extraction_note": f"Extracted from {Path(drawio_path).name}. "
-                                 "Review nodes/edges marked with _*_confidence=low/medium.",
+            "_extraction_note": (
+                f"Extracted from {Path(drawio_path).name}. "
+                "Review nodes/edges marked with _*_confidence=low/medium."
+            ),
         },
         "nodes": nodes_out,
         "edges": edges_out,
@@ -315,18 +340,34 @@ def extract(drawio_path: str, output_path: str, annotate: bool = False):
     if skipped and annotate:
         arch["_skipped"] = skipped
 
-    with open(output_path, "w", encoding="utf-8") as f:
+    with open(arch_output, "w", encoding="utf-8") as f:
         yaml.dump(arch, f, default_flow_style=False, allow_unicode=True,
                   sort_keys=False, width=120)
-
-    print(f"✓ {output_path}")
+    print(f"✓ arch.yaml → {arch_output}")
     print(f"  nodes: {len(nodes_out)}, edges: {len(edges_out)}, skipped: {len(skipped)}")
 
-    # 打印置信度摘要
-    low_conf = [n for n in nodes_out if n.get("_type_confidence") in ("low", "medium")]
+    # 输出 view.yaml（可选）
+    if view_output:
+        view = {
+            "meta": {
+                "arch": Path(arch_output).name,
+                "version": "1.0",
+                "last_modified": "{{DATE}}",
+                "_note": "Extracted from drawio. Coordinates are exact — do not edit manually.",
+            },
+            "nodes": view_nodes_data,
+            "canvas": {"width": 1900, "height": 1050, "grid": True, "grid_size": 10},
+        }
+        with open(view_output, "w", encoding="utf-8") as f:
+            yaml.dump(view, f, default_flow_style=False, allow_unicode=True,
+                      sort_keys=False, width=120)
+        print(f"✓ view.yaml → {view_output}")
+
+    # 置信度摘要
+    low_conf  = [n for n in nodes_out if n.get("_type_confidence") in ("low", "medium")]
     low_edges = [e for e in edges_out if e.get("_rel_confidence") in ("low", "medium")]
     if low_conf or low_edges:
-        print(f"\n  ⚠️  需人工 review：")
+        print(f"\n  ⚠️  需人工 review（语义推断置信度不足）：")
         for n in low_conf:
             print(f"    node [{n['_type_confidence']}] {n['id']}: type={n['type']}")
         for e in low_edges:
@@ -334,12 +375,13 @@ def extract(drawio_path: str, output_path: str, annotate: bool = False):
 
 
 def main():
-    p = argparse.ArgumentParser(description="draw.io → arch.yaml 提取器")
-    p.add_argument("--input",    required=True, help="输入 .drawio 文件路径")
-    p.add_argument("--output",   required=True, help="输出 arch.yaml 路径")
-    p.add_argument("--annotate", action="store_true", help="在输出中标注推断置信度")
+    p = argparse.ArgumentParser(description="draw.io → arch.yaml + view.yaml 提取器")
+    p.add_argument("--input",    required=True,  help="输入 .drawio 文件路径")
+    p.add_argument("--arch",     required=True,  help="输出 arch.yaml 路径")
+    p.add_argument("--view",     default=None,   help="输出 view.yaml 路径（可选，提供则输出精确坐标）")
+    p.add_argument("--annotate", action="store_true", help="在 arch.yaml 中标注推断置信度")
     args = p.parse_args()
-    extract(args.input, args.output, args.annotate)
+    extract(args.input, args.arch, view_output=args.view, annotate=args.annotate)
 
 
 if __name__ == "__main__":
