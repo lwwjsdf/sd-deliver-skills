@@ -1,6 +1,6 @@
 ---
 name: sd-tech-design
-version: 0.5.0
+version: 0.6.0
 description: 根据项目背景和需求，生成 LLD PPT 框架、架构图（draw.io）和 Technical Specification 文档
 allowed-tools:
   - Bash
@@ -59,7 +59,7 @@ Phase 4：Technical Specification（基于已确认的 LLD 生成）
 | 交付物 | 格式 | 面向对象 | 参考模板 |
 |--------|------|---------|---------|
 | LLD PPT | PowerPoint | 客户 IT 治理审批 | `$SKILL_REPO/refrences/Architecture Low-Level Design_TP1_CDP_MAE_20260414.pptx` |
-| 架构图 | draw.io XML | LLD 内嵌 / 独立交付 | `$SKILL_REPO/tech-design/diagram-templates/` |
+| 架构图 | draw.io XML | LLD 内嵌 / 独立交付 | `/sd-draw-diagram` skill |
 | Tech Spec | Word / Markdown | 开发团队实施参考 | `$SKILL_REPO/refrences/TP1_Technical Specification_V1.0.docx` |
 
 **LLD 与 Tech Spec 的根本区别：**
@@ -217,109 +217,25 @@ Appendix
 
 ---
 
-### Phase 3：架构图生成（draw.io）
+### Phase 3：架构图生成
 
-**使用模板快速生成，不从零手写 XML。**
+架构图生成已独立为 **`sd-draw-diagram`** skill，直接调用：
 
-#### 3.1 准备客户配置文件
-
-在项目目录创建 `diagram_config.json`，填写客户专有名词：
-
-```json
-{
-  "CLIENT": "客户简称",
-  "CLIENT_SYSTEMS": "客户系统总称（如 ACME Systems）",
-  "BUSINESS_USER": "业务用户称呼（如 ACME Employee）",
-  "EMAIL_SERVICE": "邮件服务商（如 SendCloud / Mailchimp）",
-  "FRONTEND_1": "主要前端渠道（如 Mini-Program）",
-  "FRONTEND_2": "次要前端渠道（如 Website）",
-  "FRONTEND_3": "第三前端渠道（如 Mobile App）",
-  "FRONTEND_4": "其他渠道（如 Other Channels）",
-  "SOCIAL_MEDIA": "社交媒体平台名称",
-  "SYSTEM_1": "核心业务系统1（如 CRM / Ticketing System）",
-  "SYSTEM_2": "核心业务系统2（如 ERP / Business Data）",
-  "SYSTEM_3": "核心业务系统3（如 CRM）",
-  "SYSTEM_4": "Future 系统1（如 RSVP）",
-  "SYSTEM_5": "Future 系统2（如 Retail System）",
-  "SYSTEM_6": "Future 系统3（如 POS）",
-  "SYSTEM_7": "Future 系统4",
-  "SYSTEM_8": "Future 系统5"
-}
+```
+/sd-draw-diagram
 ```
 
-#### 3.2 运行生成脚本
+该 skill 会引导完成配置文件填写、模板生成、调整事项提示，以及基础设施架构图的手动绘制指引。
 
-```bash
-python3 $SKILL_REPO/tech-design/diagram-templates/gen_diagrams.py \
-  --config diagram_config.json \
-  --output $PROJECT_DIR/tech-design/diagrams/
-```
+**与 LLD 的对应关系：**
 
-一次生成 6 个文件：
-
-| 文件 | 用途 | LLD 章节 |
-|------|------|---------|
-| `Logical_Architecture_<客户>.drawio` | 系统组件逻辑关系 | Section 3.3 |
-| `Data_Flow_<客户>.drawio` | CDP & MAE 数据流（含 PII 标注） | Section 3.6 |
-| `System_Flow_EndUser_<客户>.drawio` | 最终用户视角系统流 | Section 3.4 |
-| `System_Flow_Employee_<客户>.drawio` | 业务用户视角系统流 | Section 3.4 |
-| `System_Flow_Maintenance_<客户>.drawio` | 运维用户视角系统流 | Section 3.4 |
-| `Functional_Architecture_<客户>.drawio` | 系统内部功能模块详图 | Appendix |
-
-#### 3.3 生成后必做的调整
-
-生成的文件是 Westk 结构的通用化版本，需要根据客户实际情况调整：
-
-**必须调整：**
-- 删除客户不涉及的 Future 节点（灰色虚线节点）
-- 修改连线标签（数据字段名、协议、频率）
-- 更新地域标注（HK/SZ → 客户实际云区域）
-- 调整 Data Flow 图中的 PIPL/数据驻留标注（按客户合规要求）
-
-**可选调整：**
-- 增加客户特有的系统节点
-- 调整 CDP/MAE 内部模块（如客户不用 MAE，删除 MAE 相关节点）
-- 修改 Legend 中的颜色说明文字
-
-**设计规范参考：**
-```
-$SKILL_REPO/tech-design/diagram-templates/DIAGRAM_GUIDE.md
-```
-
-#### 3.4 基础设施架构图（Infrastructure Architecture）
-
-基础设施架构图（Section 3.5.1）与云厂商强相关，**不提供通用模板**，需根据客户云环境从头绘制。
-
-标准分区结构（以阿里云为例）：
-```
-[互联网区]
-  DNS / GTM / CDN
-
-[DMZ 区]
-  Cloud Firewall / WAF / ALB（公网）
-  SFTP Server / JumpHost
-
-[应用区 - 主区域]
-  VPC
-  ├── 公共子网：NAT Gateway / EIP
-  ├── 应用子网：CDP 集群 / MAE 集群 / ETL 集群
-  └── 数据子网：RDS（主备多可用区）
-
-[DR 区域]
-  VPC（镜像结构）
-
-[跨区域连接]
-  CEN / VPN
-
-[安全服务]
-  KMS / Anti-DDoS / SecurityCenter
-```
-
-绘制要点：
-- 用虚线框划定 VPC 和子网边界
-- 用不同颜色区分 DMZ / 应用区 / 数据区
-- 标注流量路径（HK 用户流量 / 大陆用户流量 / 运维流量）
-- 标注加密方式（HTTPS / VPC Traffic Encryption / TLS）
+| 图类型 | LLD 章节 |
+|--------|---------|
+| 逻辑架构图 | Section 3.3 |
+| 系统流图（3种用户视角） | Section 3.4 |
+| 基础设施架构图 | Section 3.5.1 |
+| 数据流图 | Section 3.6 |
+| 功能架构图 | Appendix |
 
 ---
 
