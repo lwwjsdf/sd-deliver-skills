@@ -16,6 +16,7 @@ import argparse
 import re
 import sys
 from pathlib import Path
+from layout import compute_layout_graphviz, compute_layout_linear
 
 # ── 语义 → 视觉映射规则（唯一视觉决策来源）──────────────────────────────────
 
@@ -351,19 +352,21 @@ def render(arch: dict, output_path: str, view: dict = None):
     use_view    = bool(view_nodes)
 
     if use_view:
-        # 从 view.yaml 读取精确坐标
+        # view.yaml 精确坐标（幂等还原）
         positions = {}
         for n in nodes:
             nid = n["id"]
-            vn = view_nodes.get(nid, {})
+            vn  = view_nodes.get(nid, {})
             visual = NODE_VISUAL.get(n.get("type","client_system"), NODE_VISUAL["client_system"])
-            x = float(vn.get("x", 0))
-            y = float(vn.get("y", 0))
-            w = float(vn.get("w", visual.get("w", DEFAULT_NODE_W)))
-            h = float(vn.get("h", visual.get("h", DEFAULT_NODE_H)))
-            positions[nid] = (x, y, w, h)
+            positions[nid] = (
+                float(vn.get("x", 0)),
+                float(vn.get("y", 0)),
+                float(vn.get("w", visual.get("w", DEFAULT_NODE_W))),
+                float(vn.get("h", visual.get("h", DEFAULT_NODE_H))),
+            )
     else:
-        positions = compute_layout(nodes, groups)
+        # 自动布局：优先 graphviz dot，回退到线性布局
+        positions = compute_layout_graphviz(arch) or compute_layout_linear(arch)
 
     node_map  = {n["id"]: n for n in nodes}
 
