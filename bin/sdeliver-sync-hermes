@@ -1,0 +1,47 @@
+#!/usr/bin/env bash
+# sdeliver-sync-hermes — git pull 후 hermes skills를 최신 상태로 동기화
+# Usage: sdeliver-sync-hermes
+
+set -e
+REPO_DIR="$(cd "$(dirname "$0")/.." && pwd -P)"
+HERMES_SKILLS="$HOME/.hermes/skills"
+
+log() { echo "  $1"; }
+
+# 각 sub-skill 디렉토리 동기화
+for skill_dir in "$REPO_DIR"/*/; do
+  [ -f "$skill_dir/SKILL.md" ] || continue
+
+  skill_name="$(grep -m1 '^name:' "$skill_dir/SKILL.md" 2>/dev/null \
+    | sed 's/^name:[[:space:]]*//' | tr -d '[:space:]')"
+  [ -z "$skill_name" ] && skill_name="$(basename "$skill_dir")"
+
+  target="$HERMES_SKILLS/$skill_name"
+
+  # symlink인 경우 실제 디렉토리로 교체
+  if [ -L "$target" ]; then
+    rm "$target"
+    cp -r "${skill_dir%/}" "$target"
+    log "✓ $skill_name (symlink → real copy)"
+  elif [ -d "$target" ]; then
+    # 실제 디렉토리인 경우 rsync로 업데이트
+    rsync -a --delete "${skill_dir%/}/" "$target/"
+    log "✓ $skill_name (synced)"
+  else
+    cp -r "${skill_dir%/}" "$target"
+    log "✓ $skill_name (new copy)"
+  fi
+done
+
+# root SKILL.md 동기화
+if [ -f "$REPO_DIR/SKILL.md" ]; then
+  skill_name="$(grep -m1 '^name:' "$REPO_DIR/SKILL.md" | sed 's/^name:[[:space:]]*//' | tr -d '[:space:]')"
+  [ -z "$skill_name" ] && skill_name="sdeliver"
+  target_dir="$HERMES_SKILLS/$skill_name"
+  mkdir -p "$target_dir"
+  cp "$REPO_DIR/SKILL.md" "$target_dir/SKILL.md"
+  log "✓ $skill_name/SKILL.md (root)"
+fi
+
+echo ""
+echo "hermes skills synced from $REPO_DIR"
