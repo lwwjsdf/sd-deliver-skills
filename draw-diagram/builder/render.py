@@ -96,14 +96,34 @@ def edge_xml(cell_id, src, tgt, style, label="") -> str:
 
 # ── 布局引擎 ─────────────────────────────────────────────────────────────────
 
-DEFAULT_NODE_W = 160
-DEFAULT_NODE_H = 44
-COL_GAP = 100
-ROW_GAP = 16
-CONTAINER_PAD_X = 20
-CONTAINER_PAD_Y = 40
-START_X = 60
-START_Y = 60
+DEFAULT_NODE_W      = 160
+DEFAULT_NODE_H      = 44
+LINE_H              = 20    # 每行文字高度，用于自动计算多行节点高度
+NODE_V_PADDING      = 16    # 节点上下内边距合计
+COL_GAP             = 100
+ROW_GAP             = 24
+CONTAINER_PAD_X     = 20
+CONTAINER_PAD_Y     = 40
+START_X             = 60
+START_Y             = 60
+MAX_GROUP_ROW_SPAN  = 1     # group 跨行超过此值时不画容器框
+
+
+def node_height(n: dict) -> float:
+    """自动计算节点高度：优先 props.h，否则按名称换行数估算。"""
+    props = n.get("props") or {}
+    if props.get("h"):
+        return float(props["h"])
+    lines = n.get("name", "").count("\n") + 1
+    return max(DEFAULT_NODE_H, lines * LINE_H + NODE_V_PADDING)
+
+
+def node_width(n: dict) -> float:
+    props = n.get("props") or {}
+    if props.get("w"):
+        return float(props["w"])
+    visual = NODE_VISUAL.get(n.get("type", "client_system"), NODE_VISUAL["client_system"])
+    return float(visual.get("w") or DEFAULT_NODE_W)
 
 
 def compute_layout(nodes: list, groups: list) -> dict:
@@ -139,9 +159,8 @@ def _linear_layout(nodes: list, groups: list) -> dict:
         node_y = START_Y + CONTAINER_PAD_Y
         for nid in node_ids:
             n = node_map[nid]
-            visual = NODE_VISUAL.get(n.get("type", "client_system"), NODE_VISUAL["client_system"])
-            w = n.get("props", {}).get("w") or visual.get("w") or DEFAULT_NODE_W
-            h = n.get("props", {}).get("h") or visual.get("h") or DEFAULT_NODE_H
+            w = node_width(n)
+            h = node_height(n)
             positions[nid] = (col_x + CONTAINER_PAD_X, node_y, w, h)
             node_y += h + ROW_GAP
         col_x += col_w + CONTAINER_PAD_X * 2 + COL_GAP
@@ -188,8 +207,7 @@ def compute_layout_with_rows(nodes: list, groups: list) -> dict:
     row_max_h = {}
     for n in nodes:
         row = node_rows[n["id"]]
-        visual = NODE_VISUAL.get(n.get("type", "client_system"), NODE_VISUAL["client_system"])
-        h = n.get("props", {}).get("h") or visual.get("h") or DEFAULT_NODE_H
+        h = node_height(n)
         row_max_h[row] = max(row_max_h.get(row, DEFAULT_NODE_H), h)
 
     # 每行 Y 基准
@@ -206,7 +224,7 @@ def compute_layout_with_rows(nodes: list, groups: list) -> dict:
     for col in all_cols:
         col_x_map[col] = x
         col_nodes = [n for n in nodes if get_col(n["id"]) == col]
-        col_w = max((node_map[n["id"]].get("props", {}).get("w") or DEFAULT_NODE_W for n in col_nodes), default=DEFAULT_NODE_W)
+        col_w = max((node_width(node_map[n["id"]]) for n in col_nodes), default=DEFAULT_NODE_W)
         x += col_w + CONTAINER_PAD_X * 2 + COL_GAP
 
     # 生成最终坐标
@@ -215,9 +233,9 @@ def compute_layout_with_rows(nodes: list, groups: list) -> dict:
         nid = n["id"]
         col = get_col(nid)
         row = node_rows[nid]
-        visual = NODE_VISUAL.get(n.get("type", "client_system"), NODE_VISUAL["client_system"])
-        w = n.get("props", {}).get("w") or visual.get("w") or DEFAULT_NODE_W
-        h = n.get("props", {}).get("h") or visual.get("h") or DEFAULT_NODE_H
+        nm = node_map[nid]
+        w = node_width(nm)
+        h = node_height(nm)
         row_h = row_max_h.get(row, DEFAULT_NODE_H)
         y_pos = row_y[row] + (row_h - h) / 2   # 同行内垂直居中
         positions[nid] = (col_x_map[col] + CONTAINER_PAD_X, y_pos, w, h)
@@ -354,11 +372,24 @@ def render(arch: dict, output_path: str, view: dict = None):
     cells_xml = ""
 
     # 渲染分组容器框
+    node_rows_in_render = {}
+    for n in nodes:
+        node_rows_in_render[n["id"]] = n.get("row", 1)
+
     for g in groups:
         gtype   = g.get("type", "data_sources")
         members = g.get("contains", [])
         if not members:
             continue
+
+        # 跨行保护：group 内节点跨行超过阈值，不画容器框（避免容器框撑穿整个画布）
+        if not use_view:
+            member_rows = [node_rows_in_render.get(m, 1) for m in members if m in node_rows_in_render]
+            if member_rows:
+                row_span = max(member_rows) - min(member_rows)
+                if row_span > MAX_GROUP_ROW_SPAN:
+                    # 跨行太多：跳过容器框，但节点仍然渲染
+                    continue
 
         if use_view and g["id"] in view_groups:
             # view.yaml 提供了精确坐标
@@ -393,7 +424,10 @@ def render(arch: dict, output_path: str, view: dict = None):
         pos    = positions.get(nid)
         if not pos:
             continue
-        x, y, w, h = pos
+        # 从 positions 取坐标，但用 node_height/node_width 确保高度正确
+        x, y = pos[0], pos[1]
+        w = node_width(n)
+        h = node_height(n)
 
         # 检查 view.yaml 中是否有例外视觉 override
         vn = view_nodes.get(nid, {})
