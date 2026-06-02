@@ -1,7 +1,7 @@
 ---
 name: sd-draw-diagram
-version: 0.2.0
-description: 为神策 CDP & MAE 项目生成 draw.io 架构图。支持两种模式：基于模板快速生成标准图，或基于自然语言描述生成自定义架构图
+version: 0.3.0
+description: 为神策 CDP & MAE 项目生成 draw.io 架构图。以 arch.yaml 为唯一事实层，渲染器严格从语义派生视觉，支持标准模板生成和自定义架构描述两种模式
 allowed-tools:
   - Bash
   - Read
@@ -30,262 +30,228 @@ echo "CLIENT: ${_CLIENT:-unknown}"
 
 # 架构图生成（draw.io）
 
+## 设计理念：事实层与渲染层分离
+
+```
+arch.yaml（事实层）          render.py（渲染层）
+─────────────────            ─────────────────
+节点的语义类型  ───────────→  颜色（绿/紫/蓝/灰）
+关系类型       ───────────→  连线线型（实线/虚线）
+has_pii + frequency ──────→  连线颜色（红/绿/蓝）
+status: future ───────────→  灰色虚线节点
+group 归属     ───────────→  容器框位置和尺寸
+```
+
+**arch.yaml 只描述"是什么"，render.py 决定"怎么画"。** 两者通过语义规则表耦合，规则表是唯一的视觉决策来源。这意味着：
+- 修改客户架构 → 只改 arch.yaml
+- 修改设计规范 → 只改 render.py 的规则表
+- 两者互不干扰，可独立版本控制
+
+---
+
 ## 两种工作模式
 
 ```
-模式 A：模板生成（标准架构，快速）
-  用户描述 → 填写 diagram_config.json → gen_diagrams.py → 6 个标准图
+模式 A：模板生成（标准 Westk 架构，快速）
+  填写 diagram_config.json → gen_diagrams.py → 6 个标准 drawio 图
 
-模式 B：自定义生成（非标架构，灵活）
-  用户描述架构 → LLM 理解意图 → 生成 arch.json → diagram_builder.py → 自定义图
+模式 B：事实层生成（任意架构，准确）
+  用自然语言描述架构 → LLM 生成 arch.yaml → render.py → drawio 图
 ```
 
 **选择依据：**
-- 客户架构与标准 Westk 结构基本一致（有 ETL、标准数据源）→ **模式 A**
-- 客户有非标结构（无 ETL、有中间系统、特殊数据流）→ **模式 B**
-- 先用模式 A，再针对特定图用模式 B 修改 → **混合使用**
+- 架构与标准模板基本一致 → **模式 A**
+- 有非标结构（无 ETL、中转系统、特殊数据流） → **模式 B**
+- 先用 A 生成框架，针对非标部分用 B 重新生成 → **混合**
 
 ---
 
 ## 模式 A：模板生成
 
-### Step 1：填写客户配置
-
-```json
-{
-  "CLIENT": "客户简称",
-  "CLIENT_SYSTEMS": "客户系统总称",
-  "BUSINESS_USER": "业务用户称呼",
-  "EMAIL_SERVICE": "邮件服务商",
-  "FRONTEND_1": "主要前端渠道",
-  "FRONTEND_2": "次要前端渠道",
-  "FRONTEND_3": "第三前端渠道",
-  "FRONTEND_4": "其他渠道",
-  "SOCIAL_MEDIA": "社交媒体平台",
-  "SYSTEM_1": "核心业务系统1",
-  "SYSTEM_2": "核心业务系统2",
-  "SYSTEM_3": "核心业务系统3",
-  "SYSTEM_4": "Future 系统1",
-  "SYSTEM_5": "Future 系统2",
-  "SYSTEM_6": "Future 系统3",
-  "SYSTEM_7": "Future 系统4",
-  "SYSTEM_8": "Future 系统5"
-}
-```
-
-### Step 2：生成
-
 ```bash
 python3 $SKILL_REPO/draw-diagram/templates/gen_diagrams.py \
-  --config $PROJECT_DIR/diagrams/diagram_config.json \
+  --config diagram_config.json \
   --output $PROJECT_DIR/diagrams/
 ```
 
-生成 6 个文件：逻辑架构图、数据流图、系统流图（3种用户视角）、功能架构图。
-
-### Step 3：必做调整（在 draw.io 中）
-
-- 删除不涉及的 Future 节点（灰色虚线）
-- 修改连线标签（字段名、协议、频率）
-- 更新地域标注（HK/SZ → 客户实际区域）
-- 按合规要求调整 PIPL/数据驻留标注
+config 格式见 `$SKILL_REPO/draw-diagram/templates/DIAGRAM_GUIDE.md`。
 
 ---
 
-## 模式 B：自定义生成
+## 模式 B：事实层生成
 
-### 工作原理
+### Step 1：LLM 收集架构事实
 
-```
-用户用自然语言描述架构
-       ↓
-LLM 理解意图，查询组件库，生成标准化 arch.json
-       ↓
-diagram_builder.py 读取 arch.json
-  - 自动计算列布局和坐标
-  - 按组件库样式渲染节点（颜色/尺寸/形状）
-  - 按连线语义渲染边（颜色/虚实/箭头）
-  - 自动添加图例
-       ↓
-输出 .drawio 文件
-```
+收到用户描述后，先分析以下 6 个维度，输出一段确认摘要，再生成 arch.yaml：
 
-### 可用组件库
-
-查看所有标准组件：
-
-```bash
-python3 $SKILL_REPO/draw-diagram/builder/components.py
-```
-
-**组件速查：**
-
-| 组件 ID | 标签 | 颜色 | 说明 |
-|---------|------|------|------|
-| `cdp` | CDP | 绿 | 神策 CDP 主容器 |
-| `mae` | MAE | 绿 | 神策 MAE 主容器 |
-| `etl` | ETL | 绿 | ETL 批量处理节点 |
-| `sftp` | SFTP Server | 绿 | SFTP 文件传输 |
-| `cdp_ingest` | Data Ingestion & ETL | 黄 | CDP 内部模块 |
-| `cdp_identity` | Identity Resolution | 黄 | CDP 内部模块 |
-| `cdp_segment` | Segmentation & Tagging | 黄 | CDP 内部模块 |
-| `cdp_analytics` | Analytics & Dashboard | 黄 | CDP 内部模块 |
-| `mae_campaign` | Campaign Planning | 黄 | MAE 内部模块 |
-| `mae_journey` | Journey Orchestration | 黄 | MAE 内部模块 |
-| `mae_channel` | Channel Management | 黄 | MAE 内部模块 |
-| `crm` | CRM | 紫 | 客户 CRM 系统 |
-| `ticketing` | Ticketing System | 紫 | 票务系统 |
-| `erp` | ERP | 紫 | ERP 系统 |
-| `miniprogram` | Mini-Program | 紫 | 微信小程序 |
-| `website` | Website | 紫 | 网站 |
-| `app` | Mobile App | 紫 | 移动应用 |
-| `sendcloud` | SendCloud | 蓝 | 邮件服务商 |
-| `end_user` | End User | 橙 | 最终用户（人形） |
-| `business_user` | Business User | 橙 | 业务用户（人形） |
-| `custom_sd` | 自定义神策产品节点 | 绿 | 修改 label 使用 |
-| `custom_client` | 自定义客户系统节点 | 紫 | 修改 label 使用 |
-| `custom_external` | 自定义外部系统节点 | 蓝 | 修改 label 使用 |
-
-组件库不满足时，在节点中使用 `custom` 字段自定义：
-
-```json
-{
-  "id": "system_a",
-  "label": "System A\n(Integration Hub)",
-  "custom": {"color": "client_system", "w": 200, "h": 80}
-}
-```
-
-### arch.json 格式
-
-```json
-{
-  "title": "图标题",
-  "layout": "lr",
-  "columns": [
-    {
-      "id": "col_sources",
-      "label": "Data Sources",
-      "container_style": "container",
-      "nodes": [
-        {"id": "crm", "label": "CRM System"},
-        {"id": "miniprogram"},
-        {"id": "pos", "future": true}
-      ]
-    },
-    {
-      "id": "col_cdp",
-      "nodes": [{"id": "cdp"}]
-    }
-  ],
-  "edges": [
-    {
-      "from": "crm", "to": "cdp",
-      "style": "sftp_batch",
-      "label": "MemberInfo [PII] / Transaction",
-      "has_pii": true, "batch": true
-    }
-  ]
-}
-```
-
-**edges 连线样式：**
-
-| style | 颜色/线型 | 场景 |
-|-------|---------|------|
-| `sdk_realtime` | 红实线 | SDK 实时上报，含 PII |
-| `sftp_batch` | 红虚线 | SFTP 批量传输 |
-| `api_realtime` | 红实线 | HTTPS API 实时调用 |
-| `kafka_async` | 蓝虚线 | Kafka 异步消费 |
-| `internal_flow` | 绿实线 | 内部数据流（非 PII）|
-| `config_flow` | 灰实线 | 配置/系统数据 |
-
-`has_pii: true` → 红色；`batch: true` → 虚线；自动推断组合。
-
-### Step 1：LLM 分析架构意图
-
-收到用户描述后，先做以下分析再生成 arch.json：
-
-1. **数据来源**：列举所有数据源（CRM/TAS/前端渠道等）
-2. **中间层**：有无 ETL、中转系统、消息队列
+1. **数据来源**：所有数据源系统（CRM/TAS/前端渠道），哪些是 future
+2. **中间层**：有无 ETL、中转系统、消息队列（非标结构重点）
 3. **核心产品**：CDP / MAE / 仅 CDP
 4. **下游系统**：邮件服务商、推送平台、用户
-5. **非标结构**：与标准模板的差异点
-6. **PII 流向**：哪些连线含 PII，哪些是批量
+5. **PII 流向**：哪些连线含 PII，哪些是批量（daily/weekly）
+6. **合规约束**：跨境数据、数据驻留（影响区域节点和 PIPL 标注）
 
-将分析结果用一段话回复确认，再生成 arch.json。
+### Step 2：生成 arch.yaml
 
-### Step 2：生成并运行
+arch.yaml 是唯一事实来源，格式如下：
+
+```yaml
+meta:
+  title: "图标题"
+  client: "客户名"
+  version: "1.0"
+  date: "YYYY-MM-DD"
+
+nodes:
+  - id: crm                    # snake_case 唯一 ID
+    name: "CRM"
+    type: client_system        # 语义类型（见类型表）
+    group: client_systems      # 所属分组（可选）
+    status: current            # current | future（future→灰色虚线）
+    props:
+      note: "附加说明（可选）"
+
+groups:
+  - id: client_systems
+    name: "Client Systems"
+    type: client_systems       # 分组类型（见类型表）
+    contains: [crm, tas]
+
+edges:
+  - from: crm
+    to: system_a
+    rel: sftp_export           # 关系类型（见关系表）
+    name: "MemberInfo / Transaction"
+    data:
+      has_pii: true
+      fields: [memberinfo, transaction]
+      protocol: SFTP
+      frequency: daily         # realtime | daily | weekly | on-demand
+    status: current
+```
+
+#### 节点类型（type）→ 渲染颜色
+
+| type | 语义 | 颜色 |
+|------|------|------|
+| `sd_product` | 神策产品（CDP/MAE/ETL） | 绿 `#d5e8d4` |
+| `sd_module` | 神策内部功能模块 | 黄 `#fffde7` |
+| `client_system` | 客户业务系统 | 紫 `#e1d5e7` |
+| `client_frontend` | 客户前端渠道 | 紫 `#e1d5e7` |
+| `external_saas` | 外部 SaaS 服务 | 蓝 `#dae8fc` |
+| `person` | 用户角色 | 橙 + 人形图标 |
+| `infra` | 基础设施（SFTP/RDS）| 绿 `#d5e8d4` |
+
+#### 关系类型（rel）→ 渲染连线
+
+| rel | 语义 |
+|-----|------|
+| `sdk_track` | SDK 埋点上报 |
+| `api_push` | API 实时推送 |
+| `sftp_export` | SFTP 文件导出 |
+| `kafka_subscribe` | Kafka 异步订阅 → **强制蓝色虚线** |
+| `api_call` | API 调用 |
+| `data_passthrough` | 数据透传（中转系统） |
+| `user_access` | 用户访问 |
+| `callback` | 回调（邮件事件等）→ **绿色实线** |
+| `deliver` | 消息投递（邮件/推送） |
+
+#### 渲染规则（render.py 执行，arch.yaml 不涉及）
+
+```
+连线颜色优先级：
+  1. rel=kafka_subscribe        → 蓝色虚线（最高优先，覆盖 PII）
+  2. status=future              → 灰色虚线
+  3. has_pii=true, daily/weekly → 红色虚线
+  4. has_pii=true, realtime     → 红色实线
+  5. rel=callback               → 绿色实线
+  6. 其余                       → 绿色实线
+
+节点颜色：由 type 字段查规则表，status=future 覆盖为灰色
+```
+
+### Step 3：运行渲染器
 
 ```bash
-python3 $SKILL_REPO/draw-diagram/builder/diagram_builder.py \
-  --arch $PROJECT_DIR/diagrams/arch.json \
+python3 $SKILL_REPO/draw-diagram/builder/render.py \
+  --arch $PROJECT_DIR/diagrams/arch.yaml \
   --output $PROJECT_DIR/diagrams/<图名>_<客户>.drawio
 ```
+
+渲染器自动完成：坐标计算、容器框生成、颜色/线型渲染、图例添加。
+
+### Step 4：检查和微调
+
+渲染结果直接可用，以下情况需在 draw.io 中微调：
+- CDP/MAE 大框内的子模块需手动拖入容器内部（平铺布局）
+- 节点间距不均匀时，拖动调整
 
 ---
 
 ## 典型非标架构变体
 
-### 变体 1：无 ETL，有统一中转系统
+### 无 ETL，有统一中转系统
 
-```
-数据源 → System A（中转）→ CDP → MAE → 邮件 → 用户
-前端渠道 → CDP（直接 SDK）
-```
+```yaml
+nodes:
+  - id: system_a
+    name: "System A\n(Integration Hub)"
+    type: client_system   # 客户自有，紫色
+    props:
+      note: "替代标准 ETL，聚合多系统数据后统一推入 CDP"
 
-arch.json 差异：加入 `system_a` 自定义节点列，删除 `etl`，数据源连线指向 `system_a`。
-
-### 变体 2：仅 CDP，无 MAE
-
-```
-数据源 → CDP → 业务用户（查询分析）
-```
-
-arch.json 差异：删除 `mae` 列和相关边，加入 `business_user`，CDP → business_user 用 `config_flow`。
-
-### 变体 3：多区域，含大陆数据驻留
-
-```
-大陆用户 → CDP（HK）→ SFTP → ECS（SZ，大陆备份）
+edges:
+  - from: crm
+    to: system_a
+    rel: sftp_export
+    data: {has_pii: true, frequency: daily}
+  - from: system_a
+    to: cdp
+    rel: data_passthrough
+    data: {has_pii: true, frequency: realtime}
 ```
 
-arch.json 差异：加入 `ecs_sz` 自定义节点（`custom_sd`），CDP → ecs_sz 用 `sftp_batch`，标注 "PIPL Daily Export [PII]"。
+### 仅 CDP，无 MAE
+
+删除 `mae` 节点和所有 `from/to: mae` 的边，加入 `business_user` 节点（`type: person`），CDP → business_user 用 `rel: user_access`。
+
+### 多区域，含大陆数据驻留
+
+```yaml
+nodes:
+  - id: ecs_sz
+    name: "ECS (SZ)\nMainland Backup"
+    type: infra
+    props:
+      note: "大陆数据驻留节点，PIPL 合规"
+edges:
+  - from: cdp
+    to: ecs_sz
+    rel: sftp_export
+    name: "PIPL Daily Export"
+    data: {has_pii: true, frequency: daily, protocol: SFTP}
+```
 
 ---
 
 ## 基础设施架构图（手动绘制）
 
-基础设施架构图与云厂商强相关，不提供自动生成，在 draw.io 中手动绘制。
-
-标准分区结构（阿里云）：
-```
-[互联网区]   DNS / GTM / CDN
-[DMZ 区]     Cloud Firewall · WAF · ALB（公网）· SFTP Server · JumpHost
-[应用区]     VPC
-               ├── 公共子网：NAT Gateway / EIP
-               ├── 应用子网：CDP 集群 / MAE 集群 / ETL 集群
-               └── 数据子网：RDS（主备多可用区）
-[DR 区域]    VPC（镜像，如 SG 区域）
-[跨区域]     CEN（Cloud Enterprise Network）
-[安全服务]   KMS · Anti-DDoS · SecurityCenter
-```
-
-绘制要点：用虚线框划定边界，标注流量路径，标注加密方式。
-颜色规范：`$SKILL_REPO/draw-diagram/templates/DIAGRAM_GUIDE.md`
+基础设施架构图（LLD Section 3.5.1）与云厂商强相关，不提供自动生成。
+绘制规范见：`$SKILL_REPO/draw-diagram/templates/DIAGRAM_GUIDE.md`
 
 ---
 
 ## 常见问题
 
-**生成的图节点重叠：** 调整各列节点的 custom.w 统一宽度，或在 draw.io 中微调位置。
+**arch.yaml 中 future 节点是否需要连线？**
+可以有 future 连线（`status: future`），渲染为灰色虚线，表示规划中的数据流。
 
-**CDP/MAE 内部子模块没有包含进大框：** 目前 builder 输出平铺布局，子模块需在 draw.io 中手动拖入容器。
+**字段名应该用中文还是英文？**
+fields 列表用英文 snake_case（渲染成连线标签的一部分）；name 用英文短语（客户审阅用）。
 
-**连线交叉太多：** 调整 columns 顺序，让主数据流尽量从左到右单向，避免回连。
-
-**需要在 PPT 中使用：** draw.io → File → Export As → PNG（300dpi）或 SVG → 嵌入 PPT。
+**需要在 PPT 中使用：**
+draw.io → File → Export As → PNG（300dpi）或 SVG → 嵌入 PPT。
 
 ## Feedback
 
-使用过程中发现问题或有改进建议，随时调用 `/sd-feedback <描述>` 记录。
+使用过程中发现问题，随时调用 `/sd-feedback <描述>` 记录。
