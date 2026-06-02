@@ -255,3 +255,36 @@ draw.io → File → Export As → PNG（300dpi）或 SVG → 嵌入 PPT。
 ## Feedback
 
 使用过程中发现问题，随时调用 `/sd-feedback <描述>` 记录。
+
+---
+
+## Review Loop（自动质量保障）
+
+生成图后，运行 review loop 自动检查并修复问题，直到通过或达到最大轮次：
+
+```bash
+python3 $SKILL_REPO/draw-diagram/review_loop.py \
+  --arch $PROJECT_DIR/diagrams/arch.yaml \
+  --output $PROJECT_DIR/diagrams/<图名>.drawio \
+  --max-rounds 5 \
+  --verbose
+```
+
+**六个内置 Checker：**
+
+| Checker | 类别 | 检查内容 | 可自动修复 |
+|---------|------|---------|-----------|
+| `overlap_checker` | visual | 节点边界框重叠 | ✓ 调整 view.yaml 坐标 |
+| `orphan_checker` | completeness | 孤立节点（无连线） | 需确认 |
+| `pii_color_checker` | spec_compliance | deliver/callback 边的 PII 标注一致性 | ✓ 更新 arch.yaml |
+| `container_checker` | visual | group 成员节点超出容器框 | ✓ 扩大容器框 |
+| `edge_label_checker` | completeness | 主要数据流连线缺少 name 标签 | 需确认 |
+| `node_type_checker` | semantic | 节点名称与 type 字段不一致 | 需确认 |
+
+**终止条件：** 无 FAIL（WARN 可接受）即通过。语义类问题需人工确认后才自动修复。
+
+**Review Framework 位置（被所有 skill 复用）：**
+```
+$SKILL_REPO/shared/review/protocol.py   ← Checker/Fixer/ReviewLoop 接口定义
+$SKILL_REPO/draw-diagram/review/        ← draw-diagram 专属 checker/fixer 实现
+```
