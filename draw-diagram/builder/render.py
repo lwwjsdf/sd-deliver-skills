@@ -89,10 +89,14 @@ def node_xml(cell_id, label, style, x, y, w, h) -> str:
             f'          <mxGeometry x="{x:.0f}" y="{y:.0f}" width="{w:.0f}" '
             f'height="{h:.0f}" as="geometry"/>\n        </mxCell>\n')
 
-def edge_xml(cell_id, src, tgt, style, label="") -> str:
+def edge_xml(cell_id, src, tgt, style, label="", waypoints=None) -> str:
+    wp_xml = ""
+    if waypoints:
+        pts = "".join(f'<mxPoint x="{x}" y="{y}"/>' for x, y in waypoints)
+        wp_xml = f'\n          <Array as="points">{pts}</Array>'
     return (f'        <mxCell id="{cell_id}" value="{esc(label)}" style="{style}" '
             f'edge="1" source="{src}" target="{tgt}" parent="1">\n'
-            f'          <mxGeometry relative="1" as="geometry"/>\n        </mxCell>\n')
+            f'          <mxGeometry relative="1" as="geometry">{wp_xml}\n          </mxGeometry>\n        </mxCell>\n')
 
 
 # ── 布局引擎 ─────────────────────────────────────────────────────────────────
@@ -265,12 +269,14 @@ def node_style_str(vtype: str, is_future: bool, shape: str = None,
             f"dashed={dashed};verticalAlign={valign};")
 
 
-def edge_style_str(color: str, dashed: bool) -> str:
+def edge_style_str(color: str, dashed: bool,
+                   exit_x: float = 1, exit_y: float = 0.5,
+                   entry_x: float = 0, entry_y: float = 0.5) -> str:
     d = "1" if dashed else "0"
     return (f"edgeStyle=orthogonalEdgeStyle;rounded=0;orthogonalLoop=1;"
             f"jettySize=auto;html=1;strokeColor={color};strokeWidth=2;"
-            f"dashed={d};exitX=1;exitY=0.5;exitDx=0;exitDy=0;"
-            f"entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontStyle=2;fontSize=10;")
+            f"dashed={d};exitX={exit_x};exitY={exit_y};exitDx=0;exitDy=0;"
+            f"entryX={entry_x};entryY={entry_y};entryDx=0;entryDy=0;fontStyle=2;fontSize=10;")
 
 
 def group_style_str(gtype: str) -> str:
@@ -450,8 +456,46 @@ def render(arch: dict, output_path: str, view: dict = None):
         id_map[nid] = cell_id
         cells_xml += node_xml(cell_id, n["name"], style, x, y, w, h)
 
+    # ── 预计算：每个节点的出边/入边分布 ──────────────────────────────────────
+    # 用于智能分配 exitY / entryY，避免连线重叠
+    outgoing = {}  # node_id → [(edge_idx, target_y), ...]
+    incoming = {}  # node_id → [(edge_idx, source_y), ...]
+    for i, e in enumerate(edges):
+        s, t = e.get("from"), e.get("to")
+        if s in positions and t in positions:
+            sy = positions[s][1] + positions[s][3]/2
+            ty = positions[t][1] + positions[t][3]/2
+            outgoing.setdefault(s, []).append((i, ty))
+            incoming.setdefault(t, []).append((i, sy))
+
+    # 计算每条的 exitY / entryY
+    edge_exit_y = {}  # edge_idx → exit_y (0~1)
+    edge_entry_y = {}  # edge_idx → entry_y (0~1)
+
+    for nid, items in outgoing.items():
+        n = len(items)
+        if n <= 1:
+            for idx, _ in items:
+                edge_exit_y[idx] = 0.5
+        else:
+            # 按 target y 排序，均匀分布 exitY
+            items_sorted = sorted(items, key=lambda x: x[1])
+            for rank, (idx, _) in enumerate(items_sorted):
+                edge_exit_y[idx] = round(0.2 + 0.6 * rank / (n - 1), 2)
+
+    for nid, items in incoming.items():
+        n = len(items)
+        if n <= 1:
+            for idx, _ in items:
+                edge_entry_y[idx] = 0.5
+        else:
+            # 按 source y 排序，均匀分布 entryY
+            items_sorted = sorted(items, key=lambda x: x[1])
+            for rank, (idx, _) in enumerate(items_sorted):
+                edge_entry_y[idx] = round(0.2 + 0.6 * rank / (n - 1), 2)
+
     # 渲染连线
-    for e in edges:
+    for i, e in enumerate(edges):
         src = id_map.get(e["from"])
         tgt = id_map.get(e["to"])
         if not src or not tgt:
@@ -467,8 +511,32 @@ def render(arch: dict, output_path: str, view: dict = None):
         if fields:
             label = f"{label}\n{' / '.join(fields)}" if label else " / ".join(fields)
 
+        # 判断连线方向
+        sx = positions[e["from"]][0] + positions[e["from"]][2]
+        tx = positions[e["to"]][0]
+        is_backward = sx > tx  # 从右到左的回连
+
+        # exit/entry 点
+        ex_y = edge_exit_y.get(i, 0.5)
+        en_y = edge_entry_y.get(i, 0.5)
+
+        waypoints = None
+        if is_backward:
+            # 回连：从底部或顶部绕路
+            src_y_bottom = positions[e["from"]][1] + positions[e["from"]][3]
+            tgt_y_bottom = positions[e["to"]][1] + positions[e["to"]][3]
+            bottom_y = max(src_y_bottom, tgt_y_bottom) + 80
+            # 走 source 底部 → 横向 → target 底部
+            waypoints = [
+                (sx, bottom_y),
+                (tx + 20, bottom_y),
+            ]
+            ex_y = 1.0  # 从底部出
+            en_y = 1.0  # 从底部入
+
+        style = edge_style_str(color, dashed, exit_y=ex_y, entry_y=en_y)
         e_id = gid()
-        cells_xml += edge_xml(e_id, src, tgt, edge_style_str(color, dashed), label)
+        cells_xml += edge_xml(e_id, src, tgt, style, label, waypoints)
 
     # 图例位置
     max_x = max((x + w for x, _, w, _ in positions.values()), default=800)

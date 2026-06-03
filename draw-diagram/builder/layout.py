@@ -15,8 +15,8 @@ from pathlib import Path
 START_X  = 60
 START_Y  = 60
 DPI_SCALE = 1.4
-NODE_SEP  = 0.5
-RANK_SEP  = 1.8
+NODE_SEP  = 0.8          # 同列节点间距加大（避免多线拥挤）
+RANK_SEP  = 2.5          # 列间距加大（给长连线留走廊）
 DEFAULT_W_INCH = 2.0
 LINE_H_INCH    = 0.22
 V_PAD_INCH     = 0.20
@@ -142,7 +142,66 @@ def compute_layout_graphviz(arch):
             w_dot * DPI_SCALE,
             h_dot * DPI_SCALE,
         )
+
+    # ── 后处理：强连接节点水平排列 ────────────────────────────────────────
+    _horizontalize_connected_pairs(arch, positions)
+
     return positions
+
+
+def _horizontalize_connected_pairs(arch, positions):
+    """
+    后处理：把同组内类型相同的核心产品节点水平排列。
+    规则：组内同一类型的节点数 ≥ 2 且 ≤ 3 → 水平对齐。
+    常见场景：product_internal 组内的多个 sd_product（CDP + SF）。
+    """
+    nodes  = arch.get("nodes", [])
+    groups = arch.get("groups", [])
+    node_map = {n["id"]: n for n in nodes}
+
+    for g in groups:
+        members = [m for m in g.get("contains", []) if m in positions]
+        if len(members) < 2:
+            continue
+
+        # 按类型分组
+        type_groups = {}
+        for m in members:
+            if m not in node_map:
+                continue
+            t = node_map[m]["type"]
+            type_groups.setdefault(t, []).append(m)
+
+        # 对核心类型（sd_product / sd_module）的子集进行水平化
+        for t, sub_members in type_groups.items():
+            if t not in ("sd_product", "sd_module"):
+                continue
+            if len(sub_members) < 2 or len(sub_members) > 4:
+                continue
+
+            # 计算平均 y 坐标
+            avg_y = sum(positions[m][1] + positions[m][3]/2 for m in sub_members) / len(sub_members)
+
+            # 按原始 x 排序
+            sorted_members = sorted(sub_members, key=lambda m: positions[m][0])
+
+            # 计算总宽度
+            total_w = sum(positions[m][2] for m in sorted_members)
+            gap = 40
+            total_w += gap * (len(sorted_members) - 1)
+
+            # 保持子集中心不变
+            min_x = min(positions[m][0] for m in sub_members)
+            max_x = max(positions[m][0] + positions[m][2] for m in sub_members)
+            center_x = (min_x + max_x) / 2
+            start_x = center_x - total_w / 2
+
+            # 重新分配 x,y
+            curr_x = start_x
+            for m in sorted_members:
+                w, h = positions[m][2], positions[m][3]
+                positions[m] = (curr_x, avg_y - h/2, w, h)
+                curr_x += w + gap
 
 
 def compute_layout_linear(arch):
