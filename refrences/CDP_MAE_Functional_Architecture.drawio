@@ -1,0 +1,338 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36" version="29.6.6">
+  <diagram id="cdp-mae-arch" name="CDP+MAE Functional Architecture">
+    <mxGraphModel dx="3675" dy="928" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="1700" pageHeight="1200" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;verticalAlign=middle;whiteSpace=wrap;fontSize=20;fontStyle=1;fontColor=#232F3E;" value="CDP &amp; MAE — System Internal Functional Architecture" vertex="1">
+          <mxGeometry height="36" width="1500" x="100" y="18" as="geometry" />
+        </mxCell>
+        <mxCell id="src-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="160" width="200" x="-168" y="122" as="geometry" />
+        </mxCell>
+        <mxCell id="src-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=12;fontColor=#003366;" value="Data Sources" vertex="1">
+          <mxGeometry height="24" width="200" x="-168" y="126" as="geometry" />
+        </mxCell>
+        <mxCell id="src-westk" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;align=center;" value="🏢 WestK Systems&#xa;(CRM / TAS / Website / Mini-Program)" vertex="1">
+          <mxGeometry height="46" width="170" x="-153" y="154" as="geometry" />
+        </mxCell>
+        <mxCell id="src-outside" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#6c8ebf;fontSize=10;align=center;" value="🌐 Outside Systems&#xa;(Social / 3rd-party APIs)" vertex="1">
+          <mxGeometry height="46" width="170" x="-153" y="210" as="geometry" />
+        </mxCell>
+        <mxCell id="int-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1f0ff;strokeColor=#4a86c8;strokeWidth=2;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="200" width="180" x="120" y="102" as="geometry" />
+        </mxCell>
+        <mxCell id="int-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=11;fontColor=#003366;" value="Integration Methods" vertex="1">
+          <mxGeometry height="22" width="180" x="120" y="106" as="geometry" />
+        </mxCell>
+        <mxCell id="int-sdk" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" value="⚡ SDK (Real-time)&#xa;20s ~ 60s latency&#xa;Mini-Program / Website" vertex="1">
+          <mxGeometry height="50" width="156" x="132" y="132" as="geometry" />
+        </mxCell>
+        <mxCell id="int-files" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4a86c8;fontSize=10;align=center;" value="📁 Files (Batch)&#xa;Daily SFTP — T+1&#xa;CSV + GPG Encrypted" vertex="1">
+          <mxGeometry height="46" width="156" x="132" y="190" as="geometry" />
+        </mxCell>
+        <mxCell id="int-api" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#4a86c8;fontSize=10;align=center;" value="🔌 API / Real-time Push&#xa;HTTPS / JSON" vertex="1">
+          <mxGeometry height="40" width="156" x="132" y="244" as="geometry" />
+        </mxCell>
+        <mxCell id="cdp-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=3;arcSize=5;dashed=0;" value="" vertex="1">
+          <mxGeometry height="680" width="620" x="470" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="cdp-header" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=14;fontColor=#006644;" value="CDP Cluster — Customer Data Platform" vertex="1">
+          <mxGeometry height="26" width="620" x="470" y="66" as="geometry" />
+        </mxCell>
+        <mxCell id="cdp-note" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=10;fontColor=#555555;fontStyle=2;" value="[System of Interest]" vertex="1">
+          <mxGeometry height="18" width="620" x="470" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="dm-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#82b366;strokeWidth=1.5;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="190" width="290" x="480" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="dm-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=11;fontColor=#006644;" value="📦 Data Model: Event-User-Item (EV-I)" vertex="1">
+          <mxGeometry height="20" width="290" x="480" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="dm-events" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;align=center;" value="Events&#xa;(行为事件)&#xa;Append-only&#xa;History cannot change" vertex="1">
+          <mxGeometry height="70" width="82" x="490" y="142" as="geometry" />
+        </mxCell>
+        <mxCell id="dm-arrow1" edge="1" parent="1" source="dm-events" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="dm-users" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dm-users" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;align=center;" value="Users&#xa;(用户档案)&#xa;Can update/change&#xa;Upsert supported" vertex="1">
+          <mxGeometry height="70" width="82" x="594" y="142" as="geometry" />
+        </mxCell>
+        <mxCell id="dm-arrow2" edge="1" parent="1" source="dm-users" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#555555;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="dm-items" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="dm-items" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=9;align=center;" value="Item&#xa;(物品维度)&#xa;Reference data&#xa;Product / Event" vertex="1">
+          <mxGeometry height="70" width="62" x="698" y="142" as="geometry" />
+        </mxCell>
+        <mxCell id="dm-tables-note" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;fontColor=#444444;whiteSpace=wrap;" value="Cluster ops: insert / update / delete&#xa;Table examples: Member Profiles · ID · Ticket Tx · Ticket Result · PCS Record · PCS Total · WestK Website Tick · Mini-Program Tick ..." vertex="1">
+          <mxGeometry height="78" width="274" x="488" y="220" as="geometry" />
+        </mxCell>
+        <mxCell id="idmap-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff8e1;strokeColor=#d6b656;strokeWidth=1.5;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="160" width="290" x="480" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="idmap-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=11;fontColor=#5b4000;" value="🔗 ID Mapping Engine (C2)" vertex="1">
+          <mxGeometry height="20" width="290" x="480" y="318" as="geometry" />
+        </mxCell>
+        <mxCell id="idmap-ids" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fffde7;strokeColor=#d6b656;fontSize=10;align=center;fontStyle=1;" value="Cookie ID → Email → Phone → UnionID → MUID → Login ID" vertex="1">
+          <mxGeometry height="30" width="270" x="490" y="342" as="geometry" />
+        </mxCell>
+        <mxCell id="idmap-example" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;fontColor=#555555;whiteSpace=wrap;" value="📌 Example (Lou):&#xa;Mar-1 Website pageview → Cookie ID (anonymous)&#xa;Mar-1 Website login  → bound to Email&#xa;Mar-2 Mini-Program buy ticket → Email + Phone + UnionID&#xa;Mar-2 11am Tick System → ID + Email + Phone (fully merged)" vertex="1">
+          <mxGeometry height="88" width="276" x="488" y="378" as="geometry" />
+        </mxCell>
+        <mxCell id="func-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#82b366;strokeWidth=1.5;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="360" width="285" x="790" y="115" as="geometry" />
+        </mxCell>
+        <mxCell id="func-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=11;fontColor=#006644;" value="CDP Functional Modules (C5)" vertex="1">
+          <mxGeometry height="20" width="285" x="790" y="118" as="geometry" />
+        </mxCell>
+        <mxCell id="func-dm" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;align=center;" value="🗄️ Data Management&#xa;Import · Clean · Validate" vertex="1">
+          <mxGeometry height="44" width="125" x="800" y="144" as="geometry" />
+        </mxCell>
+        <mxCell id="func-seg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;align=center;" value="🎯 Segment / Tag&#xa;Audience · Labels · Profiles" vertex="1">
+          <mxGeometry height="44" width="125" x="940" y="144" as="geometry" />
+        </mxCell>
+        <mxCell id="func-ua" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;align=center;" value="📊 User Analysis&#xa;Behaviour · Journey · Cohort" vertex="1">
+          <mxGeometry height="44" width="125" x="800" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="func-tools" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;align=center;" value="🔧 Analysis Tools&#xa;Funnel · Retention · Path" vertex="1">
+          <mxGeometry height="44" width="125" x="940" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="func-dash" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;align=center;" value="📈 Dashboard&#xa;KPI · Reports · Export" vertex="1">
+          <mxGeometry height="44" width="125" x="800" y="256" as="geometry" />
+        </mxCell>
+        <mxCell id="func-rbac" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#82b366;fontSize=10;align=center;" value="🔐 Roles &amp; Access Control&#xa;RBAC · Account · Permissions" vertex="1">
+          <mxGeometry height="44" width="125" x="940" y="256" as="geometry" />
+        </mxCell>
+        <mxCell id="valid-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="80" width="260" x="800" y="312" as="geometry" />
+        </mxCell>
+        <mxCell id="valid-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=10;fontColor=#5b4000;" value="✅ Validation &amp; Quality Gate" vertex="1">
+          <mxGeometry height="18" width="260" x="800" y="315" as="geometry" />
+        </mxCell>
+        <mxCell id="valid-mapping" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;align=center;" value="Field Mapping Validation" vertex="1">
+          <mxGeometry height="28" width="116" x="808" y="338" as="geometry" />
+        </mxCell>
+        <mxCell id="valid-bvt" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=9;align=center;" value="BVT (Build Verification Test)" vertex="1">
+          <mxGeometry height="28" width="116" x="936" y="338" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e0f2f1;strokeColor=#00796b;strokeWidth=1.5;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="90" width="595" x="480" y="490" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=11;fontColor=#004d40;" value="C3: Data Storage Layer (Unified Store)" vertex="1">
+          <mxGeometry height="18" width="595" x="480" y="493" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-kafka" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b2dfdb;strokeColor=#00796b;fontSize=9;align=center;" value="Kafka&#xa;(Streaming)" vertex="1">
+          <mxGeometry height="48" width="70" x="490" y="516" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-skv" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b2dfdb;strokeColor=#00796b;fontSize=9;align=center;" value="SKV&#xa;(Key-Value)" vertex="1">
+          <mxGeometry height="48" width="70" x="572" y="516" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-mysql" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#b2dfdb;strokeColor=#00796b;fontSize=9;align=center;" value="MySQL&#xa;(Metadata)" vertex="1">
+          <mxGeometry height="48" width="70" x="654" y="516" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-kudu" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#80cbc4;strokeColor=#00796b;fontSize=9;align=center;" value="Kudu&#xa;(Columnar/OLAP)" vertex="1">
+          <mxGeometry height="48" width="80" x="736" y="516" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-hdfs" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#80cbc4;strokeColor=#00796b;fontSize=9;align=center;" value="HDFS&#xa;(File Archive)" vertex="1">
+          <mxGeometry height="48" width="70" x="828" y="516" as="geometry" />
+        </mxCell>
+        <mxCell id="storage-3node" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=right;fontSize=9;fontStyle=2;fontColor=#004d40;" value="3-Node Cluster · 3-Replica HA" vertex="1">
+          <mxGeometry height="20" width="148" x="920" y="530" as="geometry" />
+        </mxCell>
+        <mxCell id="etl-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8f5e9;strokeColor=#82b366;strokeWidth=1.5;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="134" width="595" x="480" y="594" as="geometry" />
+        </mxCell>
+        <mxCell id="etl-c1" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" value="C1: Data Ingestion&#xa;ETL Cluster&#xa;Decrypt · Cleanse · Load" vertex="1">
+          <mxGeometry height="56" width="130" x="490" y="608" as="geometry" />
+        </mxCell>
+        <mxCell id="etl-c2" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" value="C2: Data Access &amp; ID Resolution&#xa;Nginx · ID-Mapping · Data Loader" vertex="1">
+          <mxGeometry height="56" width="155" x="634" y="608" as="geometry" />
+        </mxCell>
+        <mxCell id="etl-c4" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#d5e8d4;strokeColor=#82b366;fontSize=10;align=center;" value="C4: Query Engine&#xa;Impala / Luman&#xa;Funnel · Cohort · Report" vertex="1">
+          <mxGeometry height="56" width="126" x="803" y="608" as="geometry" />
+        </mxCell>
+        <mxCell id="etl-c9" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" value="C9: SFO Online Service&#xa;Sub-ms · SKV · High QPS&#xa;Personalisation API" vertex="1">
+          <mxGeometry height="56" width="126" x="943" y="608" as="geometry" />
+        </mxCell>
+        <mxCell id="etl-label" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontStyle=2;fontColor=#006644;" value="C1 / C2 / C4 / C9 — Processing &amp; Query Components" vertex="1">
+          <mxGeometry height="52" width="595" x="480" y="669" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=3;arcSize=5;" value="" vertex="1">
+          <mxGeometry height="490" width="400" x="1170" y="60" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-header" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=14;fontColor=#5b4000;" value="MAE Cluster — Marketing Automation Engine" vertex="1">
+          <mxGeometry height="26" width="400" x="1170" y="66" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-note" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=10;fontColor=#555555;fontStyle=2;" value="[System of Interest]" vertex="1">
+          <mxGeometry height="18" width="400" x="1170" y="90" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-camp-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="100" width="375" x="1182" y="116" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-camp-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=11;fontColor=#5b4000;" value="📅 Campaign Plan" vertex="1">
+          <mxGeometry height="20" width="375" x="1182" y="119" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-camp-time" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;align=center;" value="⏰ By Time&#xa;Scheduled / Recurring&#xa;One-time / Daily / Weekly" vertex="1">
+          <mxGeometry height="62" width="168" x="1192" y="143" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-camp-event" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;align=center;" value="⚡ By Event Trigger&#xa;Real-time Flink evaluation&#xa;e.g. purchase → confirmation email" vertex="1">
+          <mxGeometry height="62" width="168" x="1378" y="143" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-journey" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" value="🗺️ Journeys&#xa;Multi-step orchestration · Branching logic · Wait steps · Exit criteria" vertex="1">
+          <mxGeometry height="50" width="375" x="1182" y="228" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-ch-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="60" width="375" x="1182" y="290" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-ch-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontStyle=1;fontSize=11;fontColor=#5b4000;" value="📡 Channel Management" vertex="1">
+          <mxGeometry height="18" width="375" x="1182" y="293" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-ch-edm" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;align=center;" value="✉️ eDM" vertex="1">
+          <mxGeometry height="28" width="76" x="1192" y="316" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-ch-push" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;align=center;" value="📱 App Push" vertex="1">
+          <mxGeometry height="28" width="76" x="1278" y="316" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-ch-sms" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ffffff;strokeColor=#d6b656;fontSize=10;align=center;" value="💬 SMS" vertex="1">
+          <mxGeometry height="28" width="76" x="1364" y="316" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-ch-more" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#f5f5f5;strokeColor=#bdbdbd;fontSize=10;align=center;fontStyle=2;" value="... Future" vertex="1">
+          <mxGeometry height="28" width="96" x="1450" y="316" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-approval" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" value="✔️ Approval Flows&#xa;Campaign review &amp; sign-off before execution" vertex="1">
+          <mxGeometry height="42" width="375" x="1182" y="364" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-tpl" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=10;align=center;" value="📝 Templates&#xa;Email HTML · Dynamic variables · Personalisation blocks · A/B variants" vertex="1">
+          <mxGeometry height="42" width="375" x="1182" y="418" as="geometry" />
+        </mxCell>
+        <mxCell id="mae-c678" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=center;fontSize=9;fontStyle=2;fontColor=#5b4000;" value="C6: MAE Engine · C7: Audience Service · C8: Channel Message Service" vertex="1">
+          <mxGeometry height="76" width="375" x="1182" y="464" as="geometry" />
+        </mxCell>
+        <mxCell id="sc-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;fontSize=11;align=center;fontStyle=1;" value="SendCloud&#xa;External ESP&#xa;(SaaS)" vertex="1">
+          <mxGeometry height="80" width="120" x="1678" y="216" as="geometry" />
+        </mxCell>
+        <mxCell id="enduser" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e8eaf6;strokeColor=#3949ab;fontSize=10;align=center;" value="👥 End Users&#xa;(Email Inbox)" vertex="1">
+          <mxGeometry height="60" width="110" x="1683" y="390" as="geometry" />
+        </mxCell>
+        <mxCell id="sz-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#ede7f6;strokeColor=#6a1b9a;strokeWidth=2;fontSize=11;align=center;" value="🇨🇳 SFTP Server (SZ Env)&#xa;Mainland China VPC&#xa;PIPL Compliance — data at rest in CN" vertex="1">
+          <mxGeometry height="80" width="280" x="560" y="780" as="geometry" />
+        </mxCell>
+        <mxCell id="employee" parent="1" style="ellipse;whiteSpace=wrap;html=1;fillColor=#e8eaf6;strokeColor=#3949ab;fontSize=10;align=center;" value="👤 WestK Employee&#xa;(CDP / MAE Web UI)" vertex="1">
+          <mxGeometry height="60" width="120" x="1190" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="aad" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=10;align=center;" value="Azure AD (AAD)&#xa;SAML 2.0 SSO" vertex="1">
+          <mxGeometry height="50" width="120" x="1340" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-bg" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fafafa;strokeColor=#9e9e9e;strokeWidth=1;arcSize=8;" value="" vertex="1">
+          <mxGeometry height="180" width="490" x="30" y="760" as="geometry" />
+        </mxCell>
+        <mxCell id="legend-title" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontStyle=1;fontSize=12;fontColor=#333333;" value="Legend" vertex="1">
+          <mxGeometry height="20" width="200" x="42" y="764" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1" parent="1" style="rounded=1;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="14" width="18" x="42" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="leg1t" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" value="CDP System of Interest" vertex="1">
+          <mxGeometry height="18" width="180" x="66" y="788" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="14" width="18" x="42" y="812" as="geometry" />
+        </mxCell>
+        <mxCell id="leg2t" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" value="MAE System of Interest" vertex="1">
+          <mxGeometry height="18" width="180" x="66" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3" parent="1" style="rounded=1;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="14" width="18" x="42" y="834" as="geometry" />
+        </mxCell>
+        <mxCell id="leg3t" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" value="External Data Sources" vertex="1">
+          <mxGeometry height="18" width="180" x="66" y="832" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4" parent="1" style="rounded=1;fillColor=#ede7f6;strokeColor=#6a1b9a;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="14" width="18" x="42" y="856" as="geometry" />
+        </mxCell>
+        <mxCell id="leg4t" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" value="Mainland China / PIPL-scoped" vertex="1">
+          <mxGeometry height="18" width="180" x="66" y="854" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5" parent="1" style="rounded=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="14" width="18" x="250" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="leg5t" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" value="Real-time (20s~60s latency)" vertex="1">
+          <mxGeometry height="18" width="200" x="274" y="788" as="geometry" />
+        </mxCell>
+        <mxCell id="leg6" parent="1" style="rounded=1;fillColor=#e1d5e7;strokeColor=#9673a6;strokeWidth=2;" value="" vertex="1">
+          <mxGeometry height="14" width="18" x="250" y="812" as="geometry" />
+        </mxCell>
+        <mxCell id="leg6t" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" value="3rd-party / External SaaS" vertex="1">
+          <mxGeometry height="18" width="200" x="274" y="810" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-arrow1-line" edge="1" parent="1" style="endArrow=open;endFill=0;endSize=8;strokeColor=#333333;strokeWidth=2;html=1;" value="">
+          <mxGeometry height="14" relative="1" width="18" x="250" y="841" as="geometry">
+            <mxPoint x="250" y="841" as="sourcePoint" />
+            <mxPoint x="268" y="841" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="leg-arrow1t" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" value="Sync / Real-time flow" vertex="1">
+          <mxGeometry height="18" width="200" x="274" y="832" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-arrow2-line" edge="1" parent="1" style="endArrow=open;endFill=0;endSize=8;strokeColor=#333333;strokeWidth=2;dashed=1;html=1;" value="">
+          <mxGeometry height="14" relative="1" width="18" x="250" y="863" as="geometry">
+            <mxPoint x="250" y="863" as="sourcePoint" />
+            <mxPoint x="268" y="863" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="leg-arrow2t" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=10;" value="Async / Batch flow" vertex="1">
+          <mxGeometry height="18" width="200" x="274" y="854" as="geometry" />
+        </mxCell>
+        <mxCell id="leg-pii" parent="1" style="text;html=1;strokeColor=none;fillColor=none;align=left;fontSize=9;fontColor=#333333;fontStyle=2;" value="[PII] = contains personal data — TLS encrypted, DPO review required" vertex="1">
+          <mxGeometry height="56" width="464" x="42" y="876" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-src-int" edge="1" parent="1" source="src-bg" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;" target="int-bg" value="">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-int-c1" edge="1" parent="1" source="int-bg" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;strokeWidth=2;dashed=1;exitX=1;exitY=0.7;exitDx=0;exitDy=0;entryX=0;entryY=0.8;entryDx=0;entryDy=0;fontSize=9;" target="etl-c1" value="Batch / Files">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-int-c2" edge="1" parent="1" source="int-bg" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=2;exitX=1;exitY=0.3;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=9;fontColor=#333333;" target="etl-c2" value="SDK / Real-time [PII]">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="430" y="162" />
+              <mxPoint x="430" y="636" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arr-cdp-mae" edge="1" parent="1" source="cdp-bg" style="html=1;strokeColor=#d6b656;strokeWidth=2.5;dashed=1;exitX=0.996;exitY=0.478;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=9;fontColor=#5b4000;align=center;exitPerimeter=0;edgeStyle=orthogonalEdgeStyle;" target="mae-bg" value="Kafka (async)&#xa;SegmentList · TagProfile [PII]&#xa;AudienceSet · ConsentFlag">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1140" y="400" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="arr-mae-sc" edge="1" parent="1" source="mae-bg" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d6b656;strokeWidth=2;exitX=1;exitY=0.4;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=9;fontColor=#5b4000;" target="sc-bg" value="HTTPS API&#xa;EmailContent · RecipientList [PII]">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-sc-eu" edge="1" parent="1" source="sc-bg" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#d6b656;strokeWidth=1.5;fontSize=9;fontColor=#5b4000;" target="enduser" value="Personalised Email">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-cdp-sz" edge="1" parent="1" source="etl-c1" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6a1b9a;strokeWidth=2;dashed=1;fontSize=9;fontColor=#333333;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;" target="sz-bg" value="Daily PIPL Export [PII]&#xa;CN users only">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-emp-mae" edge="1" parent="1" source="employee" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#9673a6;strokeWidth=1.5;fontSize=9;fontColor=#5b4000;" target="mae-bg" value="Campaign config&#xa;Templates · Journey">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-emp-aad" edge="1" parent="1" source="employee" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#6c8ebf;strokeWidth=1.5;fontSize=9;" target="aad" value="SAML 2.0">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="arr-c3-c4" edge="1" parent="1" source="storage-bg" style="edgeStyle=orthogonalEdgeStyle;html=1;strokeColor=#82b366;strokeWidth=1.5;fontSize=8;" target="etl-c4" value="Query">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="sfo-note" parent="1" style="text;html=1;strokeColor=#d6b656;fillColor=#fff2cc;align=center;fontSize=9;fontColor=#5b4000;rounded=1;whiteSpace=wrap;" value="↑ External downstream systems&#xa;call C9 SFO for real-time&#xa;user attribute lookups" vertex="1">
+          <mxGeometry height="50" width="148" x="1530" y="590" as="geometry" />
+        </mxCell>
+        <mxCell id="rt-note" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=1.5;fontSize=10;align=center;" value="⚡ Real-time latency: 20s ~ 60s&#xa;(Flink streaming window — not sub-second)" vertex="1">
+          <mxGeometry height="50" width="260" x="890" y="790" as="geometry" />
+        </mxCell>
+        <mxCell id="cb-note" parent="1" style="rounded=1;whiteSpace=wrap;html=1;fillColor=#e8e8e8;strokeColor=#999999;strokeWidth=1.5;fontSize=10;align=center;" value="📨 Callback data: SendCloud returns&#xa;open / click / bounce events → MAE analytics" vertex="1">
+          <mxGeometry height="50" width="270" x="1230" y="680" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

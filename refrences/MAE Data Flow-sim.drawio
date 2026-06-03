@@ -1,0 +1,172 @@
+<mxfile host="app.diagrams.net" agent="Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/145.0.0.0 Safari/537.36">
+  <diagram name="MAE Data Flow v1" id="_4CN-DCN7-_UcOfIa8C7">
+    <mxGraphModel dx="3120" dy="2329" grid="1" gridSize="10" guides="1" tooltips="1" connect="1" arrows="1" fold="1" page="1" pageScale="1" pageWidth="827" pageHeight="1169" math="0" shadow="0">
+      <root>
+        <mxCell id="0" />
+        <mxCell id="1" parent="0" />
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-2" parent="1" style="whiteSpace=wrap;fillColor=#f5f5f5;strokeColor=#666666;verticalAlign=top;fontStyle=1;fontSize=14;fontColor=#333333;rounded=0;" value="Legend" vertex="1">
+          <mxGeometry height="410" width="385" x="1240" y="10" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-3" parent="1" style="fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;fontSize=14;rounded=0;" value="System of Interest" vertex="1">
+          <mxGeometry height="26" width="360" x="1252" y="50" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-4" parent="1" style="fillColor=#e1d5e7;strokeColor=#6c8ebf;strokeWidth=2;fontSize=14;rounded=0;" value="WestK Systems (data source)" vertex="1">
+          <mxGeometry height="26" width="360" x="1252" y="85" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-4b" parent="1" style="fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=14;rounded=0;" value="SendCloud (third-party ESP)" vertex="1">
+          <mxGeometry height="26" width="360" x="1252" y="110" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-5" parent="1" style="fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;rounded=0;" value="Internal Module (C-numbered)" vertex="1">
+          <mxGeometry height="26" width="360" x="1252" y="135" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-6" edge="1" parent="1" style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#cc0000;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1250" y="210" as="sourcePoint" />
+            <mxPoint x="1320" y="210" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-7" parent="1" style="text;html=1;fontSize=14;align=left;" value="&lt;font color=&quot;#cc0000&quot;&gt;Data flow with PII / Sensitive data&lt;/font&gt;" vertex="1">
+          <mxGeometry height="22" width="278" x="1326" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-8" edge="1" parent="1" style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#006644;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1250" y="238" as="sourcePoint" />
+            <mxPoint x="1320" y="238" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-9" parent="1" style="text;html=1;fontSize=14;align=left;" value="&lt;font color=&quot;#006644&quot;&gt;Internal data flow (non-PII, within SoI)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="22" width="278" x="1326" y="228" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-10" edge="1" parent="1" style="endArrow=block;endFill=1;strokeWidth=2;dashed=1;strokeColor=#0066cc;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1250" y="268" as="sourcePoint" />
+            <mxPoint x="1320" y="268" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-11" parent="1" style="text;html=1;fontSize=14;align=left;" value="&lt;font color=&quot;#0066cc&quot;&gt;Internal async (CDP → MAE)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="22" width="278" x="1326" y="258" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-12" edge="1" parent="1" style="endArrow=block;endFill=1;strokeWidth=2;strokeColor=#888888;" value="">
+          <mxGeometry relative="1" as="geometry">
+            <mxPoint x="1250" y="298" as="sourcePoint" />
+            <mxPoint x="1320" y="298" as="targetPoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-13" parent="1" style="text;html=1;fontSize=14;align=left;" value="System / config data (no PII) — config, health check; no personal data transfer" vertex="1">
+          <mxGeometry height="22" width="278" x="1326" y="288" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-14" parent="1" style="html=1;text;fontSize=14;align=left;strokeColor=none;fillColor=none;" value="&lt;b&gt;[PII]&lt;/b&gt;  Personal Identifiable Information&lt;br&gt;&lt;b&gt;[Sensitive]&lt;/b&gt;  Transaction / Financial data&lt;br&gt;&lt;br&gt;&lt;font color=&quot;#cc0000&quot;&gt;⚠ All red flows require review&amp;nbsp;&lt;/font&gt;&lt;div&gt;&lt;font color=&quot;#cc0000&quot;&gt;prior to production go-live&lt;/font&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="120" width="365" x="1253" y="320" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-15" parent="1" style="html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=2;verticalAlign=top;fontSize=14;rounded=0;" value="&lt;b&gt;CDP Cluster&lt;/b&gt;&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="260" width="190" x="-110" y="240" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-16" parent="1" style="shape=cylinder3;html=1;whiteSpace=wrap;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#fff2cc;strokeColor=#d6b656;fontSize=14;" value="C3: Data Storage&lt;br/&gt;(Kafka)" vertex="1">
+          <mxGeometry height="62" width="150" x="-90" y="310" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-17" parent="1" style="shape=mxgraph.basic.person2;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;verticalLabelPosition=bottom;verticalAlign=top;" value="WestK Employee" vertex="1">
+          <mxGeometry height="105" width="75" x="540" y="-29" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-18" parent="1" style="html=1;whiteSpace=wrap;fillColor=#d5e8d4;strokeColor=#82b366;strokeWidth=3;verticalAlign=top;fontSize=14;rounded=0;" value="&lt;b&gt;&lt;font style=&quot;font-size:22px;&quot;&gt;MAE Cluster&lt;/font&gt;&lt;/b&gt;&lt;div&gt;&lt;br/&gt;&lt;/div&gt;" vertex="1">
+          <mxGeometry height="570" width="970" x="220" y="130" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-19" parent="1" style="html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;verticalAlign=middle;fontSize=14;rounded=0;" value="&lt;b&gt;C9: SFO&lt;/b&gt;&lt;br&gt;&lt;font style=&quot;font-size:12px;&quot;&gt;Online&lt;br&gt;Service&lt;/font&gt;&lt;br&gt;&lt;font style=&quot;font-size: 10px; color: rgb(136, 136, 136);&quot;&gt;(No CDP&lt;br&gt;interface)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="300" width="115" x="235" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-20" parent="1" style="html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;verticalAlign=top;fontSize=14;rounded=0;" value="&lt;b&gt;C6: Marketing Automation Engine&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:12px;color:#555555;&quot;&gt;Journey orchestration · campaign scheduling · trigger evaluation&lt;/font&gt;" vertex="1">
+          <mxGeometry height="90" width="942" x="230" y="200" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-21" parent="1" style="html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#d6b656;fontSize=14;rounded=0;" value="Flink (real-time processing)" vertex="1">
+          <mxGeometry height="30" width="916" x="240" y="248" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-22" parent="1" style="html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;verticalAlign=top;fontSize=14;rounded=0;" value="&lt;b&gt;C7: Audience Service&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:12px;color:#555555;&quot;&gt;Audience matching · consent management · profile lookup&lt;/font&gt;" vertex="1">
+          <mxGeometry height="125" width="810" x="362" y="370" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-23" parent="1" style="shape=cylinder3;html=1;whiteSpace=wrap;boundedLbl=1;backgroundOutline=1;size=12;fillColor=#ffffff;strokeColor=#d6b656;fontSize=14;" value="SKV" vertex="1">
+          <mxGeometry height="55" width="150" x="376" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-24" parent="1" style="html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#d6b656;fontSize=14;rounded=0;" value="Audience Service" vertex="1">
+          <mxGeometry height="50" width="614" x="542" y="420" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-25" parent="1" style="html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;verticalAlign=top;fontSize=14;rounded=0;" value="&lt;b&gt;C8: Channel Message Service&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:12px;color:#555555;&quot;&gt;Content rendering · channel selection · send scheduling&lt;/font&gt;" vertex="1">
+          <mxGeometry height="130" width="810" x="362" y="540" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-26" parent="1" style="html=1;whiteSpace=wrap;fillColor=#ffffff;strokeColor=#d6b656;fontSize=14;rounded=0;" value="Email Channel" vertex="1">
+          <mxGeometry height="60" width="254" x="376" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-27" parent="1" style="html=1;whiteSpace=wrap;fillColor=#e8e8e8;strokeColor=#999999;fontSize=14;rounded=0;dashed=1;" value="Push / In-App Channel" vertex="1">
+          <mxGeometry height="60" width="254" x="640" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-28" parent="1" style="html=1;whiteSpace=wrap;fillColor=#e8e8e8;strokeColor=#999999;fontSize=14;rounded=0;dashed=1;" value="Other Channels&lt;br/&gt;(SMS / WeChat)" vertex="1">
+          <mxGeometry height="60" width="246" x="910" y="580" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-29" parent="1" style="html=1;whiteSpace=wrap;fillColor=#dae8fc;strokeColor=#6c8ebf;strokeWidth=2;fontSize=14;rounded=0;" value="&lt;b&gt;SendCloud&lt;/b&gt;&lt;br/&gt;&lt;font style=&quot;font-size:12px;color:#666;&quot;&gt;(External Email Service Provider)&lt;/font&gt;" vertex="1">
+          <mxGeometry height="65" width="220" x="1380" y="660" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-34" parent="1" style="shape=mxgraph.basic.person2;html=1;fillColor=#dae8fc;strokeColor=#6c8ebf;fontSize=14;verticalLabelPosition=bottom;verticalAlign=top;" value="End User" vertex="1">
+          <mxGeometry height="100" width="75" x="1699" y="783" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-35" edge="1" parent="1" source="gESch8L-e2FIn5hnz7Lb-17" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.25;entryY=0;entryDx=0;entryDy=0;fontSize=11;align=center;labelBackgroundColor=#fffde7;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#888888;fontColor=#555555;" target="gESch8L-e2FIn5hnz7Lb-20" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;PlanConfig | CampaignBrief&lt;br&gt;EmailTemplate | CanvasConfig&lt;/font&gt;">
+          <mxGeometry relative="1" x="0.4746" y="-45" as="geometry">
+            <mxPoint x="10" y="-28" as="offset" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-36" edge="1" parent="1" source="gESch8L-e2FIn5hnz7Lb-16" style="html=1;rounded=0;exitX=0.5;exitY=0;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;align=center;labelBackgroundColor=#e3f2fd;dashed=1;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#0066cc;fontColor=#0066cc;edgeStyle=orthogonalEdgeStyle;exitPerimeter=0;" target="gESch8L-e2FIn5hnz7Lb-20" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;&lt;font color=&quot;#0066cc&quot;&gt;Kafka Topic Sub (async)&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#0066cc&quot;&gt;SegmentList | TagProfile [PII]&lt;br&gt;AudienceSet | UserID [PII]&lt;br&gt;ConsentFlag&lt;/font&gt;&lt;/font&gt;">
+          <mxGeometry relative="1" as="geometry">
+            <Array as="points">
+              <mxPoint x="-15" y="190" />
+              <mxPoint x="200" y="190" />
+              <mxPoint x="200" y="245" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-37" edge="1" parent="1" source="gESch8L-e2FIn5hnz7Lb-20" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0.5;entryY=0;entryDx=0;entryDy=0;fontSize=11;align=center;labelBackgroundColor=#e8f5e9;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#006644;fontColor=#006644;" target="gESch8L-e2FIn5hnz7Lb-22" value="&lt;font color=&quot;#006644&quot;&gt;CampaignConfig&lt;br/&gt;TargetSegmentID&lt;br/&gt;JourneyStepDef&lt;/font&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-38" edge="1" parent="1" source="gESch8L-e2FIn5hnz7Lb-22" style="edgeStyle=orthogonalEdgeStyle;html=1;rounded=0;exitX=0.3;exitY=0;exitDx=0;exitDy=0;entryX=0.3;entryY=1;entryDx=0;entryDy=0;fontSize=11;align=center;labelBackgroundColor=#e8f5e9;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#006644;fontColor=#006644;" target="gESch8L-e2FIn5hnz7Lb-20" value="&lt;font color=&quot;#006644&quot;&gt;AudienceSet&lt;br/&gt;ConsentFlag&lt;br/&gt;ProfileScore&lt;/font&gt;">
+          <mxGeometry relative="1" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-40" edge="1" parent="1" source="gESch8L-e2FIn5hnz7Lb-26" style="html=1;rounded=0;exitX=0.5;exitY=1;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;align=left;labelBackgroundColor=#ffebee;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#cc0000;fontColor=#cc0000;edgeStyle=orthogonalEdgeStyle;" target="gESch8L-e2FIn5hnz7Lb-29" value="&lt;font style=&quot;font-size: 14px;&quot;&gt;&lt;b&gt;&lt;font color=&quot;#cc0000&quot;&gt;HTTPS API (sync)&lt;/font&gt;&lt;/b&gt;&lt;br&gt;&lt;font color=&quot;#cc0000&quot;&gt;EmailContent | RecipientList [PII]&lt;br&gt;CampaignID | TemplateID&lt;/font&gt;&lt;/font&gt;">
+          <mxGeometry relative="1" x="-0.1749" as="geometry">
+            <mxPoint as="offset" />
+            <Array as="points">
+              <mxPoint x="503" y="740" />
+              <mxPoint x="1320" y="740" />
+              <mxPoint x="1320" y="693" />
+            </Array>
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-43" edge="1" parent="1" source="gESch8L-e2FIn5hnz7Lb-29" style="html=1;rounded=0;exitX=1;exitY=0.5;exitDx=0;exitDy=0;entryX=0;entryY=0.5;entryDx=0;entryDy=0;fontSize=11;align=center;labelBackgroundColor=#ffebee;endArrow=block;endFill=1;strokeWidth=2;strokeColor=#cc0000;fontColor=#cc0000;edgeStyle=orthogonalEdgeStyle;" target="gESch8L-e2FIn5hnz7Lb-34" value="&lt;font color=&quot;#cc0000&quot; style=&quot;font-size: 14px;&quot;&gt;Receive Campaign Content [PII]&lt;/font&gt;">
+          <mxGeometry relative="1" x="-0.2902" y="20" as="geometry">
+            <mxPoint as="offset" />
+            <mxPoint x="1695.5" y="752" as="sourcePoint" />
+          </mxGeometry>
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-46" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=14;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.user;" value="" vertex="1">
+          <mxGeometry height="61" width="61" x="547" y="-5" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-47" parent="1" style="sketch=0;outlineConnect=0;fontColor=#232F3E;gradientColor=none;fillColor=#232F3D;strokeColor=none;dashed=0;verticalLabelPosition=bottom;verticalAlign=top;align=center;html=1;fontSize=14;fontStyle=0;aspect=fixed;pointerEvents=1;shape=mxgraph.aws4.user;" value="" vertex="1">
+          <mxGeometry height="61" width="61" x="1706" y="802" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-48" parent="1" style="html=1;whiteSpace=wrap;fillColor=#fff2cc;strokeColor=#d6b656;strokeWidth=2;verticalAlign=top;fontSize=14;rounded=0;" value="C2: Data Access &amp;amp; Identity Resolution" vertex="1">
+          <mxGeometry height="59" width="150" x="-90" y="415.5" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-30" parent="1" style="html=1;whiteSpace=wrap;fillColor=#CCCCCC;strokeColor=#6c8ebf;strokeWidth=1;verticalAlign=top;fontSize=14;rounded=0;dashed=1;shadow=1;" value="&lt;b&gt;Internet&lt;/b&gt;&lt;br/&gt;(End User Channels)" vertex="1">
+          <mxGeometry height="140" width="200" x="1380" y="755" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-31" parent="1" style="html=1;whiteSpace=wrap;fillColor=#CCCCCC;strokeColor=#999999;fontSize=14;rounded=0;dashed=0;" value="Website" vertex="1">
+          <mxGeometry height="30" width="66" x="1392" y="797" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-32" parent="1" style="html=1;whiteSpace=wrap;fillColor=#CCCCCC;strokeColor=#999999;fontSize=14;rounded=0;shadow=1;" value="Mini-Program" vertex="1">
+          <mxGeometry height="30" width="88" x="1468" y="797" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-33" parent="1" style="html=1;whiteSpace=wrap;fillColor=#CCCCCC;strokeColor=#999999;fontSize=14;rounded=0;shadow=1;" value="App" vertex="1">
+          <mxGeometry height="30" width="168" x="1392" y="837" as="geometry" />
+        </mxCell>
+        <mxCell id="gESch8L-e2FIn5hnz7Lb-52" parent="1" style="fillColor=#e8e8e8;strokeColor=#999999;strokeWidth=2;fontSize=14;rounded=0;dashed=1;" value="Future Delivery" vertex="1">
+          <mxGeometry height="26" width="358" x="1253" y="160" as="geometry" />
+        </mxCell>
+      </root>
+    </mxGraphModel>
+  </diagram>
+</mxfile>

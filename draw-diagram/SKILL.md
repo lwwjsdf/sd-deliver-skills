@@ -1,6 +1,6 @@
 ---
 name: sd-draw-diagram
-version: 0.3.0
+version: 0.9.0
 description: 为神策 CDP & MAE 项目生成 draw.io 架构图。以 arch.yaml 为唯一事实层，渲染器严格从语义派生视觉，支持标准模板生成和自定义架构描述两种模式
 allowed-tools:
   - Bash
@@ -49,24 +49,21 @@ group 归属     ───────────→  容器框位置和尺寸
 
 ---
 
-## 两种工作模式
+## 工作流（所有新项目统一使用）
+
+**唯一推荐路径：arch.yaml → render.py**
 
 ```
-模式 A：模板生成（标准 Westk 架构，快速）
-  填写 diagram_config.json → gen_diagrams.py → 6 个标准 drawio 图
-
-模式 B：事实层生成（任意架构，准确）
-  用自然语言描述架构 → LLM 生成 arch.yaml → render.py → drawio 图
+用自然语言描述架构 → LLM 生成 arch.yaml → render.py → drawio 图
 ```
 
-**选择依据：**
-- 架构与标准模板基本一致 → **模式 A**
-- 有非标结构（无 ETL、中转系统、特殊数据流） → **模式 B**
-- 先用 A 生成框架，针对非标部分用 B 重新生成 → **混合**
+arch.yaml 是事实层的唯一来源，render.py 严格从语义派生视觉。不允许直接使用 diagram_builder.py（旧 JSON 路径，已废弃）。
 
 ---
 
-## 模式 A：模板生成
+## 快速模式：模板生成（仅限标准架构且时间极紧时）
+
+若项目架构与标准 Westk 模板基本一致，可用模板快速生成骨架，**但产出仍需转换为 arch.yaml 以便后续维护**：
 
 ```bash
 python3 $SKILL_REPO/draw-diagram/templates/gen_diagrams.py \
@@ -76,9 +73,11 @@ python3 $SKILL_REPO/draw-diagram/templates/gen_diagrams.py \
 
 config 格式见 `$SKILL_REPO/draw-diagram/templates/DIAGRAM_GUIDE.md`。
 
+> ⚠️ 模板生成的 .drawio 文件是静态的，不含语义层。如需修改，应重新整理为 arch.yaml 后用 render.py 渲染。
+
 ---
 
-## 模式 B：事实层生成
+## 标准模式：事实层生成（所有非标架构必须）
 
 ### Step 1：LLM 收集架构事实
 
@@ -172,11 +171,19 @@ edges:
 
 ### Step 3：运行渲染器
 
+**唯一渲染入口：**
+
 ```bash
 python3 $SKILL_REPO/draw-diagram/builder/render.py \
   --arch $PROJECT_DIR/diagrams/arch.yaml \
   --output $PROJECT_DIR/diagrams/<图名>_<客户>.drawio
 ```
+
+> ⚠️ `diagram_builder.py`（旧 JSON 路径）已废弃，不得在新项目中使用。如遇到旧项目的 `arch.json`，先用迁移脚本转换：
+> ```bash
+> python3 $SKILL_REPO/draw-diagram/builder/migrate.py \
+>   --input old_arch.json --output arch.yaml
+> ```
 
 渲染器自动完成：坐标计算、容器框生成、颜色/线型渲染、图例添加。
 
@@ -240,6 +247,36 @@ edges:
 绘制规范见：`$SKILL_REPO/draw-diagram/templates/DIAGRAM_GUIDE.md`
 
 ---
+
+## 从旧格式迁移（JSON → YAML）
+
+旧项目若使用 `diagram_builder.py` + `arch.json`，需迁移到 `render.py` + `arch.yaml`。
+
+### 一键迁移
+
+```bash
+python3 $SKILL_REPO/draw-diagram/builder/migrate.py \
+  --input old_arch.json \
+  --output arch.yaml
+```
+
+### 格式对照
+
+| 旧 (JSON) | 新 (YAML) | 说明 |
+|-----------|-----------|------|
+| `columns[].nodes[]` | `nodes[]` + `groups[]` | 节点扁平化，分组显式声明 |
+| `nodes[].future: true` | `nodes[].status: future` | 布尔 → 枚举 |
+| `nodes[].custom.color` | `nodes[].type` | 颜色键 → 语义类型 |
+| `edges[].style` | `edges[].rel` | 样式键 → 语义关系 |
+| `edges[].has_pii` + `edges[].batch` | `edges[].data.has_pii` + `edges[].data.frequency` | 扁平 → 嵌套结构化 |
+| 无 | `meta` 块 | 新增图元信息 |
+
+### 手动迁移要点
+
+1. **节点去列化**：旧格式节点属于某一 column，新格式节点全局扁平，通过 `group` 字段归属分组。
+2. **语义化类型**：将 `custom.color`（如 `"client_system"`）提升为 `type`；`"sd_product"` 等同理。
+3. **语义化关系**：将 `style`（如 `"sftp_batch"`）映射为 `rel`（如 `"sftp_export"`）+ `data.frequency`（`daily`）。
+4. **Future 统一**：节点和边的 future 状态统一用 `status: future`。"
 
 ## 常见问题
 

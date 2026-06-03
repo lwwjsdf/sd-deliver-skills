@@ -1,6 +1,12 @@
 #!/usr/bin/env python3
 """
-draw.io 架构图构建器
+⚠️  已废弃（Deprecated）
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+此文件为旧版 JSON 路径，不再维护。所有新项目必须使用 arch.yaml + render.py。
+如需迁移旧项目，请使用 migrate.py：
+  python3 migrate.py --input old_arch.json --output arch.yaml
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
 接收架构 JSON 描述，自动计算布局，生成 draw.io XML
 
 架构 JSON 格式：
@@ -287,7 +293,14 @@ def build_diagram(arch: dict, output_path: str):
 
 # ── CLI ───────────────────────────────────────────────────────────────────────
 def main():
-    parser = argparse.ArgumentParser(description="draw.io 架构图构建器")
+    import warnings
+    warnings.warn(
+        "diagram_builder.py 已废弃。请使用 render.py + arch.yaml。"
+        "迁移工具: python3 migrate.py --input old_arch.json --output arch.yaml",
+        DeprecationWarning,
+        stacklevel=2
+    )
+    parser = argparse.ArgumentParser(description="draw.io 架构图构建器 [已废弃]")
     parser.add_argument("--arch", required=True, help="架构 JSON 文件路径")
     parser.add_argument("--output", required=True, help="输出 .drawio 文件路径")
     args = parser.parse_args()

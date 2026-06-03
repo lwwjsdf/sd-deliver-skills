@@ -89,7 +89,17 @@ echo "PENDING_FEEDBACK: $_PENDING_FEEDBACK"
 **② `SKILL_REPO` 含"未设置"：**
 停止，提示重新运行 `./setup`。
 
-**③ 正常情况，输出项目状态卡片：**
+**③ 正常情况，输出项目状态：**
+
+根据用户偏好选择输出格式。如果用户偏好简洁/直接风格（如 Jackson 的魏征风格：不要夸奖、不要装饰、直接给事实），使用紧凑格式：
+
+```
+sdeliver v<VERSION> | 客户: <CLIENT> | <SA_HOST> / <SA_PROJECT>
+
+状态: PROJECT.md <状态> | CLARIFICATION.md <状态> | DELIVERY.md <进度> | 埋点方案 <状态> | 业务规则 <状态> | 模拟数据 <状态>
+```
+
+否则使用标准格式：
 
 ```
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -105,12 +115,10 @@ echo "PENDING_FEEDBACK: $_PENDING_FEEDBACK"
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 ```
 
-如果 `PENDING_FEEDBACK` > 0，在状态卡片后追加：
+如果 `PENDING_FEEDBACK` > 0，在状态后追加：
 ```
-🔧 有 <PENDING_FEEDBACK> 条 skill 改进反馈待处理（在 Claude Code 中查看）：
-   <FEEDBACK_FILES>
+[PENDING_FEEDBACK] 条 skill 反馈待处理: <FEEDBACK_FILES>
 ```
-这是给 skill 开发者看的提示，不影响当前交付工作。
 
 然后展示可用 skill 列表（始终展示，不管当前阶段）：
 
@@ -150,14 +158,14 @@ echo "PENDING_FEEDBACK: $_PENDING_FEEDBACK"
 | `.docx` | `python3 $SKILL_REPO/shared/read_doc.py <file>` |
 | `.doc` | `python3 $SKILL_REPO/shared/read_doc.py <file>` |
 | `.pdf` | Read 工具直接读取 |
-| `.xlsx` `.xls` | 用 openpyxl dump 原始内容后由 AI 解析（见下方说明） |
+## Excel 里程碑表解析
 
-**Excel 文件处理方式：**
+当 references/ 中包含 `.xlsx` 里程碑/项目计划表时：
 
 ```bash
 python3 -c "
 import openpyxl
-wb = openpyxl.load_workbook('$FILE', data_only=True)
+wb = openpyxl.load_workbook('file.xlsx', data_only=True)
 print('Sheets:', wb.sheetnames)
 for sheet in wb.sheetnames:
     ws = wb[sheet]
@@ -168,15 +176,23 @@ for sheet in wb.sheetnames:
 "
 ```
 
-读取后判断文件用途：
-- **里程碑/项目计划表**（含 Milestone、Deliverable、Phase 等关键词）→ 标记为 `milestone_file`，Step 5 用于生成 DELIVERY.md
-- **埋点方案**（含 Event、Property、Tracking 等关键词）→ 记录路径，提示用户设置 `TRACKING_PLAN_PATH`
-- **其他**（预算、人员等）→ 提取关键信息纳入 PROJECT.md
+**判断文件用途：**
+- 含 Milestone、Deliverable、Phase、Acceptance 等关键词 → `milestone_file`，用于生成 DELIVERY.md
+- 含 Event、Property、Tracking 等关键词 → 埋点方案，记录 `TRACKING_PLAN_PATH`
+- 含 Cost、Fee、Payment、Budget → 预算表，提取付款节点和金额
 
-从每个文档中提取（有则提取，无则留空，不编造）：
-- 客户背景（行业、规模、核心业务）
-- 本期交付范围（目标、功能模块、不在范围内的内容）
-- 关键里程碑和时间节点
+**付款节点提取模式：**
+```bash
+grep -i -E "(upon|payment|fee|HKD|USD|%|percent)"
+```
+
+**时间信息提取：**
+Excel 中可能没有明确的"开始日期/结束日期"列，时间信息可能分散在：
+- 里程碑名称中（如 "Dec 2027 - Dec 2028"）
+- 付款节点描述中（如 "Upon contract signed"）
+- O&M 阶段标注中
+
+提取后需人工确认或向客户索取详细项目计划表。
 - 技术约束（CDP 版本、合规要求、集成系统）
 - 关键联系人
 
@@ -343,6 +359,30 @@ DELIVERY.md 已生成，共 <N> 个交付物条目，与项目计划表里程碑
 | 容量评估、带宽、信创、ID3、排查 SOP | `/sd-faq` |
 
 如果 `PROACTIVE` 为 `false`，不主动推荐，等用户明确要求后再说。
+
+## 故障排查
+
+### Skill 加载失败
+
+如果用户报告 `[Failed to load skill: xxx]`：
+
+1. **先手动验证**：`skill_view(name="xxx")` 看是否能加载
+2. **手动加载成功** → 告知用户是临时问题，直接继续任务（无需等修复）
+3. **手动加载也失败** → 检查 SKILL.md 格式（YAML frontmatter 是否完整、是否有语法错误）
+4. **文件存在但加载失败** → 可能是 skill 目录权限问题，检查 `ls -la ~/.hermes/skills/xxx/`
+
+常见原因：
+- YAML frontmatter 中 `allowed-tools` 格式错误（应为列表格式 `- Bash`）
+- 文件编码问题（应为 UTF-8）
+- 目录名与 SKILL.md 中的 `name` 字段不匹配
+
+### 大文档读取
+
+对于 >1MB 的 `.doc`/`.docx` 文件，避免一次性加载全部内容。使用 `references/sow-document-extraction-patterns.md` 中的关键词提取模式。
+
+### 技术方案待澄清项提取
+
+当需要评审多个技术方案（通道对接、数据导入等）时，使用 `references/technical-scheme-clarification.md` 中的系统化提取方法。
 
 ## 完成状态协议
 
