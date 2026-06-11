@@ -398,16 +398,17 @@ class SensorsOpenAPI:
 
     # ── 自定义查询 ──
 
-    def custom_query(self, sql: str, timeout: int = 60) -> dict:
+    def custom_query(self, sql: str, limit: int = 1000, timeout: int = 60) -> dict:
         """执行自定义 SQL 查询（神策「自定义查询」功能）。
 
         sql: 标准 SQL，表名为 events / users，时间字段为 date（DATE 类型）。
+        limit: 查询结果条数上限（默认 1000，最大 10000）。
         返回: {"columns": [...], "rows": [[...], ...]} 或错误信息。
         """
         return self._request(
             "POST",
             "/api/v3/analytics/v1/custom-query/query",
-            {"sql": sql},
+            {"sql": sql, "limit": limit},
         )
 
     def query_event_counts(self, event_names: list, start_date: str, end_date: str) -> dict:
@@ -441,6 +442,104 @@ class SensorsOpenAPI:
         except Exception as e:
             logger.warning("查询事件条数失败: %s", e)
             return {}
+
+    def query_event_properties_sample(
+        self, event_name: str, property_names: list, start_date: str, end_date: str, sample_size: int = 100
+    ) -> list:
+        """查询指定事件的属性样本数据。
+
+        event_name: 事件名
+        property_names: 属性名列表，如 ["amount", "pay_method"]
+        start_date / end_date: 'YYYY-MM-DD'
+        sample_size: 抽样条数（默认 100，最大 1000）
+        返回: [{property_name: value, ...}, ...] 格式的样本列表。
+        """
+        if not property_names:
+            return []
+        props_sql = ", ".join(f"{p}" for p in property_names)
+        sql = (
+            f"SELECT {props_sql} FROM events "
+            f"WHERE date >= '{start_date}' AND date <= '{end_date}' "
+            f"AND event = '{event_name}' "
+            f"LIMIT {min(sample_size, 1000)}"
+        )
+        try:
+            resp = self.custom_query(sql, limit=min(sample_size, 1000))
+            if not self._ok(resp):
+                logger.warning("查询事件属性失败 [%s]: %s", event_name, resp.get("message", ""))
+                return []
+            rows = resp.get("data", {}).get("rows", [])
+            cols = resp.get("data", {}).get("columns", [])
+            if not rows or not cols:
+                return []
+            col_names = [c.get("name", "") for c in cols]
+            return [dict(zip(col_names, row)) for row in rows]
+        except Exception as e:
+            logger.warning("查询事件属性失败 [%s]: %s", event_name, e)
+            return []
+
+    def query_property_distribution(
+        self, event_name: str, property_name: str, start_date: str, end_date: str, top_n: int = 20
+    ) -> dict:
+        """查询指定属性的值分布（用于枚举值校验）。
+
+        event_name: 事件名
+        property_name: 属性名
+        start_date / end_date: 'YYYY-MM-DD'
+        top_n: 返回最常见的 N 个值（默认 20）
+        返回: {value: count, ...} 格式的分布字典。
+        """
+        sql = (
+            f"SELECT {property_name}, count(*) AS cnt FROM events "
+            f"WHERE date >= '{start_date}' AND date <= '{end_date}' "
+            f"AND event = '{event_name}' "
+            f"GROUP BY {property_name} "
+            f"ORDER BY cnt DESC "
+            f"LIMIT {top_n}"
+        )
+        try:
+            resp = self.custom_query(sql, limit=top_n)
+            if not self._ok(resp):
+                logger.warning("查询属性分布失败 [%s.%s]: %s", event_name, property_name, resp.get("message", ""))
+                return {}
+            rows = resp.get("data", {}).get("rows", [])
+            cols = resp.get("data", {}).get("columns", [])
+            if not rows or not cols:
+                return {}
+            prop_idx = next((i for i, c in enumerate(cols) if c.get("name") == property_name), 0)
+            cnt_idx = next((i for i, c in enumerate(cols) if c.get("name") == "cnt"), 1)
+            return {row[prop_idx]: int(row[cnt_idx]) for row in rows}
+        except Exception as e:
+            logger.warning("查询属性分布失败 [%s.%s]: %s", event_name, property_name, e)
+            return {}
+
+    def query_user_property_sample(
+        self, property_names: list, sample_size: int = 100
+    ) -> list:
+        """查询用户属性样本数据。
+
+        property_names: 属性名列表，如 ["user_level", "vip_status"]
+        sample_size: 抽样条数（默认 100，最大 1000）
+        返回: [{property_name: value, ...}, ...] 格式的样本列表。
+        """
+        if not property_names:
+            return []
+        props_sql = ", ".join(f"{p}" for p in property_names)
+        sql = f"SELECT {props_sql} FROM users LIMIT {min(sample_size, 1000)}"
+        try:
+            resp = self.custom_query(sql, limit=min(sample_size, 1000))
+            if not self._ok(resp):
+                logger.warning("查询用户属性失败: %s", resp.get("message", ""))
+                return []
+            rows = resp.get("data", {}).get("rows", [])
+            cols = resp.get("data", {}).get("columns", [])
+            if not rows or not cols:
+                return []
+            col_names = [c.get("name", "") for c in cols]
+            return [dict(zip(col_names, row)) for row in rows]
+        except Exception as e:
+            logger.warning("查询用户属性失败: %s", e)
+            return []
 
 
 # 使用示例

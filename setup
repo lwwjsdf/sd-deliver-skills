@@ -2,12 +2,13 @@
 # sdeliver setup — register skills with agent frameworks and install sdeliver CLI
 #
 # Usage:
-#   ./setup              # auto-detect installed agents
-#   ./setup --host claude
-#   ./setup --host hermes
-#   ./setup --host cursor
-#   ./setup --host opencode
-#   ./setup --host all   # install to all detected agents
+#   ./setup                    # auto-detect installed agents
+#   ./setup --host claude      # install to Claude Code
+#   ./setup --host opencode    # install to OpenCode
+#   ./setup --host all         # install to all detected agents
+#   ./setup --include-draft    # also install draft/deprecated skills
+#
+# Supported agents: claude, opencode
 set -e
 
 REPO_DIR="$(cd "$(dirname "$0")" && pwd -P)"
@@ -19,8 +20,24 @@ HERMES_SKILLS="$HOME/.hermes/skills"
 CURSOR_SKILLS="$HOME/.cursor/skills"
 OPENCODE_SKILLS="$HOME/.config/opencode/skills"
 
+# Global flags
+INCLUDE_DRAFT=0
+
 log() { echo "$1"; }
 err() { echo "❌ $1" >&2; exit 1; }
+
+# ── Parse SKILL.md frontmatter ────────────────────────────────────────────────
+# Extract status from frontmatter. Returns "active" if not specified.
+_get_skill_status() {
+  local skill_file="$1"
+  local status="active"
+  if [ -f "$skill_file" ]; then
+    local parsed
+    parsed=$(grep -m1 '^status:' "$skill_file" 2>/dev/null | sed 's/^status:[[:space:]]*//' | tr -d '[:space:]')
+    [ -n "$parsed" ] && status="$parsed"
+  fi
+  echo "$status"
+}
 
 # ── Symlink helper ────────────────────────────────────────────────────────────
 _link() {
@@ -29,52 +46,176 @@ _link() {
   ln -snf "$src" "$dst"
 }
 
-# ── Register skills into a given skills directory ─────────────────────────────
-# Root skill: create a clean dir with only SKILL.md symlinked (not the whole repo).
-# Sub-skills: symlink the subdir, prefixed with "sd-" to avoid name collisions.
+# ── Register plugins into a given agent's skills directory ────────────────────
 register_skills_to() {
   local skills_dir="$1"
   local agent_name="$2"
   mkdir -p "$skills_dir"
   local linked=()
+  local skipped=()
 
-  # Root skill — only expose SKILL.md, not the entire repo.
-  # If a previous setup left a directory symlink pointing at the whole repo,
-  # remove it first so mkdir -p creates a real directory.
-  if [ -f "$REPO_DIR/SKILL.md" ]; then
-    skill_name="$(grep -m1 '^name:' "$REPO_DIR/SKILL.md" 2>/dev/null \
-      | sed 's/^name:[[:space:]]*//' | tr -d '[:space:]')"
-    [ -z "$skill_name" ] && skill_name="sdeliver"
-    target_dir="$skills_dir/$skill_name"
-    # Remove stale symlink if it points to the repo root (not a real dir)
-    if [ -L "$target_dir" ]; then
-      rm "$target_dir"
-    fi
-    mkdir -p "$target_dir"
-    ln -snf "$REPO_DIR/SKILL.md" "$target_dir/SKILL.md"
-    linked+=("$skill_name")
+  # Clean stale symlinks from previous setup versions
+  # Remove old flat .md symlinks
+  find "$skills_dir" -maxdepth 1 -name "*.md" -type l 2>/dev/null | while read -r link; do
+    rm "$link"
+  done
+  # Remove old cmd directories (will be re-registered)
+  for cmd_name in sd-onboard sd-status sd-design-tracking sd-setup-tracking sd-validate-data sd-size-server sd-design-tech sd-draw-arch sd-run-perf-test sd-run-sit sd-run-uat sd-format-doc sd-ask-faq; do
+    rm -rf "$skills_dir/$cmd_name" 2>/dev/null || true
+  done
+  # Also clean up old non-prefixed command names (from previous versions)
+  for old_cmd in onboard status design-tracking setup-tracking validate-data size-server design-tech draw-arch run-perf-test run-sit run-uat format-doc ask-faq; do
+    rm -rf "$skills_dir/$old_cmd" 2>/dev/null || true
+  done
+  # Remove plugin-prefixed skill symlinks (sd-core-*, sd-tracking-* etc.)
+  for plugin in sd-core sd-tracking-design sd-tracking-pipeline sd-infra sd-quality sd-docs sd-knowledge; do
+    find "$skills_dir" -maxdepth 1 -name "${plugin}-*" -type l -o -name "${plugin}-*" -type d 2>/dev/null | while read -r link; do
+      rm -rf "$link"
+    done
+  done
+  # Remove stale old-style skill symlinks (sd-faq, sd-feedback, etc.)
+  for old_skill in sd-faq sd-feedback sd-server-sizing sd-sit-uat sd-tech-design sd-draw-diagram sd-performance-test sd-data-validation sd-uat sd-tracking-design sd-tracking-setup-e2e business-doc-formatting; do
+    rm -rf "$skills_dir/$old_skill" 2>/dev/null || true
+  done
+  # Remove old subdirectory-based skill structures (skills/sd/)
+  if [ -d "$skills_dir/sd" ]; then
+    rm -rf "$skills_dir/sd" 2>/dev/null || true
   fi
 
-  # Sub-skills — use name: field as directory name (already has sd- prefix)
-  for skill_dir in "$REPO_DIR"/*/; do
-    [ -f "$skill_dir/SKILL.md" ] || continue
+  # Root skill — sdeliver entry point (SKILL.md at repo root)
+  if [ -f "$REPO_DIR/SKILL.md" ]; then
+    local root_status
+    root_status=$(_get_skill_status "$REPO_DIR/SKILL.md")
+    if [ "$root_status" != "draft" ] && [ "$root_status" != "deprecated" ] || [ "$INCLUDE_DRAFT" -eq 1 ]; then
+      _entry_dir="$skills_dir/sdeliver"
+      rm -rf "$_entry_dir" 2>/dev/null || true
+      mkdir -p "$_entry_dir"
+      ln -snf "$REPO_DIR/SKILL.md" "$_entry_dir/SKILL.md"
+      linked+=("sdeliver")
+    else
+      skipped+=("sdeliver ($root_status)")
+    fi
+  fi
 
-    skill_name="$(grep -m1 '^name:' "$skill_dir/SKILL.md" 2>/dev/null \
-      | sed 's/^name:[[:space:]]*//' | tr -d '[:space:]')"
-    [ -z "$skill_name" ] && skill_name="$(basename "$skill_dir")"
+  # Plugin directories (sd-*)
+  for plugin_dir in "$REPO_DIR"/sd-*/; do
+    [ -d "$plugin_dir" ] || continue
+    plugin_name="$(basename "$plugin_dir")"
 
-    _link "${skill_dir%/}" "$skills_dir/$skill_name"
-    linked+=("$skill_name")
+    # Register each skill in the plugin's skills/ subdir
+    for skill_dir in "$plugin_dir"skills/*/; do
+      [ -f "$skill_dir/SKILL.md" ] || continue
+      skill_name="$(basename "$skill_dir")"
+
+      local skill_status
+      skill_status=$(_get_skill_status "$skill_dir/SKILL.md")
+      if [ "$skill_status" = "draft" ] || [ "$skill_status" = "deprecated" ]; then
+        if [ "$INCLUDE_DRAFT" -eq 0 ]; then
+          skipped+=("$plugin_name/$skill_name ($skill_status)")
+          continue
+        fi
+      fi
+
+      target="$skills_dir/$plugin_name-$skill_name"
+      _link "${skill_dir%/}" "$target"
+      linked+=("$plugin_name/$skill_name")
+    done
+
+    # Register commands — wrap each .md in a directory with SKILL.md
+    if [ -d "$plugin_dir"commands ]; then
+      for cmd_file in "$plugin_dir"commands/*.md; do
+        [ -f "$cmd_file" ] || continue
+        cmd_name="$(basename "$cmd_file" .md)"
+
+        local cmd_status
+        cmd_status=$(_get_skill_status "$cmd_file")
+        if [ "$cmd_status" = "draft" ] || [ "$cmd_status" = "deprecated" ]; then
+          if [ "$INCLUDE_DRAFT" -eq 0 ]; then
+            skipped+=("$cmd_name ($cmd_status)")
+            continue
+          fi
+        fi
+
+        cmd_dir="$skills_dir/$cmd_name"
+        rm -rf "$cmd_dir" 2>/dev/null || true
+        mkdir -p "$cmd_dir"
+        ln -snf "$cmd_file" "$cmd_dir/SKILL.md"
+        linked+=("$cmd_name")
+      done
+    fi
   done
 
-  log "  [$agent_name] ${#linked[@]} skills → $skills_dir"
+  log "  [$agent_name] ${#linked[@]} items → $skills_dir"
+  if [ ${#skipped[@]} -gt 0 ]; then
+    log "     (skipped ${#skipped[@]} draft/deprecated skills)"
+    for item in "${skipped[@]}"; do
+      log "       - $item"
+    done
+  fi
+}
+
+# ── Register slash commands in opencode.jsonc ─────────────────────────────────
+register_opencode_commands() {
+  local config_file="$HOME/.config/opencode/opencode.jsonc"
+  [ ! -f "$config_file" ] && return
+
+  # Build a temp JSON with command entries
+  local tmpfile
+  tmpfile=$(mktemp 2>/dev/null || echo "/tmp/sdeliver-opencode-commands.json")
+  echo "{" > "$tmpfile"
+  local first=true
+  local skipped_count=0
+  for plugin_dir in "$REPO_DIR"/sd-*/; do
+    [ -d "$plugin_dir" ] || continue
+    [ -d "$plugin_dir"commands ] || continue
+    for cmd_file in "$plugin_dir"commands/*.md; do
+      [ -f "$cmd_file" ] || continue
+      local cmd_name cmd_desc cmd_status
+      cmd_name="$(basename "$cmd_file" .md)"
+      cmd_desc="$(grep -m1 '^description:' "$cmd_file" 2>/dev/null | sed 's/^description:[[:space:]]*//' | tr -d '"')"
+      [ -z "$cmd_desc" ] && cmd_desc="$cmd_name"
+
+      # Check status - skip draft/deprecated commands unless --include-draft
+      cmd_status=$(_get_skill_status "$cmd_file")
+      if [ "$cmd_status" = "draft" ] || [ "$cmd_status" = "deprecated" ]; then
+        if [ "$INCLUDE_DRAFT" -eq 0 ]; then
+          skipped_count=$((skipped_count + 1))
+          continue
+        fi
+      fi
+
+      $first || echo "," >> "$tmpfile"
+      first=false
+      cat >> "$tmpfile" <<COMMAND_ENTRY
+"$cmd_name": {
+  "template": "【Command 模式】用户输入了 /${cmd_name}。请严格遵循以下交互流程，未经用户明确同意不要自动执行任何操作：\\n\\n1. 先完整展示此 command 的目的、前置条件和执行步骤概览\\n2. 询问用户是否确认执行，或希望跳过某些步骤\\n3. 每一步执行前都简要说明即将做什么，等待用户确认后再继续\\n4. 如果用户输入与 command 无关的内容，提示当前正在执行 ${cmd_name}，询问是否继续或取消\\n\\n当前 command 描述：${cmd_desc}",
+  "description": "$cmd_desc"
+}
+COMMAND_ENTRY
+    done
+  done
+  echo "}" >> "$tmpfile"
+
+  # Use Python helper script to merge into opencode.jsonc
+  python3 "$REPO_DIR/sd-core/scripts/merge_commands.py" \
+    "$tmpfile" "$config_file"
+  local rc=$?
+  rm -f "$tmpfile"
+  return $rc
 }
 
 # ── Install sdeliver CLI ──────────────────────────────────────────────────────
 install_cli() {
   mkdir -p "$BIN_DIR"
-  chmod +x "$REPO_DIR/bin/sdeliver"
-  _link "$REPO_DIR/bin/sdeliver" "$BIN_DIR/sdeliver"
+  # CLI entry point moved to sd-core/scripts/
+  CLI_SRC="$REPO_DIR/sd-core/scripts/sdeliver"
+  if [ -f "$CLI_SRC" ]; then
+    chmod +x "$CLI_SRC"
+    _link "$CLI_SRC" "$BIN_DIR/sdeliver"
+  else
+    # Fallback to legacy bin/ location
+    [ -f "$REPO_DIR/bin/sdeliver" ] && chmod +x "$REPO_DIR/bin/sdeliver" && _link "$REPO_DIR/bin/sdeliver" "$BIN_DIR/sdeliver"
+  fi
 
   case ":$PATH:" in
     *":$BIN_DIR:"*) ;;
@@ -92,8 +233,19 @@ while [ $# -gt 0 ]; do
   case "$1" in
     --host) HOST="$2"; shift 2 ;;
     --host=*) HOST="${1#--host=}"; shift ;;
+      --include-draft)
+      INCLUDE_DRAFT=1; shift ;;
     -h|--help)
-      echo "Usage: ./setup [--host claude|hermes|cursor|opencode|all|auto]"
+      echo "Usage: ./setup [--host claude|opencode|all|auto] [--include-draft]"
+      echo ""
+      echo "Options:"
+      echo "  --host claude|opencode|all|auto  Target agent framework (default: auto)"
+      echo "  --include-draft                  Also install draft/deprecated skills"
+      echo ""
+      echo "Skill Status:"
+      echo "  Skills/commands marked with 'status: draft' or 'status: deprecated'"
+      echo "  in their frontmatter are skipped by default."
+      echo "  Use --include-draft to install them anyway."
       exit 0 ;;
     *) err "Unknown option: $1" ;;
   esac
@@ -157,23 +309,48 @@ log "→ Registering skills..."
 [ "$INSTALL_HERMES"   -eq 1 ] && register_skills_to "$HERMES_SKILLS"   "hermes"
 [ "$INSTALL_CURSOR"   -eq 1 ] && register_skills_to "$CURSOR_SKILLS"   "cursor"
 [ "$INSTALL_OPENCODE" -eq 1 ] && register_skills_to "$OPENCODE_SKILLS" "opencode"
+[ "$INSTALL_OPENCODE" -eq 1 ] && register_opencode_commands
 
 log ""
 log "→ Installing sdeliver CLI → $BIN_DIR/sdeliver"
 install_cli
 
+log "→ Installing sdeliver-auto-feedback → $BIN_DIR/sdeliver-auto-feedback"
+if [ -f "$REPO_DIR/sd-core/scripts/sdeliver-auto-feedback" ]; then
+  chmod +x "$REPO_DIR/sd-core/scripts/sdeliver-auto-feedback"
+  _link "$REPO_DIR/sd-core/scripts/sdeliver-auto-feedback" "$BIN_DIR/sdeliver-auto-feedback"
+elif [ -f "$REPO_DIR/bin/sdeliver-auto-feedback" ]; then
+  chmod +x "$REPO_DIR/bin/sdeliver-auto-feedback"
+  _link "$REPO_DIR/bin/sdeliver-auto-feedback" "$BIN_DIR/sdeliver-auto-feedback"
+fi
+
+# Install Python deps used by tracking-setup-e2e scripts
+if command -v pip3 >/dev/null 2>&1; then
+  log "→ Installing Python dependencies (requests, beautifulsoup4, ruamel.yaml)..."
+  pip3 install requests beautifulsoup4 ruamel.yaml 2>/dev/null || \
+    log "  ⚠️ pip3 install failed — run manually: pip3 install requests beautifulsoup4 ruamel.yaml"
+fi
+
 log ""
 log "→ Initializing sdeliver config..."
-chmod +x "$REPO_DIR/bin/sdeliver-config"
-_link "$REPO_DIR/bin/sdeliver-config" "$BIN_DIR/sdeliver-config"
+if [ -f "$REPO_DIR/sd-core/scripts/sdeliver-config" ]; then
+  chmod +x "$REPO_DIR/sd-core/scripts/sdeliver-config"
+  _link "$REPO_DIR/sd-core/scripts/sdeliver-config" "$BIN_DIR/sdeliver-config"
+else
+  [ -f "$REPO_DIR/bin/sdeliver-config" ] && chmod +x "$REPO_DIR/bin/sdeliver-config" && _link "$REPO_DIR/bin/sdeliver-config" "$BIN_DIR/sdeliver-config"
+fi
 mkdir -p "$HOME/.sdeliver/analytics"
+# Determine sdeliver-config location
+_SD_CONFIG=""
+[ -f "$REPO_DIR/sd-core/scripts/sdeliver-config" ] && _SD_CONFIG="$REPO_DIR/sd-core/scripts/sdeliver-config"
+[ -z "$_SD_CONFIG" ] && _SD_CONFIG="$BIN_DIR/sdeliver-config"
 # Always update skill_repo_path (may change after git clone to new location)
-"$REPO_DIR/bin/sdeliver-config" set skill_repo_path "$REPO_DIR"
+"$_SD_CONFIG" set skill_repo_path "$REPO_DIR"
 # Set defaults only on first install
-"$REPO_DIR/bin/sdeliver-config" get version >/dev/null 2>&1 || \
-  "$REPO_DIR/bin/sdeliver-config" set version "0.1.0"
-"$REPO_DIR/bin/sdeliver-config" get proactive >/dev/null 2>&1 || \
-  "$REPO_DIR/bin/sdeliver-config" set proactive "true"
+"$_SD_CONFIG" get version >/dev/null 2>&1 || \
+  "$_SD_CONFIG" set version "0.1.0"
+"$_SD_CONFIG" get proactive >/dev/null 2>&1 || \
+  "$_SD_CONFIG" set proactive "true"
 log "  skill_repo_path = $REPO_DIR"
 
 log ""

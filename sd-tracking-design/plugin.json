@@ -1,0 +1,10 @@
+{
+  "name": "sd-tracking-design",
+  "version": "1.0.0",
+  "description": "埋点方案设计：从业务范围确认到输出埋点方案 Excel（Events/Details/Users 三个 sheet）",
+  "author": {
+    "name": "SensorsData Delivery Team"
+  },
+  "keywords": ["sensorsdata", "tracking", "tracking-plan", "event-design", "attribute-design"],
+  "license": "MIT"
+}

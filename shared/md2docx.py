@@ -16,6 +16,7 @@ from docx import Document
 from docx.shared import Pt, Inches, RGBColor
 from docx.enum.text import WD_ALIGN_PARAGRAPH
 from docx.oxml.ns import qn
+from docx.oxml import OxmlElement
 
 # ── 字体配置 ──────────────────────────────────────────────────────────────────
 FONT_CONFIG = {
@@ -56,13 +57,13 @@ def set_run_font(run, west_font, east_font, size_pt, bold=False, color=None):
     r = run._element
     rPr = r.find(qn('w:rPr'))
     if rPr is None:
-        rPr = docx.oxml.OxmlElement('w:rPr')
+        rPr = OxmlElement('w:rPr')
         r.insert(0, rPr)
     
     # 设置东亚字体
     rFonts = rPr.find(qn('w:rFonts'))
     if rFonts is None:
-        rFonts = docx.oxml.OxmlElement('w:rFonts')
+        rFonts = OxmlElement('w:rFonts')
         rPr.insert(0, rFonts)
     
     rFonts.set(qn('w:eastAsia'), east_font)
@@ -112,6 +113,49 @@ def format_code_blocks(doc):
                 run.font.color.rgb = RGBColor(0x33, 0x33, 0x33)
 
 
+def highlight_tbc_items(doc):
+    """高亮所有 TBC 项目（黄色背景）"""
+    import re
+    
+    YELLOW = RGBColor(0xFF, 0xFF, 0x00)
+    
+    def apply_yellow_highlight(run):
+        """为 run 应用黄色高亮背景"""
+        # 使用 shading 设置背景色
+        r = run._element
+        rPr = r.find(qn('w:rPr'))
+        if rPr is None:
+            rPr = OxmlElement('w:rPr')
+            r.insert(0, rPr)
+        
+        # 移除已有的 shading
+        existing_shd = rPr.find(qn('w:shd'))
+        if existing_shd is not None:
+            rPr.remove(existing_shd)
+        
+        # 添加黄色背景
+        shd = OxmlElement('w:shd')
+        shd.set(qn('w:val'), 'clear')
+        shd.set(qn('w:color'), 'auto')
+        shd.set(qn('w:fill'), 'FFFF00')
+        rPr.append(shd)
+    
+    # 处理段落中的 TBC
+    for para in doc.paragraphs:
+        for run in para.runs:
+            if '[TBC' in run.text or 'TBC]' in run.text:
+                apply_yellow_highlight(run)
+    
+    # 处理表格中的 TBC
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                for para in cell.paragraphs:
+                    for run in para.runs:
+                        if '[TBC' in run.text or 'TBC]' in run.text:
+                            apply_yellow_highlight(run)
+
+
 def process_document(docx_path):
     """处理文档，应用字体和格式"""
     doc = Document(docx_path)
@@ -127,6 +171,9 @@ def process_document(docx_path):
     
     # 处理代码块
     format_code_blocks(doc)
+    
+    # 高亮 TBC 项目
+    highlight_tbc_items(doc)
     
     # 设置页面边距
     for section in doc.sections:

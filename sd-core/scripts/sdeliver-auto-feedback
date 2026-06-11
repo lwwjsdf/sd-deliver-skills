@@ -1,0 +1,284 @@
+#!/usr/bin/env bash
+# sdeliver-auto-feedback — 自动诊断项目问题并记录反馈
+#
+# 用法:
+#   sdeliver-auto-feedback <project-dir>
+#
+# 自动检测项:
+#   - tracking-plan-not-found   TRACKING_PLAN_PATH 配置但文件不存在
+#   - sa-host-unreachable       SA_HOST 无法连通
+#   - stale-business-logic      business_logic.yaml 超过 30 天未更新
+#   - stale-delivery            DELIVERY.md 超过 14 天未更新
+#   - empty-references          references/ 为空但 PROJECT.md 已存在
+#   - unvalidated-mock-data     mock_data/ 有数据但没有验证报告
+#   - missing-api-key           需要导入但 API_KEY 未配置
+#   - outdated-yaml             YAML 验证通过后超过 7 天未造数
+
+set -e
+
+PROJECT_DIR="${1:-$(pwd)}"
+FEEDBACK_DIR="$HOME/.sdeliver/feedback"
+TODAY=$(date +%Y-%m-%d)
+
+err() { echo "❌ $1" >&2; }
+log() { echo "$1"; }
+
+# ── 工具函数 ──────────────────────────────────────────────────────────────────
+
+# 检查问题是否已记录（去重，避免每天重复记录同一问题）
+_is_recorded() {
+  local issue_type="$1"
+  local recent_files
+  recent_files=$(find "$FEEDBACK_DIR" -name "*.md" -mtime -3 2>/dev/null | head -20)
+  [ -z "$recent_files" ] && return 1
+  echo "$recent_files" | xargs grep -l "auto-feedback-type: $issue_type" >/dev/null 2>&1
+}
+
+# 写入反馈文件
+_record_feedback() {
+  local skill="$1"
+  local issue_type="$2"
+  local severity="$3"
+  local description="$4"
+  local suggestion="$5"
+
+  mkdir -p "$FEEDBACK_DIR"
+
+  # 去重检查
+  if _is_recorded "$issue_type"; then
+    return 0
+  fi
+
+  local slug
+  slug=$(echo "$issue_type" | tr '_' '-')
+  local filename="${TODAY}-${skill}-${slug}.md"
+  local filepath="$FEEDBACK_DIR/$filename"
+
+  cat > "$filepath" <<EOF
+---
+skill: $skill
+type: auto-detected
+severity: $severity
+date: $TODAY
+auto-feedback-type: $issue_type
+project-dir: $PROJECT_DIR
+---
+
+## 发生了什么
+$description
+
+## 期望行为
+$suggestion
+
+## 自动检测上下文
+- 检测时间: $TODAY
+- 项目目录: $PROJECT_DIR
+EOF
+
+  echo "AUTO_FEEDBACK_RECORDED: $issue_type → $filepath"
+}
+
+# 获取文件修改天数（兼容 macOS/Linux）
+_file_age_days() {
+  local file="$1"
+  [ ! -f "$file" ] && echo "999" && return
+  local mtime
+  if stat -f%m "$file" >/dev/null 2>&1; then
+    # macOS
+    mtime=$(stat -f%m "$file")
+  else
+    # Linux
+    mtime=$(stat -c%Y "$file")
+  fi
+  local now
+  now=$(date +%s)
+  echo $(( (now - mtime) / 86400 ))
+}
+
+# 检查 URL 是否可达（3 秒超时）
+_is_url_reachable() {
+  local url="$1"
+  curl -s --max-time 3 -o /dev/null -w "%{http_code}" "$url" 2>/dev/null | grep -qE "^(200|301|302|401)$"
+}
+
+# ── 检测逻辑 ──────────────────────────────────────────────────────────────────
+
+_detect_tracking_plan() {
+  local env_file="$PROJECT_DIR/.env"
+  [ ! -f "$env_file" ] && return
+
+  local track_plan
+  track_plan=$(grep '^TRACKING_PLAN_PATH=' "$env_file" 2>/dev/null | cut -d= -f2- | tr -d '"')
+  [ -z "$track_plan" ] && return
+
+  # 处理相对路径
+  if [[ "$track_plan" != /* ]]; then
+    track_plan="$PROJECT_DIR/$track_plan"
+  fi
+
+  if [ ! -f "$track_plan" ]; then
+    _record_feedback \
+      "sd-tracking-setup-e2e" \
+      "tracking-plan-not-found" \
+      "high" \
+      "TRACKING_PLAN_PATH 配置为 '$track_plan'，但文件不存在。" \
+      "请确认埋点方案 Excel 文件路径正确，或重新放置文件到指定路径。"
+  fi
+}
+
+_detect_sa_host() {
+  local env_file="$PROJECT_DIR/.env"
+  [ ! -f "$env_file" ] && return
+
+  local sa_host
+  sa_host=$(grep '^SA_HOST=' "$env_file" 2>/dev/null | cut -d= -f2- | tr -d '"')
+  [ -z "$sa_host" ] && return
+
+  if ! _is_url_reachable "$sa_host"; then
+    _record_feedback \
+      "sdeliver" \
+      "sa-host-unreachable" \
+      "medium" \
+      "SA_HOST ($sa_host) 无法连通（HTTP 3 秒超时）。" \
+      "请检查网络连接、VPN 状态或 CDP 地址是否正确。"
+  fi
+}
+
+_detect_stale_business_logic() {
+  local yaml_file="$PROJECT_DIR/rules/business_logic.yaml"
+  [ ! -f "$yaml_file" ] && return
+
+  local age
+  age=$(_file_age_days "$yaml_file")
+  [ "$age" -lt 30 ] && return
+
+  _record_feedback \
+    "sd-tracking-setup-e2e" \
+    "stale-business-logic" \
+    "low" \
+    "business_logic.yaml 已 ${age} 天未更新（超过 30 天）。" \
+    "业务规则可能已过时，建议根据最新 Tracking Plan 重新验证和更新。"
+}
+
+_detect_stale_delivery() {
+  local delivery_file="$PROJECT_DIR/DELIVERY.md"
+  [ ! -f "$delivery_file" ] && return
+
+  local age
+  age=$(_file_age_days "$delivery_file")
+  [ "$age" -lt 14 ] && return
+
+  _record_feedback \
+    "sdeliver" \
+    "stale-delivery" \
+    "low" \
+    "DELIVERY.md 已 ${age} 天未更新（超过 14 天）。" \
+    "交付进度可能已滞后，建议更新完成状态并与里程碑计划对齐。"
+}
+
+_detect_empty_references() {
+  local refs_dir="$PROJECT_DIR/references"
+  local project_md="$PROJECT_DIR/PROJECT.md"
+
+  [ ! -f "$project_md" ] && return
+  [ ! -d "$refs_dir" ] && return
+
+  local ref_count
+  ref_count=$(ls -A "$refs_dir" 2>/dev/null | wc -l | tr -d ' ')
+  [ "$ref_count" -gt 0 ] && return
+
+  _record_feedback \
+    "sdeliver" \
+    "empty-references" \
+    "low" \
+    "PROJECT.md 已存在，但 references/ 目录为空。" \
+    "建议将 SOW、技术方案等项目文档放入 references/ 目录，便于 onboarding 和知识沉淀。"
+}
+
+_detect_unvalidated_mock_data() {
+  local mock_dir="$PROJECT_DIR/mock_data"
+  [ ! -d "$mock_dir" ] && return
+
+  local has_jsonl
+  has_jsonl=$(find "$mock_dir" -name "*.jsonl" -maxdepth 1 2>/dev/null | head -1)
+  [ -z "$has_jsonl" ] && return
+
+  # 检查是否有验证报告
+  local has_report
+  has_report=$(find "$mock_dir" -name "*validation*" -o -name "*report*" 2>/dev/null | head -1)
+  [ -n "$has_report" ] && return
+
+  _record_feedback \
+    "sd-tracking-setup-e2e" \
+    "unvalidated-mock-data" \
+    "medium" \
+    "mock_data/ 存在 .jsonl 数据文件，但未找到验证报告。" \
+    "建议运行 validate_import.py 确认数据已正确导入 CDP，并保留验证结果。"
+}
+
+_detect_missing_api_key() {
+  local env_file="$PROJECT_DIR/.env"
+  [ ! -f "$env_file" ] && return
+
+  local api_key track_url
+  api_key=$(grep '^API_KEY=' "$env_file" 2>/dev/null | cut -d= -f2- | tr -d '"')
+  track_url=$(grep '^SA_TRACK_URL=' "$env_file" 2>/dev/null | cut -d= -f2- | tr -d '"')
+
+  # 如果有数据文件但没有 API_KEY，提示
+  local mock_dir="$PROJECT_DIR/mock_data"
+  if [ -d "$mock_dir" ] && [ -n "$track_url" ] && [ -z "$api_key" ]; then
+    local has_jsonl
+    has_jsonl=$(find "$mock_dir" -name "*.jsonl" -maxdepth 1 2>/dev/null | head -1)
+    [ -z "$has_jsonl" ] && return
+
+    _record_feedback \
+      "sd-tracking-setup-e2e" \
+      "missing-api-key" \
+      "medium" \
+      "mock_data/ 已生成数据，但 .env 中未配置 API_KEY。" \
+      "请在 .env 中填写 API_KEY，以便执行元数据导入和数据校验。"
+  fi
+}
+
+_detect_outdated_yaml_after_validation() {
+  local yaml_file="$PROJECT_DIR/rules/business_logic.yaml"
+  [ ! -f "$yaml_file" ] && return
+
+  # 检查是否有 PASSED 标记的验证记录（通过文件时间判断）
+  local yaml_age
+  yaml_age=$(_file_age_days "$yaml_file")
+  [ "$yaml_age" -lt 7 ] && return
+
+  # 检查是否有 mock_data（如果 YAML 很久但没有数据，说明卡住了）
+  local mock_dir="$PROJECT_DIR/mock_data"
+  [ ! -d "$mock_dir" ] && return
+
+  local has_jsonl
+  has_jsonl=$(find "$mock_dir" -name "*.jsonl" -maxdepth 1 2>/dev/null | head -1)
+  [ -n "$has_jsonl" ] && return
+
+  _record_feedback \
+    "sd-tracking-setup-e2e" \
+    "outdated-yaml" \
+    "low" \
+    "business_logic.yaml 已 ${yaml_age} 天未更新，且尚未生成模拟数据。" \
+    "YAML 验证通过后建议尽快进入造数阶段，避免业务规则过时。"
+}
+
+# ── 主流程 ────────────────────────────────────────────────────────────────────
+
+main() {
+  [ ! -d "$PROJECT_DIR" ] && { err "项目目录不存在: $PROJECT_DIR"; exit 1; }
+
+  # 执行所有检测
+  _detect_tracking_plan
+  _detect_sa_host
+  _detect_stale_business_logic
+  _detect_stale_delivery
+  _detect_empty_references
+  _detect_unvalidated_mock_data
+  _detect_missing_api_key
+  _detect_outdated_yaml_after_validation
+}
+
+main "$@"

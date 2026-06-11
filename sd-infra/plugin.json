@@ -1,0 +1,10 @@
+{
+  "name": "sd-infra",
+  "version": "1.0.0",
+  "description": "基础设施与技术方案：服务器评估、LLD 设计、架构图（draw.io）、性能测试",
+  "author": {
+    "name": "SensorsData Delivery Team"
+  },
+  "keywords": ["sensorsdata", "server-sizing", "tech-design", "architecture", "performance-test"],
+  "license": "MIT"
+}

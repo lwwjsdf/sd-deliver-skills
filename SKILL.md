@@ -1,6 +1,7 @@
 ---
 name: sdeliver
 version: 0.1.0
+status: draft
 description: |
   神策数据交付 Skill 集合入口。感知当前客户项目状态，展示可用能力，
   引导用户选择合适的 skill。
@@ -75,6 +76,16 @@ _PENDING_FEEDBACK=$(find "$_FEEDBACK_DIR" -name "*.md" 2>/dev/null | wc -l | tr 
 echo "PENDING_FEEDBACK: $_PENDING_FEEDBACK"
 [ "$_PENDING_FEEDBACK" -gt 0 ] && \
   echo "FEEDBACK_FILES: $(find "$_FEEDBACK_DIR" -name "*.md" 2>/dev/null | xargs -I{} basename {} | tr '\n' ',' | sed 's/,$//')"
+
+# ── 自动诊断 ─────────────────────────────────────────────────────────────────
+_AUTO_FEEDBACK_SCRIPT="$(command -v sdeliver-auto-feedback 2>/dev/null || echo "$(dirname "$0")/sd-core/scripts/sdeliver-auto-feedback")"
+[ ! -x "$_AUTO_FEEDBACK_SCRIPT" ] && _AUTO_FEEDBACK_SCRIPT="$(command -v sdeliver-auto-feedback 2>/dev/null || echo "")"
+if [ -n "$_AUTO_FEEDBACK_SCRIPT" ] && [ -x "$_AUTO_FEEDBACK_SCRIPT" ]; then
+  _AUTO_OUT=$("$_AUTO_FEEDBACK_SCRIPT" "$_PROJECT_DIR" 2>/dev/null)
+  echo "$_AUTO_OUT" | grep '^AUTO_FEEDBACK_RECORDED:' | while read -r line; do
+    echo "$line"
+  done
+fi
 ```
 
 ## Preamble 输出处理
@@ -118,6 +129,21 @@ sdeliver v<VERSION> | 客户: <CLIENT> | <SA_HOST> / <SA_PROJECT>
 如果 `PENDING_FEEDBACK` > 0，在状态后追加：
 ```
 [PENDING_FEEDBACK] 条 skill 反馈待处理: <FEEDBACK_FILES>
+```
+
+**自动诊断结果处理：**
+
+Preamble 中如果输出了 `AUTO_FEEDBACK_RECORDED:` 行，在状态卡片后追加：
+
+```
+⚠️ 自动检测到 <N> 个问题：
+  - <issue_type_1>  →  已记录到 feedback/<文件名>
+  - <issue_type_2>  →  ...
+```
+
+如果用户偏好简洁风格，只输出一行：
+```
+自动诊断: <N> 个问题已记录（feedback/）
 ```
 
 然后展示可用 skill 列表（始终展示，不管当前阶段）：

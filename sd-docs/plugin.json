@@ -1,0 +1,10 @@
+{
+  "name": "sd-docs",
+  "version": "1.0.0",
+  "description": "交付文档：业务文档格式化（Markdown → Word/PDF）",
+  "author": {
+    "name": "SensorsData Delivery Team"
+  },
+  "keywords": ["sensorsdata", "document", "formatting", "word", "pdf"],
+  "license": "MIT"
+}

@@ -1,0 +1,45 @@
+{
+  "name": "@sensorsdata/sd-deliver-skills",
+  "version": "1.0.0",
+  "description": "SensorsData delivery skills for AI coding assistants",
+  "bin": {
+    "sd-deliver-setup": "./setup",
+    "sd-deliver": "./sd-core/scripts/sdeliver"
+  },
+  "scripts": {
+    "setup": "./setup",
+    "postinstall": "./setup --host all"
+  },
+  "files": [
+    "setup",
+    "sd-core/",
+    "sd-tracking-design/",
+    "sd-tracking-pipeline/",
+    "sd-infra/",
+    "sd-quality/",
+    "sd-docs/",
+    "sd-knowledge/",
+    "shared/",
+    "references/",
+    "AGENTS.md",
+    "README.md"
+  ],
+  "keywords": [
+    "sensorsdata",
+    "cdp",
+    "delivery",
+    "skills",
+    "ai-assistant",
+    "claude",
+    "opencode"
+  ],
+  "author": "SensorsData",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/sensorsdata/sd-deliver-skills"
+  },
+  "engines": {
+    "node": ">=14.0.0"
+  }
+}

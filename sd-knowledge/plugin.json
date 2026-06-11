@@ -1,0 +1,10 @@
+{
+  "name": "sd-knowledge",
+  "version": "1.0.0",
+  "description": "交付知识库：容量评估、信创、ID3 规范、排查 SOP 等常见问题",
+  "author": {
+    "name": "SensorsData Delivery Team"
+  },
+  "keywords": ["sensorsdata", "faq", "knowledge", "capacity", "xinchuang", "sop"],
+  "license": "MIT"
+}

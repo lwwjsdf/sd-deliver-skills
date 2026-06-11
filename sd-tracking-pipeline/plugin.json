@@ -1,0 +1,10 @@
+{
+  "name": "sd-tracking-pipeline",
+  "version": "1.0.0",
+  "description": "数据管道执行：从埋点方案解析（business_logic.yaml）到模拟数据生成、元数据导入、数据导入和结果校验",
+  "author": {
+    "name": "SensorsData Delivery Team"
+  },
+  "keywords": ["sensorsdata", "tracking", "data-pipeline", "mock-data", "metadata-import", "data-validation"],
+  "license": "MIT"
+}

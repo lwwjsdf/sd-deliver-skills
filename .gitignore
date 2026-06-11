@@ -1,24 +1,31 @@
-# 环境变量（含敏感信息，不提交）
-.env
-
-# 客户文件（不提交到仓库）
-# 这些文件属于客户项目目录，不属于 skill repo
-*.xlsx
-*.xls
-*.docx
-*.jsonl
-*.jmx
-mock_data/
-references/
-rules/special/
+# Node
+node_modules/
+package-lock.json
+npm-debug.log*
 
 # Python
 __pycache__/
 *.pyc
-.venv/
+*.pyo
+.Python
+*.egg-info/
+dist/
+build/
 
-# gstack browse 日志
-.gstack/
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
 
-.agents/
-temp
+# OS
+.DS_Store
+Thumbs.db
+
+# Test artifacts
+reports/
+*.tar.gz
+
+# Local config (but keep .env.example)
+.env
