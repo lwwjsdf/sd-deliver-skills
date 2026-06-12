@@ -1,6 +1,6 @@
 ---
 name: data-validation
-version: 1.0.0
+version: 1.1.0
 description: |
   数据全流程校验知识。覆盖导入前校验（基于历史反馈和基础规则）、
   导入后校验（基于 OpenAPI 查询 CDP 实际数据）和 UAT 场景校验
@@ -10,6 +10,57 @@ allowed-tools:
   - Bash
   - Read
 ---
+
+## ⚠️ AI 行为约束（重要）
+
+### 1. 先确认校验意图，再读文件
+
+用户说"数据校验"时，**不要立即全面扫描**。先问清场景：
+
+| 选项 | 含义 | 读取范围 |
+|------|------|----------|
+| **A. 导入前校验** | 刚生成的 JSONL 是否符合方案 | `.env`、`business_logic.yaml`、Tracking Plan、JSONL、迭代记录 |
+| **B. 导入后校验** | CDP 落库数据是否完整 | `.env`、已导入的 JSONL/分片、`IMPORT_STATUS.md` |
+| **C. 问题定位** | 针对具体字段/事件查原因 | 用户指定的文件 + Tracking Plan 对应部分 |
+| **D. UAT 指标验证** | 验证 uat_test_logic.yaml 指标 | `uat_test_logic.yaml`、OpenAPI |
+
+**默认推荐**：如果用户没有明确说明，优先假设为 **A. 导入前校验**。
+
+### 2. 禁止现场写大段 Python 脚本
+
+Agent 不允许在聊天中编写并执行 10 行以上的临时 Python 代码来做数据扫描。所有常见操作必须使用已封装的脚本：
+
+| 目的 | 使用脚本 |
+|------|----------|
+| 快速了解 JSONL 概况 | `scan_jsonl.py` |
+| 导入前校验 | `validate_pre_import.py` |
+| 导入后条数对比 | `validate_import.py` |
+| 导入后属性抽样 | `validate_post_import.py` |
+| 属性分布查询 | `query_event_properties.py` |
+| 元数据预检查 | `check_metadata.py` |
+| 历史数据管理 | `mock_data_manager.py` |
+
+**例外**：只有脚本确实不存在、且任务是一次性的 3-5 行辅助代码时，才允许现场写。
+
+### 3. 大数据量默认抽样
+
+- JSONL > 10 MB 时，默认使用 `--sample 1000`
+- 不要打印完整 Counter / 全部属性分布
+- 输出结构化摘要，不要原始数据
+
+### 4. 输出结构化结论
+
+校验结果必须按以下格式输出：
+
+```
+## 校验结论
+- 状态：✅ 通过 / ❌ 未通过 / ⚠️ 有警告
+- 覆盖：导入前 / 导入后 / UAT
+- 关键问题（最多 5 条）
+- 下一步建议
+```
+
+不要输出大段原始 Python 输出或完整枚举值列表。
 
 ## 校验体系
 

@@ -24,29 +24,50 @@ argument-hint: "[--jsonl ./mock_data/<project>.jsonl]"
 > - 枚举值在允许范围内
 > - 历史反馈项是否已覆盖
 >
+> **AI 行为约束：**
+> - 必须先确认校验意图（导入前校验 / 问题定位）
+> - 必须使用 `scan_jsonl.py` 和 `validate_pre_import.py` 脚本，禁止现场写大段 Python
+> - JSONL > 10 MB 时默认抽样
+> - 输出结构化结论，不要原始 Counter
+>
 > **1/y = 确认执行**
 > **0/n = 取消**
 > **2/s = 跳过**
 
 ## 交互规则
 
-### 规则 1：绝不自动执行
+### 规则 1：先确认意图
 
-AI 必须先展示校验范围，等待用户确认后再运行脚本。
+用户输入 `/sd-validate-mock-data` 后，AI 先问：
 
-### 规则 2：校验失败必须停止
+```
+请选择：
+  [1] 标准导入前校验（对比 Tracking Plan + 历史反馈）← 默认
+  [2] 快速概览（只看 JSONL 事件分布和属性样例）
+  [3] 针对具体问题定位（请告诉我字段/事件名）
+```
+
+### 规则 2：必须使用封装脚本
+
+| 任务 | 脚本 |
+|------|------|
+| 快速概览 | `scan_jsonl.py --jsonl <file>` |
+| 导入前校验 | `validate_pre_import.py --jsonl <file> --tracking-plan <xlsx>` |
+| 历史反馈覆盖 | `validate_pre_import.py --iterations <md>` |
+
+**禁止现场写 10 行以上 Python 做扫描。**
+
+### 规则 3：大数据量抽样
+
+- 标准模式：`validate_pre_import.py` 默认每个事件抽样 1000 条
+- 快速模式：`scan_jsonl.py --sample 1000`
+
+### 规则 4：失败停止
 
 如果校验未通过：
-1. 列出所有违规项
+1. 列出关键问题（最多 5 条）
 2. 建议修复路径：修改 `business_logic.yaml` → 重新 `/sd-generate-mock-data` → 重新校验
 3. 询问：修复后重试 / 忽略警告继续 / 取消
-
-### 规则 3：迭代记录检查
-
-如果 `references/MOCK_DATA_ITERATIONS.md` 存在：
-- 读取未关闭问题
-- 校验本轮数据是否已覆盖这些问题
-- 输出覆盖情况报告
 
 ## 工作流
 
@@ -56,7 +77,14 @@ AI 必须先展示校验范围，等待用户确认后再运行脚本。
 - 查找最新生成的 `.jsonl` 文件
 - 检查 `MOCK_DATA_ITERATIONS.md` 是否存在
 
-### Step 2：执行校验
+### Step 2A：快速概览
+
+```bash
+python3 <skill-repo>/sd-tracking-pipeline/scripts/scan_jsonl.py \
+  --jsonl "./mock_data/<project>.jsonl"
+```
+
+### Step 2B：标准导入前校验
 
 ```bash
 python3 <skill-repo>/sd-tracking-pipeline/scripts/validate_pre_import.py \
@@ -65,12 +93,16 @@ python3 <skill-repo>/sd-tracking-pipeline/scripts/validate_pre_import.py \
   --iterations "./references/MOCK_DATA_ITERATIONS.md"
 ```
 
-如果脚本不存在，使用等价的 `validate_import.py --pre-only` 或 `check_metadata.py` 组合。
-
 ### Step 3：结果处理
 
-- **通过**：提示可以进入导入阶段
-- **未通过**：列出问题，建议修复
+输出结构化结论：
+```
+## 校验结论
+- 状态：✅ 通过 / ❌ 未通过 / ⚠️ 有警告
+- 检查项：事件名、属性完整性、类型、枚举值、历史反馈
+- 关键问题：...
+- 下一步：...
+```
 
 ## 下一步建议
 
