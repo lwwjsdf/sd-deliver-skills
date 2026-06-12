@@ -4,7 +4,7 @@ version: 1.0.0
 description: |
   模拟数据生成知识。基于 business_logic.yaml 和埋点方案生成测试数据，
   支持固定测试账号（UAT 场景）和批量随机用户（大数据量）。
-  当讨论造数、模拟数据、测试数据生成时自动加载。
+  当讨论造数、模拟数据、测试数据生成、mock data 时自动加载。
 allowed-tools:
   - Bash
   - Read

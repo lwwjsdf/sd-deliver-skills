@@ -2,9 +2,10 @@
 name: data-validation
 version: 1.0.0
 description: |
-  数据全流程校验知识。覆盖导入前校验（基于历史反馈和基础规则）和
-  导入后校验（基于 OpenAPI 查询 CDP 实际数据）。
-  当讨论数据校验、数据质量、导入验证、Mock 数据验证时自动加载。
+  数据全流程校验知识。覆盖导入前校验（基于历史反馈和基础规则）、
+  导入后校验（基于 OpenAPI 查询 CDP 实际数据）和 UAT 场景校验
+  （基于 uat_test_logic.yaml）。自动生成技术报告+客户报告，收集反馈。
+  当讨论数据校验、数据质量、导入验证、UAT 验收、Mock 数据验证时自动加载。
 allowed-tools:
   - Bash
   - Read
@@ -12,22 +13,23 @@ allowed-tools:
 
 ## 校验体系
 
-数据校验分为两个阶段，缺一不可：
+数据校验分为三个阶段：
 
 ```
 ┌─────────────────────────────────────────────────────────┐
 │  Stage 1: 导入前校验（Pre-import Validation）            │
 │  • 基础规则：事件名、属性、类型、枚举值                   │
 │  • 历史反馈：基于 MOCK_DATA_ITERATIONS.md 检查           │
-│  • 目的：确保生成的数据符合预期，避免导入错误数据         │
 ├─────────────────────────────────────────────────────────┤
 │  [导入到 CDP]                                           │
 ├─────────────────────────────────────────────────────────┤
 │  Stage 2: 导入后校验（Post-import Validation）           │
-│  • 条数对比：导入条数 vs CDP 实际条数                     │
-│  • 数据完整性：抽样检查属性、枚举值、时间戳               │
-│  • 历史反馈验证：确认问题已修复                           │
-│  • 目的：确认数据正确落库                                 │
+│  • 条数对比 + 数据完整性抽样 + 业务逻辑                   │
+├─────────────────────────────────────────────────────────┤
+│  Stage 3: UAT 场景校验（UAT Scenario Validation）        │
+│  • Indicators 指标计算验证（基于 SQL）                   │
+│  • ID-Mapping 用户打通验证                               │
+│  • Permissions 权限验证（标记手动项）                    │
 └─────────────────────────────────────────────────────────┘
 ```
 
@@ -270,7 +272,101 @@ references/MOCK_DATA_ITERATIONS.md
 3. **Round 2** 导入前，AI 基于迭代文档进行历史反馈校验
 4. **Round 2** 导入后，AI 验证历史问题是否已解决
 
-## 常见问题
+## UAT 场景校验（Stage 3）
+
+### 输入文件
+
+| 文件 | 说明 |
+|------|------|
+| `references/uat-test-case.xlsx` | UAT Test Case（业务确认文档）|
+| `references/uat_test_logic.yaml` | AI 可执行的 UAT 逻辑文件 |
+
+### 校验类型
+
+#### Indicators 校验（自动 SQL 计算）
+
+从 `uat_test_logic.yaml` 读取 `indicators`，通过 OpenAPI 执行 SQL 验证：
+
+```bash
+python3 <skill-repo>/sd-tracking-pipeline/scripts/validate_uat.py \
+  --logic "./references/uat_test_logic.yaml" \
+  --type indicators
+```
+
+#### ID-Mapping 校验（自动查询样本用户）
+
+通过 OpenAPI 查询样本用户的 identity 字段，验证关联性：
+
+```bash
+python3 <skill-repo>/sd-tracking-pipeline/scripts/validate_uat.py \
+  --logic "./references/uat_test_logic.yaml" \
+  --type id_mapping
+```
+
+#### Permissions 校验（标记手动执行）
+
+`automation: manual` 的用例生成手动执行清单。
+
+### 用例确认状态
+
+如果 `uat_test_logic.yaml` 中的 `confirmed: false`：
+- 询问用户是否仍然执行
+- 执行时报告标注 "⚠️ UAT 用例未确认"
+
+### UAT Test Case 版本号
+
+使用日期版本格式：`uat-test-case.v2024.06.12.xlsx`
+
+## 双份报告
+
+每次执行 `/sd-validate-data` 生成两份报告：
+
+### 技术报告
+
+**路径**：`reports/data_validation_tech_<timestamp>.md`
+
+包含：
+- 导入前/后校验详情（事件条数、属性完整性、业务逻辑）
+- UAT 场景校验结果（Indicators、ID-Mapping）
+- AI 自动判断的问题清单
+- SQL 证据和样本数据
+
+### 客户报告
+
+**路径**：`reports/data_validation_business_<timestamp>.md`
+
+包含：
+- 验收结论（一目了然的 pass/fail）
+- 数据完整性摘要
+- UAT 场景验证结果
+- 待确认问题
+- 下一步建议
+
+## 反馈机制
+
+### 迭代记录文件
+
+| 文件 | 内容 |
+|------|------|
+| `references/MOCK_DATA_ITERATIONS.md` | 造数反馈 + 数据质量问题 |
+| `references/UAT_ITERATIONS.md` | UAT 验收反馈 |
+
+### AI 自动判断规则
+
+| 现象 | 自动分类 | 严重度 | 写入文件 |
+|------|----------|--------|----------|
+| 事件条数 = 0 | 导入失败 | P0 | MOCK_DATA_ITERATIONS |
+| CDP 条数 < 导入条数 20% | 数据丢失 | P0 | MOCK_DATA_ITERATIONS |
+| 必填属性空值率 > 10% | 数据质量 | P1 | MOCK_DATA_ITERATIONS |
+| 枚举值非法 > 5% | 埋点/YAML | P1 | MOCK_DATA_ITERATIONS |
+| 用户分层比例偏差 > 20% | 业务逻辑 | P1 | MOCK_DATA_ITERATIONS |
+| 指标计算值异常 | UAT 指标 | P1 | UAT_ITERATIONS |
+| ID-Mapping 字段缺失 | ID 打通 | P0 | UAT_ITERATIONS |
+| 权限用例未执行 | 手动执行 | P2 | UAT_ITERATIONS |
+
+### 下一轮 Checklist
+
+每轮校验完成后自动更新，基于未关闭问题生成校验清单。
 
 **Q: 导入前校验和导入后校验有什么区别？**
 

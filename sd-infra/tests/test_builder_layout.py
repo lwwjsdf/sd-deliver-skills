@@ -1,10 +1,4 @@
 """Tests for layout.py — graphviz dot + linear fallback."""
-import sys
-from pathlib import Path
-
-BUILDER_DIR = Path(__file__).parent.parent / "builder"
-sys.path.insert(0, str(BUILDER_DIR))
-
 from layout import compute_layout_linear
 
 

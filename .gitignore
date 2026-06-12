@@ -26,6 +26,9 @@ Thumbs.db
 # Test artifacts
 reports/
 *.tar.gz
+.coverage
+.pytest_cache/
+htmlcov/
 
 # Local config (but keep .env.example)
 .env

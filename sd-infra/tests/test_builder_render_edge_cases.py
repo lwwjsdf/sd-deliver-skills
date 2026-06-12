@@ -1,10 +1,4 @@
 """Edge-case tests for draw-diagram rendering."""
-import sys
-from pathlib import Path
-
-BUILDER_DIR = Path(__file__).parent.parent / "builder"
-sys.path.insert(0, str(BUILDER_DIR))
-
 from render import render
 
 

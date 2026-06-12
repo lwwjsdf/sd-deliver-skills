@@ -1,11 +1,5 @@
 """pytest fixtures for draw-diagram tests."""
 import pytest
-import sys
-from pathlib import Path
-
-# Ensure builder/ is on path for imports
-BUILDER_DIR = Path(__file__).parent.parent / "builder"
-sys.path.insert(0, str(BUILDER_DIR))
 
 
 @pytest.fixture

@@ -6,17 +6,21 @@ Checks:
   - skill SKILL.md: frontmatter name + description, name matches directory
   - command .md: frontmatter description + argument-hint
   - Required directories exist
+  - (with --check-tests) every script has a corresponding test file
 
 Usage:
   python3 validate_plugins.py
+  python3 validate_plugins.py --check-tests
 """
 
+import argparse
 import json
 import os
 import re
+import subprocess
 import sys
 from pathlib import Path
-from typing import List
+from typing import List, Set
 
 REPO = Path(__file__).resolve().parent
 
@@ -40,6 +44,9 @@ total_commands = 0
 active_commands = 0
 draft_commands = 0
 deprecated_commands = 0
+total_scripts = 0
+scripts_with_tests = 0
+scripts_without_tests: List[str] = []
 
 
 def err(msg: str):
@@ -178,6 +185,82 @@ def validate_plugin(plugin_name: str):
             pass  # acceptable
 
 
+def _expected_test_patterns(script_rel_path: Path) -> List[str]:
+    """Return candidate test file name patterns for a script.
+
+    scripts/foo.py              -> test_foo.py, test_foo_*.py
+    scripts/bar/foo.py          -> test_bar_foo.py, test_bar_foo_*.py
+                                  or test_bar/test_foo.py, test_bar/test_foo_*.py
+    """
+    parts = script_rel_path.with_suffix("").parts
+    dotted = "_".join(parts)
+    flat_patterns = [f"test_{dotted}.py", f"test_{dotted}_*.py"]
+    if len(parts) > 1:
+        subdir = parts[0]
+        module = parts[-1]
+        nested_patterns = [
+            f"{subdir}/test_{module}.py",
+            f"{subdir}/test_{module}_*.py",
+        ]
+        return flat_patterns + nested_patterns
+    return flat_patterns
+
+
+def _has_matching_test(tests_dir: Path, patterns: List[str]) -> bool:
+    """Check whether any file under tests_dir matches the given glob patterns."""
+    for pattern in patterns:
+        if list(tests_dir.glob(pattern)):
+            return True
+    return False
+
+
+def validate_tests():
+    """Verify every script under sd-*/scripts/ has a corresponding test file."""
+    global total_scripts, scripts_with_tests
+    for plugin_name in PLUGINS:
+        plugin_dir = REPO / plugin_name
+        scripts_dir = plugin_dir / "scripts"
+        tests_dir = plugin_dir / "tests"
+        if not scripts_dir.is_dir():
+            continue
+        for script in sorted(scripts_dir.rglob("*.py")):
+            if script.name == "__init__.py":
+                continue
+            if "__pycache__" in script.parts:
+                continue
+            total_scripts += 1
+            rel = script.relative_to(scripts_dir)
+            patterns = _expected_test_patterns(rel)
+            if tests_dir.is_dir() and _has_matching_test(tests_dir, patterns):
+                scripts_with_tests += 1
+            else:
+                scripts_without_tests.append(f"{plugin_name}/scripts/{rel}")
+                err(
+                    f"[{plugin_name}] Missing test for script '{rel}' "
+                    f"(expected one of: {', '.join(patterns)})"
+                )
+
+
+def validate_pytest_collection():
+    """Run pytest --collect-only to catch import/syntax errors in tests."""
+    try:
+        result = subprocess.run(
+            [sys.executable, "-m", "pytest", "--collect-only", "-q"],
+            cwd=REPO,
+            capture_output=True,
+            text=True,
+        )
+    except FileNotFoundError:
+        err("pytest not found; cannot validate test collection")
+        return
+    if result.returncode != 0:
+        err("pytest --collect-only failed; tests have import or syntax errors")
+        # Surface the tail of pytest output so the user can debug.
+        tail = "\n".join(result.stderr.splitlines()[-20:] or result.stdout.splitlines()[-20:])
+        for line in tail.splitlines():
+            err(f"  {line}")
+
+
 def validate_references():
     """Validate global references/ directory exists."""
     refs = REPO / "references"
@@ -187,10 +270,22 @@ def validate_references():
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Validate sd-deliver-skills plugins")
+    parser.add_argument(
+        "--check-tests",
+        action="store_true",
+        help="Also verify every script has a corresponding test file",
+    )
+    args = parser.parse_args()
+
     for plugin in PLUGINS:
         validate_plugin(plugin)
 
     validate_references()
+
+    if args.check_tests:
+        validate_tests()
+        validate_pytest_collection()
 
     print(f"\n{'='*50}")
     print(f"sd-deliver-skills validator")
@@ -202,6 +297,8 @@ def main():
     print(f"{'='*50}")
     print(f"  Skills:       {total_skills} (active: {active_skills}, draft: {draft_skills}, deprecated: {deprecated_skills})")
     print(f"  Commands:     {total_commands} (active: {active_commands}, draft: {draft_commands}, deprecated: {deprecated_commands})")
+    if args.check_tests:
+        print(f"  Scripts:      {total_scripts} (with tests: {scripts_with_tests}, missing: {len(scripts_without_tests)})")
 
     if not errors and not warnings:
         print("\n✅ All plugins passed!")

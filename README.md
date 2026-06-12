@@ -2,7 +2,7 @@
 
 > 从工具箱到操作系统。不只是更快交付，而是更好的交付决策。
 
-**7 个 Plugin，17 Skills，13 Commands。** 覆盖项目 onboarding、埋点设计、数据管道、基础设施评估、质量保障、交付文档和知识库。
+**7 个 Plugin，19 Skills，16 Commands。** 覆盖项目 onboarding、埋点设计、数据管道、基础设施评估、质量保障、交付文档和知识库。
 
 支持 Hermes、OpenCode、Cursor、Claude Code 等主流 Agent 框架。
 
@@ -272,10 +272,14 @@ Commands:
 | `data-pipeline` | 数据管道全流程知识：YAML 规范、造数逻辑、导入流程 |
 | `mock-data` | 模拟数据知识：数据规模、业务规则、验证方法 |
 | `metadata-import` | 元数据导入知识：API 说明、错误码、重试策略 |
+| `data-import` | 数据导入知识：BatchConsumer、导入后校验、落库排查 |
 
 | Command | 说明 |
 |---------|------|
-| `/setup-tracking` | 方案确认 → YAML 生成 → 验证 → 造数 → 导入 → 校验（全自动） |
+| `/setup-tracking` | 方案确认 → YAML 生成 → 验证 → 造数 → 校验 → 导入（全自动工作流） |
+| `/generate-mock-data` | 仅生成模拟数据 |
+| `/validate-mock-data` | 仅对生成的 JSONL 做导入前校验 |
+| `/import-mock-data` | 元数据导入 + 数据导入 + 导入后校验 |
 | `/validate-data` | 数据校验：对比埋点方案与实际数据，输出差异报告 |
 
 **使用示例：**
@@ -286,6 +290,9 @@ Skills:
 
 Commands:
 - `/setup-tracking` — 从确认好的埋点方案开始，走完全链路
+- `/generate-mock-data` — 仅生成模拟数据
+- `/validate-mock-data` — 仅做导入前校验
+- `/import-mock-data` — 仅导入已校验的数据
 - `方案已确认，帮我造500个用户的模拟数据` → `/setup-tracking`
 
 ---

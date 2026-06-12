@@ -1,10 +1,4 @@
 """Tests for render.py semantic → visual mapping rules."""
-import sys
-from pathlib import Path
-
-BUILDER_DIR = Path(__file__).parent.parent / "builder"
-sys.path.insert(0, str(BUILDER_DIR))
-
 from render import edge_color, node_style_str, NODE_VISUAL, NODE_FUTURE_OVERRIDE
 
 

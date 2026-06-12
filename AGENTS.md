@@ -4,7 +4,7 @@ Agent guidance for AI agents working in this repository. This file is the **sing
 
 ## Project Overview
 
-**sdeliver-skills** (`sensorsdata/sd-deliver-skills`) — a marketplace of **7 independent plugins** with 17 skills and 13 commands that bring structured delivery workflows to AI coding assistants for SensorsData CDP/MAE implementations.
+**sdeliver-skills** (`sensorsdata/sd-deliver-skills`) — a marketplace of **7 independent plugins** with 19 skills and 16 commands that bring structured delivery workflows to AI coding assistants for SensorsData CDP/MAE implementations.
 
 Built for Hermes, OpenCode, Cursor, and Claude Code.
 
@@ -103,6 +103,39 @@ python3 validate_plugins.py
 ```
 
 Validates: `plugin.json` required fields / name match / semver; skill frontmatter and name-matches-directory; command frontmatter; all required directories exist.
+
+## 脚本开发规范（TDD）
+
+All executable scripts under `sd-*/scripts/` must be developed test-first.
+
+### Test layout
+
+- One test file per script: `sd-<plugin>/tests/test_<module>.py` mirrors `sd-<plugin>/scripts/<module>.py`.
+- All CDP, OpenAPI, network and filesystem I/O must be mocked; use `tmp_path` / `temp_dir` for files.
+- Mark tests with `@pytest.mark.unit`, `@pytest.mark.integration` or `@pytest.mark.slow`.
+
+### TDD checklist
+
+1. Write the failing test before implementing the script/function.
+2. Every public function has at least one test.
+3. Every error-handling branch has a `pytest.raises` test.
+4. Coverage threshold: **80%** line coverage per script.
+5. Run before committing:
+   ```bash
+   make test-plugin PLUGIN=sd-<plugin>   # plugin-level
+   make test                             # all non-integration tests
+   make validate                         # structure + test coverage
+   ```
+6. `python3 validate_plugins.py --check-tests` treats a missing test file as an **error**.
+
+### Test commands
+
+```bash
+make test                  # run all unit tests
+make test-plugin PLUGIN=sd-tracking-pipeline
+make validate              # validate_plugins.py --check-tests
+make cov                   # coverage report
+```
 
 ## Operational Procedures
 

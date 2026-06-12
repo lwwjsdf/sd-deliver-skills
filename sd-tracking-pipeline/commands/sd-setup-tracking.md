@@ -1,41 +1,46 @@
 ---
 name: sd-setup-tracking
-description: 从埋点方案到数据导入的全链路自动化执行
-argument-hint: ""
+description: 埋点数据全链路工作流编排：生成模拟数据 → 校验 → 导入 CDP
+argument-hint: "[--skip-generate|--skip-validate|--skip-import]"
 ---
 
-# /sd-setup-tracking — 埋点全链路交付
+# /sd-setup-tracking — 埋点数据全链路交付
 
 > ⚠️ **执行前确认**
 >
 > **此 command 会做什么：**
-> 从埋点方案到模拟数据生成、元数据导入、数据导入和结果校验的全链路自动化执行。包含多个脚本调用，可能会修改项目配置和 CDP 数据。
+> 编排「生成模拟数据 → 导入前校验 → 导入 CDP」的完整工作流。
+> 每个子步骤实际由 `/sd-generate-mock-data`、`/sd-validate-mock-data`、`/sd-import-mock-data` 完成。
 >
 > **前置条件：**
 > - 项目已初始化（`sdeliver init` 完成）
 > - 埋点方案已确认（`.env` 中 `TRACKING_PLAN_PATH` 已设置）
-> - **⚠️ 关键：需要 Open API 密钥（`API_KEY`）用于 Phase 5/7**
+> - `rules/business_logic.yaml` 已存在或可生成
+> - **⚠️ 关键：需要 Open API 密钥（`API_KEY`）用于元数据导入和导入后校验**
 >
 > **执行步骤概览：**
-> 1. 前置检查（`.env` 完整性、历史数据扫描、迭代记录检查）
-> 2. 生成 business_logic.yaml（从埋点方案提取业务逻辑）
-> 3. 验证 YAML（检查格式和完整性）
-> 4. 枚举值确认（向客户确认枚举值）
-> 5. 生成模拟数据（可选择规模：小/中/大）
-> 6. **导入前数据校验**（基于历史反馈 + 基础规则）
-> 7. 元数据导入（导入到神策 CDP）
-> 8. 数据导入（上传模拟数据）
-> 9. **导入后数据校验**（基于 OpenAPI 查询 CDP 实际数据）
-> 10. 更新迭代记录（交付反馈、问题记录、验证结果）
-> 11. 历史数据清理（询问是否备份/清理旧数据）
+> 1. 前置检查（`.env` 完整性、历史数据扫描）
+> 2. 生成 `business_logic.yaml`（如不存在）
+> 3. 验证 YAML
+> 4. 枚举值确认
+> 5. **生成模拟数据**（调用 `/sd-generate-mock-data`）
+> 6. **导入前数据校验**（调用 `/sd-validate-mock-data`）
+> 7. **元数据导入**
+> 8. **数据导入**
+> 9. **导入后数据校验**
+> 10. 更新迭代记录
+> 11. 历史数据清理
 >
-> **⚠️ 注意：此 command 会调用多个脚本并修改 CDP 配置，每一步都需要你的确认。**
+> **也可以在任意子步骤暂停或跳过：**
+> - `--skip-generate`：跳过造数，使用已有 JSONL
+> - `--skip-validate`：跳过导入前校验（不推荐）
+> - `--skip-import`：只生成并校验，不导入 CDP
 >
-> 1/y = 确认执行
-> 0/n = 取消
-> 2/s = 跳过
+> **1/y = 确认执行**
+> **0/n = 取消**
+> **2/s = 跳过当前步骤**
 >
-> 每一步执行前我会再次确认。
+> 每个 Phase 执行前我会再次确认。
 
 ## 交互规则（AI 必须严格遵守）
 
@@ -43,11 +48,15 @@ argument-hint: ""
 
 **严禁在未经用户明确确认的情况下执行任何脚本或命令。**
 
-用户输入 `/setup-tracking` 后，AI 必须：
+用户输入 `/sd-setup-tracking` 后，AI 必须：
 1. **先展示此页面**（目的、前置条件、步骤概览）
 2. **等待用户回复** `确认` 或 `取消`
 3. 用户输入 `确认` 后，进入 Step 1（前置检查）
 4. **每个 Phase 执行前**，简要说明即将做什么，等待用户确认
+5. **Phase 5/6/7/8 对应原子 command**：在每个子步骤执行时，提示用户也可以使用对应的原子 command 单独执行：
+   - 造数 → `/sd-generate-mock-data`
+   - 导入前校验 → `/sd-validate-mock-data`
+   - 导入 → `/sd-import-mock-data`
 
 ### 规则 2：前置检查必须最先执行
 
@@ -180,9 +189,9 @@ python3 scripts/list_enum_values.py \
 
 分四批向客户确认，所有批次确认完毕后更新 YAML。
 
-### Phase 4：造数（数据量选择）
+### Phase 4：造数（调用 `/sd-generate-mock-data`）
 
-用户选择规模后执行：
+用户选择规模后执行。此步骤可单独通过 `/sd-generate-mock-data` 触发。
 
 ```bash
 # 小规模（示例）
@@ -194,9 +203,9 @@ python3 scripts/generate_mock_data.py \
 
 生成完成后报告文件大小和记录数。
 
-### Phase 5：导入前数据校验（关键）
+### Phase 5：导入前数据校验（调用 `/sd-validate-mock-data`，关键）
 
-**此步骤必须执行，不能跳过。**
+**此步骤必须执行，不能跳过。** 可单独通过 `/sd-validate-mock-data` 触发。
 
 基于历史反馈进行导入前校验：
 
@@ -227,7 +236,11 @@ python3 scripts/validate_pre_import.py \
      - 询问：修复 YAML → 重新造数 / 忽略警告继续 / 取消
      - 如果选择修复，记录问题到迭代记录文档
 
-### Phase 6：元数据导入
+### Phase 6-8：导入 CDP（调用 `/sd-import-mock-data`）
+
+元数据导入、数据导入、导入后校验统一由 `/sd-import-mock-data` 负责，也可单独触发。
+
+#### Phase 6：元数据导入
 
 **需要 `API_KEY`。**
 
@@ -240,7 +253,7 @@ python3 scripts/import_meta_data.py \
 - 询问是否跳过（记录原因）
 - 或暂停，提示用户获取 API_KEY 后重试
 
-### Phase 7：数据导入
+#### Phase 7：数据导入
 
 ```bash
 # 元数据预检查
@@ -254,7 +267,7 @@ python3 scripts/import_mock_data.py \
 
 报告导入进度和预计完成时间。
 
-### Phase 8：导入后数据校验（基于 OpenAPI）
+#### Phase 8：导入后数据校验（基于 OpenAPI）
 
 **需要 `API_KEY`。此步骤必须执行。**
 
@@ -343,8 +356,71 @@ Round N:
 **导入前**：必须检查迭代记录中的所有未关闭问题，确认已修复
 **导入后**：必须通过 OpenAPI 查询 CDP，验证条数和数据完整性
 
+## 交付反馈分析工作流
+
+每次交付团队反馈 Mock 数据问题后，按以下流程分类和处理。
+
+### 分类矩阵
+
+```
+交付反馈（如"缺少isMPlusMembership"）
+    │
+    ├─ Step 1: 检查 Tracking Plan（xlsx）→ 字段是否存在
+    │    ├─ 存在 → 进入 Step 2
+    │    └─ 不存在 → 标记为【采集方案外】→ 需用户确认是否加入方案
+    │
+    ├─ Step 2: 检查 business_logic.yaml → 是否已定义
+    │    ├─ 已定义 → 进入 Step 3
+    │    └─ 未定义 → 标记为【YAML缺失】→ 补充定义后重新造数据
+    │
+    └─ Step 3: 检查当前生成的 JSONL + profiles → 数据中是否存在
+         ├─ 存在 → 标记为【数据已存在】→ 确认是否已导入 CDP
+         └─ 不存在 → 标记为【生成遗漏】→ 修复生成脚本后重新造数据
+```
+
+### Step 1：检查 Tracking Plan（xlsx）
+
+使用 Python zipfile 直接解析 xlsx 共享字符串（无需 openpyxl），检查字段是否在方案中：
+
+```python
+import zipfile, re
+
+for fname in ['references/Annex 6 - Tracking Plan - Mini Program_V0.1 (1).xlsx']:
+    with zipfile.ZipFile(fname) as z:
+        content = z.open('xl/sharedStrings.xml').read().decode('utf-8')
+        texts = re.findall(r'<t>([^<]+)</t>', content)
+        for field in [待检查字段列表]:
+            if field in texts:
+                print(f'{field}: FOUND in {fname}')
+            else:
+                print(f'{field}: NOT IN {fname}')
+```
+
+必须检查全部三端采集方案（Mini Program、Website、eDM），字段可能只在部分方案中存在。
+
+### 分类结果处理
+
+| 分类 | 处理方式 |
+|------|----------|
+| 【采集方案外】 | 告知用户不在当前版本 Tracking Plan 中，需先更新方案。不在方案中的字段不进入造数据修复流程 |
+| 【YAML缺失】 | 在 business_logic.yaml 中补充定义，重新造数据 |
+| 【生成遗漏】 | 修复 generate_profile.py 或 YAML 事件序列，重新造数据 |
+| 【数据已存在但CDP查不到】 | 确认数据是否已导入 CDP；如未导入则执行导入 |
+| 【数据已存在且在CDP中】 | 标记为已修复，更新迭代记录 |
+
+### 常见陷阱
+
+1. 字段名不一致：交付反馈的字段名可能与 Tracking Plan 不同（如 isPurchaseMPlus vs isMPlusMembership），先确认语义对应关系
+2. 三端方案独立：字段在任一方案中有定义就算"方案中有"，不需要三端都有
+3. user_properties 在 profiles JSONL 中检查，不在事件 JSONL 中
+4. 首条 profile 可能是 L0 用户无会员属性，必须遍历全部 profiles
+5. business_logic.yaml 的 user_properties 可能不在 Tracking Plan 中，需以方案为准
+
 ## 完成建议
 
-- "需要验证数据正确性？→ `/validate-data`（包含导入前 + 导入后校验）"
+- "需要单独生成数据？→ `/sd-generate-mock-data`"
+- "需要单独校验数据？→ `/sd-validate-mock-data`"
+- "需要单独导入数据？→ `/sd-import-mock-data`"
+- "需要验证数据正确性？→ `/sd-validate-data`（包含导入前 + 导入后校验）"
 - "需要查看历史反馈？→ 检查 `references/MOCK_DATA_ITERATIONS.md`"
-- "需要执行 UAT 验收？→ `/run-uat`"
+- "需要执行 UAT 验收？→ `/sd-run-uat`"

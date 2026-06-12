@@ -97,14 +97,19 @@ Preamble 自动检测以下内容：
 可用 Command（active）：
   /sd-onboard          初始化项目档案
   /sd-setup-tracking   执行埋点全链路
+  /sd-generate-mock-data  生成模拟数据
+  /sd-validate-mock-data  导入前数据校验
+  /sd-import-mock-data    导入数据到 CDP
   /sd-ask-faq          查询交付知识库
 
 待上线 Command（draft）：
   /sd-design-tracking  设计埋点方案
+  /sd-design-uat       设计 UAT Test Case
+  /sd-run-uat          执行 UAT
+  /sd-design-sit       设计 SIT Plan
+  /sd-run-sit          执行 SIT
   /sd-size-server      评估服务器
   /sd-validate-data    数据全流程校验
   /sd-design-tech      技术方案设计
   /sd-draw-arch        架构图生成
-  /sd-design-test      测试方案设计（SIT/UAT/Perf）
-  /sd-run-test         测试执行（SIT/UAT/Perf）
 ```

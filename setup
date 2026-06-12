@@ -60,11 +60,11 @@ register_skills_to() {
     rm "$link"
   done
   # Remove old cmd directories (will be re-registered)
-  for cmd_name in sd-onboard sd-status sd-design-tracking sd-setup-tracking sd-validate-data sd-size-server sd-design-tech sd-draw-arch sd-run-perf-test sd-run-sit sd-run-uat sd-format-doc sd-ask-faq; do
+  for cmd_name in sd-onboard sd-status sd-design-tracking sd-setup-tracking sd-generate-mock-data sd-validate-mock-data sd-import-mock-data sd-validate-data sd-size-server sd-design-tech sd-draw-arch sd-run-perf-test sd-run-sit sd-run-uat sd-format-doc sd-ask-faq sd-design-test sd-run-test sd-design-uat sd-design-sit; do
     rm -rf "$skills_dir/$cmd_name" 2>/dev/null || true
   done
   # Also clean up old non-prefixed command names (from previous versions)
-  for old_cmd in onboard status design-tracking setup-tracking validate-data size-server design-tech draw-arch run-perf-test run-sit run-uat format-doc ask-faq; do
+  for old_cmd in onboard status design-tracking setup-tracking generate-mock-data validate-mock-data import-mock-data validate-data size-server design-tech draw-arch run-perf-test run-sit run-uat format-doc ask-faq; do
     rm -rf "$skills_dir/$old_cmd" 2>/dev/null || true
   done
   # Remove plugin-prefixed skill symlinks (sd-core-*, sd-tracking-* etc.)

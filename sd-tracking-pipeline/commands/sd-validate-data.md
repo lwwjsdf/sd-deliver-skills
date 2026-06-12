@@ -1,6 +1,6 @@
 ---
 name: sd-validate-data
-description: 数据全流程校验：导入前基于历史反馈检查 + 导入后基于 OpenAPI 查询 CDP 实际数据
+description: 数据全流程校验：导入前+导入后+UAT场景校验+双份报告+自动反馈
 argument-hint: ""
 status: draft
 ---
@@ -10,20 +10,23 @@ status: draft
 > ⚠️ **执行前确认**
 >
 > **此 command 会做什么：**
-> 执行数据的全流程校验，包含两个阶段：
-> 1. **导入前校验** — 基于历史反馈和基础规则，检查生成的模拟数据是否符合预期
-> 2. **导入后校验** — 基于 OpenAPI 查询 CDP 实际落库数据，确认数据正确导入
+> 执行数据全流程校验（导入前 + 导入后 + UAT 场景），输出技术报告和客户报告，自动收集反馈并生成下一轮 Checklist。
 >
 > **前置条件：**
-> - 埋点方案文档存在（`TRACKING_PLAN_PATH` 已设置）
-> - 神策环境可连接（`SA_HOST`、`SA_PROJECT` 已配置）
-> - 导入后校验需要 `API_KEY`（OpenAPI 密钥）
+> - 埋点方案存在（`TRACKING_PLAN_PATH` 已设置）
+> - 导入后校验需要 `API_KEY`
+> - UAT 校验需要 `uat_test_logic.yaml`（可选，无文件跳过）
 >
 > **执行步骤概览：**
-> 1. 检查是否有迭代记录（`MOCK_DATA_ITERATIONS.md`）
-> 2. 导入前校验（事件名、属性、枚举值、历史反馈项）
-> 3. 导入后校验（OpenAPI 查询 CDP 条数对比、数据完整性）
-> 4. 输出校验报告（通过/异常/缺失/历史问题覆盖情况）
+> 1. 确认校验范围（全流程/仅导入前/仅导入后/仅UAT）
+> 2. 确认模式（完整/快速）
+> 3. 导入前校验
+> 4. 导入后校验
+> 5. UAT 场景校验（如 uat_test_logic.yaml 存在）
+> 6. AI 自动判断问题并分类
+> 7. 更新 MOCK_DATA_ITERATIONS.md + UAT_ITERATIONS.md
+> 8. 生成技术报告 + 客户报告
+> 9. 生成下一轮 Checklist
 >
 > 1/y = 确认执行
 > 0/n = 取消
@@ -31,167 +34,129 @@ status: draft
 >
 > 每一步执行前我会再次确认。
 
+## 交互规则
+
+### Step 1：确认校验范围
+
+用户输入后，AI 展示选项：
+
+```
+选择校验范围：
+  [1] 全流程校验（导入前 + 导入后 + UAT 场景）← 默认
+  [2] 仅导入前校验（JSONL + Tracking Plan）
+  [3] 仅导入后校验（CDP 数据）
+  [4] 仅 UAT 场景校验
+  [5] 自定义事件/属性深度校验
+```
+
+### Step 2：确认模式
+
+```
+选择校验模式：
+  [1] 快速模式 — 条数 + 基础结构（约 2-5 分钟）
+  [2] 完整模式 — 条数 + 结构 + 业务逻辑 + UAT 场景（约 10-30 分钟）← 默认
+```
+
+### Step 3：UAT 用例确认
+
+如果 `references/uat_test_logic.yaml` 存在但 `confirmed: false`：
+
+```
+⚠️ UAT 用例未确认（confirmed=false）
+
+是否仍然执行 UAT 校验？
+  [1] 执行（报告将标注"UAT 用例未确认"）
+  [2] 跳过 UAT 部分（仅执行数据校验）
+```
+
 ## 校验阶段
 
-### Stage 1：导入前校验（Pre-import Validation）
+### Stage 1：导入前校验
 
-**目的**：在数据导入 CDP 之前，确保生成的模拟数据符合要求，避免导入错误数据。
-
-**输入**：
-- `mock_data/<project>.jsonl` — 生成的模拟数据
-- `references/tracking-plan.xlsx` — 埋点方案
-- `references/MOCK_DATA_ITERATIONS.md` — 迭代记录（如有）
-
-**校验内容**：
-
-#### 1.1 基础规则校验
-
-| 检查项 | 通过标准 | 失败处理 |
-|--------|----------|----------|
-| 事件名 | 与 Tracking Plan 完全一致（大小写敏感） | ❌ 停止，修复 YAML |
-| 必填属性 | 全部存在，无缺失 | ❌ 停止，修复 YAML |
-| 属性类型 | 与方案定义一致（string/int/float/bool/datetime/list） | ❌ 停止，修复 YAML |
-| 枚举值 | 在允许范围内 | ⚠️ 警告，询问是否继续 |
-
-#### 1.2 历史反馈校验（关键）
-
-如果存在 `MOCK_DATA_ITERATIONS.md`：
-
-1. 读取所有未关闭的问题项
-2. 针对每个问题，在模拟数据中抽样验证：
-   - **枚举值不全** — 抽样 100 条，检查枚举值分布是否符合修复后的配置
-   - **比例失衡** — 统计用户分层比例，验证是否在预期范围内
-   - **数值类型错误** — 抽样检查数值字段类型（int vs float）
-   - **缺少事件** — 检查事件序列中是否存在新增事件
-   - **属性缺失** — 检查事件属性是否完整
-   - **时间异常** — 检查事件时间分布是否合理
-
-3. **覆盖报告**：
-   ```
-   历史问题覆盖情况：
-   - Round 1 问题 #3: amount 字段包含小数 — ✅ 已覆盖（抽样 10/10 为 float）
-   - Round 1 问题 #4: 退款事件存在 — ❌ 未覆盖（RefundCompleted 未找到）
-   ```
-
-#### 1.3 脚本
-
+**脚本**：
 ```bash
-python3 scripts/validate_pre_import.py \
+python3 <skill-repo>/sd-tracking-pipeline/scripts/validate_pre_import.py \
   --jsonl "./mock_data/<project>.jsonl" \
   --tracking-plan "$TRACKING_PLAN_PATH" \
   --iterations "./references/MOCK_DATA_ITERATIONS.md"
 ```
 
-**结果处理**：
-- **全部通过**：进入 Stage 2（如果数据已导入）或提示可以导入
-- **历史问题未覆盖**：⚠️ 警告，询问是否继续（记录到迭代记录）
-- **基础规则失败**：❌ 停止，修复后重新造数
+### Stage 2：导入后校验
 
----
-
-### Stage 2：导入后校验（Post-import Validation）
-
-**目的**：通过 OpenAPI 查询 CDP 实际数据，确认数据已正确落库。
-
-**前置条件**：
-- 数据已导入 CDP（`/setup-tracking` Phase 7 完成）
-- `.env` 中配置了 `API_KEY`
-
-**校验内容**：
-
-#### 2.1 条数对比
-
-查询 CDP 中各事件的实际条数，与导入文件对比：
-
+**条数对比**：
 ```bash
-python3 scripts/validate_import.py \
+python3 <skill-repo>/sd-tracking-pipeline/scripts/validate_import.py \
   --jsonl "./mock_data/<project>.jsonl" \
   --wait 60
 ```
 
-| 状态 | 说明 | 处理 |
-|------|------|------|
-| ✅ | 导入条数 = CDP 条数 | 正常 |
-| ℹ️ 偏多 | CDP 条数 > 导入条数 | 正常（可能有历史数据） |
-| ⚠️ 偏少 | CDP 条数 < 导入条数 | 警告（可能有数据丢失） |
-| ❌ 未找到 | CDP 条数 = 0 | 错误（导入失败或延迟） |
-
-#### 2.2 数据完整性抽样检查
-
-通过 OpenAPI 查询抽样数据，检查：
-- 属性是否存在（与 Tracking Plan 对比）
-- 属性值类型是否正确
-- 枚举值是否在允许范围内
-- 时间戳是否在合理范围
-
+**数据完整性抽样**：
 ```bash
-python3 scripts/validate_post_import.py \
-  --project "$SA_PROJECT" \
-  --api-key "$API_KEY" \
-  --events "EventName1,EventName2" \
+python3 <skill-repo>/sd-tracking-pipeline/scripts/validate_post_import.py \
+  --events "OrderPaid,ProductViewed" \
+  --properties "amount,pay_method" \
   --sample-size 100
 ```
 
-#### 2.3 历史反馈项验证
-
-如果迭代记录中有未关闭的问题，在 CDP 数据中验证：
-- 查询特定事件的属性分布
-- 检查新增事件是否落库
-- 验证数值字段类型
-
-#### 2.4 结果处理
-
-- **全部通过**：✅ 数据校验完成，更新迭代记录
-- **条数异常**：等待后重试 / 检查导入日志 / 重新导入
-- **数据不完整**：检查元数据导入 / 修复 YAML 重新造数
-
----
-
-## 校验报告模板
-
-```markdown
-## 数据校验报告 — Round N
-
-**校验时间：** YYYY-MM-DD HH:MM
-**校验范围：** XX 个事件，XX 条记录
-**校验人：** AI / 交付团队
-
-### Stage 1：导入前校验
-
-| 检查项 | 结果 | 说明 |
-|--------|------|------|
-| 事件名一致性 | ✅/❌ | ... |
-| 必填属性完整性 | ✅/❌ | ... |
-| 属性类型正确性 | ✅/❌ | ... |
-| 枚举值范围 | ✅/⚠️ | ... |
-
-**历史问题覆盖：**
-- Round X 问题 #Y: [问题描述] — ✅ 已覆盖 / ❌ 未覆盖
-
-**结论：** [通过/未通过]
-
-### Stage 2：导入后校验
-
-| 事件名 | 导入条数 | CDP 条数 | 状态 | 备注 |
-|--------|----------|----------|------|------|
-| EventName1 | 1000 | 1000 | ✅ | ... |
-| EventName2 | 500 | 480 | ⚠️ 偏少 | ... |
-
-**数据完整性抽样：**
-- 抽样 100 条，属性完整率：XX%
-- 枚举值合规率：XX%
-
-**历史问题验证：**
-- Round X 问题 #Y: [问题描述] — ✅ 已验证 / ❌ 未通过
-
-**结论：** [通过/未通过]
-
-### 待办 Action
-
-- [ ] ...
+**业务逻辑校验**：
+```bash
+python3 <skill-repo>/sd-tracking-pipeline/scripts/validate_business.py \
+  --logic "./rules/business_logic.yaml" \
+  --start-date "2024-01-01" \
+  --end-date "2024-01-31"
 ```
+
+### Stage 3：UAT 场景校验
+
+**Indicators + ID-Mapping 自动校验**：
+```bash
+python3 <skill-repo>/sd-tracking-pipeline/scripts/validate_uat.py \
+  --logic "./references/uat_test_logic.yaml" \
+  --type indicators,id_mapping
+```
+
+**手动用例清单生成**：列出 `automation: manual` 的项。
+
+### Stage 4：AI 自动判断与分类
+
+| 现象 | 分类 | 严重度 | 写入文件 |
+|------|------|--------|----------|
+| 事件条数 = 0 | 导入失败 | P0 | MOCK_DATA_ITERATIONS |
+| CDP 条数 < 导入条数 20% | 数据丢失 | P0 | MOCK_DATA_ITERATIONS |
+| 必填属性空值率 > 10% | 数据质量 | P1 | MOCK_DATA_ITERATIONS |
+| 枚举值非法 > 5% | 埋点/YAML | P1 | MOCK_DATA_ITERATIONS |
+| 用户分层比例偏差 > 20% | 业务逻辑 | P1 | MOCK_DATA_ITERATIONS |
+| 指标计算值异常 | UAT 指标 | P1 | UAT_ITERATIONS |
+| ID-Mapping 字段缺失 | ID 打通 | P0 | UAT_ITERATIONS |
+| 权限用例未执行 | 手动执行 | P2 | UAT_ITERATIONS |
+
+### Stage 5：更新迭代记录
+
+- 数据质量问题 → `references/MOCK_DATA_ITERATIONS.md`
+- UAT 验收问题 → `references/UAT_ITERATIONS.md`
+- 自动追加 Round 章节
+
+### Stage 6：生成双份报告
+
+**技术报告**：`reports/data_validation_tech_<timestamp>.md`
+- 导入前/后校验详情
+- 属性完整性
+- 业务逻辑校验
+
+**客户报告**：`reports/data_validation_business_<timestamp>.md`
+- 验收结论
+- 数据完整性（简单呈现）
+- UAT 场景验证
+- 待确认问题
+- 下一步建议
+
+### Stage 7：生成下一轮 Checklist
+
+基于未关闭问题，自动生成下一轮校验清单。
 
 ## 完成建议
 
-- "校验未通过？需要重新造数和导入？→ `/setup-tracking`"
-- "需要记录反馈到迭代文档？→ 我会帮你更新 `MOCK_DATA_ITERATIONS.md`"
+- "校验通过？→ 可上线或进入下一阶段"
+- "校验未通过？→ 修复后重新 `/sd-setup-tracking`"
+- "仅执行 UAT？→ `/sd-run-uat`"
+- "需要设计 UAT 用例？→ `/sd-design-uat`"

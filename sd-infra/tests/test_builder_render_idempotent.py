@@ -1,13 +1,9 @@
 """Tests for view.yaml auto-export and idempotent restore."""
-import sys
 import xml.etree.ElementTree as ET
-from pathlib import Path
 
-BUILDER_DIR = Path(__file__).parent.parent / "builder"
-sys.path.insert(0, str(BUILDER_DIR))
+import yaml
 
 from render import render
-import yaml
 
 
 def _extract_positions(drawio_path: str) -> dict:
