@@ -122,6 +122,38 @@ def test_evaluate_condition_unknown(tmp_path):
         engine.evaluate_condition("invalid expr", {})
 
 
+def test_get_event_sequences_with_derive(tmp_path):
+    path = _write_rules(tmp_path, {
+        "user_segments": {"S": {"ratio": 1.0}},
+        "event_sequences": [
+            {
+                "name": "purchase",
+                "events": [
+                    {
+                        "event": "Order",
+                        "fields": {"ticketsQuantity": 3, "paidAmount": 300},
+                        "derive": {
+                            "event": "OrderDetail",
+                            "count_ref": "{Order.ticketsQuantity}",
+                            "distribute_fields": {"paidAmount": "divide_evenly"},
+                            "prefix_fields": {"ticketID": "TK-{orderIndex:03d}-{detailIndex:03d}"},
+                            "carry_fields": ["paymentMethod"],
+                        },
+                    },
+                ],
+            }
+        ],
+    })
+    engine = RuleEngine(path)
+    seqs = engine.get_event_sequences()
+    assert len(seqs) == 1
+    edef = seqs[0].events[0]
+    assert edef.derive is not None
+    assert edef.derive.event == "OrderDetail"
+    assert edef.derive.count_ref == "{Order.ticketsQuantity}"
+    assert edef.derive.distribute_fields == {"paidAmount": "divide_evenly"}
+
+
 def test_get_preset_events_and_property_enums(tmp_path):
     path = _write_rules(tmp_path, {
         "user_segments": {"S": {"ratio": 1.0}},

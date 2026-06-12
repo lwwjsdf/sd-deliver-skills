@@ -75,3 +75,38 @@ def test_weighted_choice():
 
 def test_weighted_choice_empty():
     assert EventSequencer._weighted_choice([]) is None
+
+
+def test_property_enum_resolver_date_relative_to_today():
+    resolver = PropertyEnumResolver({
+        "expirationTime": {
+            "type": "date_relative_to_today",
+            "distribution": {"expired": 1.0},
+            "expired_range": [-10, -1],
+            "active_range": [1, 10],
+        }
+    })
+    val = resolver.resolve("expirationTime")
+    result = datetime.datetime.strptime(val, "%Y-%m-%d").date()
+    assert (datetime.date.today() - result).days >= 1
+
+
+def test_property_enum_resolver_weighted_int():
+    resolver = PropertyEnumResolver({
+        "ticketsQuantity": {
+            "type": "weighted_int",
+            "values": [
+                {"value": 1, "weight": 0},
+                {"value": 2, "weight": 1},
+            ],
+        }
+    })
+    assert resolver.resolve("ticketsQuantity") == 2
+
+
+def test_property_enum_resolver_range():
+    resolver = PropertyEnumResolver({
+        "paidAmount": {"type": "range", "min": 100, "max": 200}
+    })
+    val = resolver.resolve("paidAmount")
+    assert 100 <= val <= 200

@@ -24,6 +24,17 @@ class IdentityDef:
 
 
 @dataclass
+class DeriveConfig:
+    event: str
+    count_ref: Optional[str] = None
+    count: Optional[int] = None
+    distribute_fields: Optional[Dict[str, str]] = None
+    prefix_fields: Optional[Dict[str, str]] = None
+    carry_fields: Optional[List[str]] = None
+    gap_seconds: int = 1
+
+
+@dataclass
 class EventDef:
     event: str
     required: bool = True
@@ -32,6 +43,7 @@ class EventDef:
     fields: Optional[Dict] = None
     profile_update: Optional[Dict] = None
     repeat: Optional[str] = None
+    derive: Optional[DeriveConfig] = None
 
 
 @dataclass
@@ -112,6 +124,18 @@ class RuleEngine:
             events = []
             for ev in seq.get("events", []):
                 if isinstance(ev, dict):
+                    derive_cfg = ev.get("derive")
+                    derive = None
+                    if derive_cfg:
+                        derive = DeriveConfig(
+                            event=derive_cfg.get("event", ""),
+                            count_ref=derive_cfg.get("count_ref"),
+                            count=derive_cfg.get("count"),
+                            distribute_fields=derive_cfg.get("distribute_fields"),
+                            prefix_fields=derive_cfg.get("prefix_fields"),
+                            carry_fields=derive_cfg.get("carry_fields"),
+                            gap_seconds=derive_cfg.get("gap_seconds", 1),
+                        )
                     events.append(EventDef(
                         event=ev.get("event", ""),
                         required=ev.get("required", True),
@@ -120,6 +144,7 @@ class RuleEngine:
                         fields=ev.get("fields"),
                         profile_update=ev.get("profile_update"),
                         repeat=ev.get("repeat"),
+                        derive=derive,
                     ))
                 elif isinstance(ev, str):
                     events.append(EventDef(event=ev))

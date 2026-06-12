@@ -136,6 +136,42 @@ class PropertyEnumResolver:
                 random_end = random_start + _dt.timedelta(days=duration)
                 return fmt.format(start=random_start.strftime(date_fmt), end=random_end.strftime(date_fmt))
 
+            if t == "date_relative_to_today":
+                distribution = spec.get("distribution", {"active": 1.0})
+                expired_range = spec.get("expired_range", [-365, -1])
+                active_range = spec.get("active_range", [1, 365])
+                date_fmt = spec.get("date_format", "%Y-%m-%d")
+
+                roll = random.random()
+                cumulative = 0.0
+                chosen = "active"
+                for bucket, weight in distribution.items():
+                    cumulative += weight
+                    if roll <= cumulative:
+                        chosen = bucket
+                        break
+
+                if chosen == "expired":
+                    days = random.randint(expired_range[0], expired_range[1])
+                else:
+                    days = random.randint(active_range[0], active_range[1])
+
+                result = _dt.date.today() + _dt.timedelta(days=days)
+                return result.strftime(date_fmt)
+
+            if t == "weighted_int":
+                values = spec.get("values", [])
+                if not values:
+                    return None
+                population = [v["value"] for v in values]
+                weights = [v.get("weight", 1.0) for v in values]
+                return random.choices(population, weights=weights, k=1)[0]
+
+            if t == "range":
+                lo = spec.get("min", 1)
+                hi = spec.get("max", 100)
+                return round(random.uniform(lo, hi), 2)
+
             if t == "datetime":
                 fmt = spec.get("format", "%Y/%m/%d %H:%M:%S")
                 date_range = spec.get("range", ["2025-01-01", "2025-12-31"])
@@ -356,6 +392,13 @@ class EventSequencer:
                 for k, v in props.items():
                     context["field_values"][f"{edef.event}.{k}"] = v
 
+                # Generate derived events (e.g. payment details from an order)
+                if edef.derive:
+                    derived = self._generate_derived_events(
+                        edef, event, user, context, rep_idx
+                    )
+                    events.extend(derived)
+
             # Advance past all repeats
             if repeat_count > 1:
                 current_time_ms += (repeat_count - 1) * 30_000
@@ -366,6 +409,105 @@ class EventSequencer:
                     user.profile[k] = v
 
         return events
+
+    def _generate_derived_events(
+        self,
+        edef: EventDef,
+        parent_event: Event,
+        user: User,
+        context: dict,
+        parent_index: int = 0,
+    ) -> List[Event]:
+        """Generate child events from a parent event (e.g. order details)."""
+        from datetime import datetime as _datetime
+
+        derive = edef.derive
+        if not derive:
+            return []
+
+        # Determine count
+        count = derive.count or 1
+        if derive.count_ref:
+            m = _REPEAT_REF_RE.match(str(derive.count_ref))
+            if m:
+                ref_key = m.group(1)
+                count = int(context["field_values"].get(ref_key, count))
+            else:
+                try:
+                    count = int(derive.count_ref)
+                except (ValueError, TypeError):
+                    pass
+
+        count = max(1, count)
+
+        parent_props = parent_event.properties
+        derived_events: List[Event] = []
+
+        # Calculate distributed values
+        distributed: Dict[str, float] = {}
+        if derive.distribute_fields:
+            for field, strategy in derive.distribute_fields.items():
+                total = parent_props.get(field, 0)
+                if not isinstance(total, (int, float)):
+                    total = 0
+                if strategy == "divide_evenly":
+                    base = round(total / count, 2)
+                    # Adjust last one so sum matches total
+                    distributed[field] = base
+
+        for i in range(count):
+            ts = parent_event.timestamp_ms + (i + 1) * derive.gap_seconds * 1000
+            props: Dict[str, Any] = {}
+
+            # Carry fields from parent
+            if derive.carry_fields:
+                for field in derive.carry_fields:
+                    if field in parent_props:
+                        props[field] = parent_props[field]
+
+            # Apply distributed values
+            for field, base_value in distributed.items():
+                if i == count - 1:
+                    # Adjust last detail to ensure sum equals parent total
+                    current_sum = sum(distributed[field] for _ in range(count - 1))
+                    props[field] = round(parent_props.get(field, 0) - current_sum, 2)
+                else:
+                    props[field] = base_value
+
+            # Apply prefix-generated fields
+            if derive.prefix_fields:
+                for field, template in derive.prefix_fields.items():
+                    try:
+                        props[field] = template.format(
+                            orderIndex=parent_index,
+                            detailIndex=i,
+                            parentEvent=parent_event.event_name,
+                        )
+                    except (KeyError, ValueError):
+                        props[field] = template
+
+            # Fill remaining schema properties
+            schema = self.tracking_plan.get_event_schema(derive.event)
+            event_dt = _datetime.fromtimestamp(ts / 1000)
+            if schema:
+                for prop_def in schema.properties:
+                    if prop_def.name not in props:
+                        resolved = self._prop_resolver.resolve(prop_def.name)
+                        if resolved is not None:
+                            props[prop_def.name] = resolved
+                        else:
+                            props[prop_def.name] = self.tracking_plan.generate_value(prop_def, event_dt)
+
+            derived_events.append(
+                Event(
+                    event_name=derive.event,
+                    user=user,
+                    timestamp_ms=ts,
+                    properties=props,
+                )
+            )
+
+        return derived_events
 
     def _build_properties(
         self, edef: EventDef, user: User, context: dict, ts: int = 0

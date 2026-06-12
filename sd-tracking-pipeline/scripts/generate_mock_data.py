@@ -711,119 +711,34 @@ def main():
     )
     args = parser.parse_args()
 
-    if args.rules:
+    # 规则模式是推荐方式；未指定 --rules 时尝试自动发现规则文件
+    rules_path = args.rules
+    if not rules_path:
+        default_rules = Path.cwd() / "rules" / "business_logic.yaml"
+        if default_rules.exists():
+            rules_path = str(default_rules)
+            print(f"⚠️  未指定 --rules，自动发现规则文件: {default_rules}")
+
+    if rules_path:
+        args.rules = rules_path
         run_rules_mode(args)
         return
 
-    # 简单模式：支持命令行参数，未指定时从 references/ 自动发现
-    sa_project = args.project or os.getenv("SA_PROJECT", "default")
-    tracking_plan_path = args.tracking_plan
-    if not tracking_plan_path:
-        refs_dir = Path.cwd() / "references"
-        if refs_dir.exists():
-            xlsx_files = sorted(
-                refs_dir.glob("*.xlsx"),
-                key=lambda p: p.stat().st_mtime,
-                reverse=True,
-            )
-            if xlsx_files:
-                tracking_plan_path = str(xlsx_files[0])
-                print(f"⚠️  未指定 --tracking-plan，自动选择最新方案: {xlsx_files[0].name}")
-
-    # 验证必要配置
-    if not tracking_plan_path:
-        print(
-            "错误：缺少必要配置，请通过 --tracking-plan 参数指定埋点方案，"
-            "或确保 references/ 目录存在 .xlsx 方案文件"
-        )
-        sys.exit(1)
-
-    excel_path = Path(tracking_plan_path)
-    if not excel_path.exists():
-        print(f"错误：找不到埋点方案文件：{excel_path}")
-        sys.exit(1)
-
-    # 输出目录
-    output_dir = args.output or str(Path(__file__).parent.parent / "mock_data")
-
-    plan = parse_tracking_plan(str(excel_path))
-    events = plan["events"]
-    user_attrs = plan["users"]
-    identity_defs = plan["identities"]
-
-    if identity_defs:
-        print(f"Identity 定义: {[d['name'] for d in identity_defs]}")
-
-    # 用户池
-    users_n = args.users if args.users is not None else 20
-    users = [(generate_user_id(), i + 1) for i in range(users_n)]
-
-    all_records = []
-
-    # User profile records
-    if user_attrs:
-        for uid, idx in users:
-            all_records.append(
-                build_profile_record(user_attrs, uid, idx, sa_project, identity_defs)
-            )
-
-    use_time_series = args.days is not None or args.daily_users is not None
-
-    if use_time_series:
-        # 时序模式：每天选 daily_users 个活跃用户，每人每事件生成 daily_count 条
-        days = args.days if args.days is not None else 30
-        daily_users_n = (
-            args.daily_users if args.daily_users is not None else min(20, users_n)
-        )
-        daily_count = args.daily_count if args.daily_count is not None else 100
-
-        print(f"=== 模拟数据生成（时序模式）===")
-        print(f"文件: {excel_path.name}")
-        print(
-            f"项目: {sa_project}  用户池: {users_n}  每日活跃: {daily_users_n}  天数: {days}  每用户每事件: {daily_count}\n"
-        )
-        print(f"发现 {len(events)} 个事件，{len(user_attrs)} 个用户属性")
-
-        for day_offset in range(days):
-            daily_active = random.sample(users, min(daily_users_n, len(users)))
-            for event in events:
-                for uid, idx in daily_active:
-                    for _ in range(daily_count):
-                        ts = _timestamp_for_day(day_offset)
-                        all_records.append(
-                            build_track_record(
-                                event, uid, ts, idx, sa_project, identity_defs
-                            )
-                        )
-    else:
-        # 简单模式：每事件生成 count 条，随机时间
-        count = args.count if args.count is not None else 50
-
-        print(f"=== 模拟数据生成 ===")
-        print(f"文件: {excel_path.name}")
-        print(f"项目: {sa_project}  每事件记录数: {count}  模拟用户数: {users_n}\n")
-        print(f"发现 {len(events)} 个事件，{len(user_attrs)} 个用户属性")
-
-        for event in events:
-            for _ in range(count):
-                uid, idx = random.choice(users)
-                ts = _random_timestamp_ms()
-                all_records.append(
-                    build_track_record(event, uid, ts, idx, sa_project, identity_defs)
-                )
-
-    random.shuffle(all_records)
-
-    jsonl_path, batch_path = write_outputs(all_records, output_dir, "mock_events")
-    identity_map_path = write_identity_map(users, identity_defs, output_dir)
-
-    print(f"\n生成 {len(all_records)} 条记录")
-    print(f"  JSONL:            {jsonl_path}")
-    print(f"  Batch (b64):      {batch_path}")
-    print(f"  Identity map CSV: {identity_map_path}  ← 用于校验 ID-Mapping 合并结果")
-    print(f"\n导入命令（需要 SA_TOKEN）：")
-    print(f'  curl -X POST "$SA_HOST/sa?token=$SA_TOKEN" \\')
-    print(f"       -d 'data='$(cat {batch_path})")
+    # 简单模式已弃用：给出清晰迁移提示
+    print("❌ 简单模式已弃用。请使用规则模式生成数据：")
+    print("")
+    print("  python3 generate_mock_data.py \\")
+    print("    --rules ./rules/business_logic.yaml \\")
+    print("    --tracking-plan ./references/<tracking-plan>.xlsx \\")
+    print("    --users 100 --days 30 --sessions-per-day 5")
+    print("")
+    print("规则模式支持：")
+    print("  - 从 business_logic.yaml 读取用户分层、事件序列、转化率")
+    print("  - 派生事件（如一个订单生成多个 ticket detail）")
+    print("  - property_enums 控制字段分布")
+    print("")
+    print("参考模板：sd-tracking-pipeline/references/BUSINESS_LOGIC_SNIPPETS.md")
+    sys.exit(1)
 
 
 if __name__ == "__main__":
