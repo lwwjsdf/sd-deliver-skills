@@ -52,21 +52,25 @@ Phase 4（造数）前必须询问用户选择规模：
 # 小规模（UAT 验证）
 python3 scripts/generate_mock_data.py \
   --rules ./rules/business_logic.yaml \
-  --tracking-plan "$TRACKING_PLAN_PATH" \
+  --tracking-plan "./references/Annex 6 - Tracking Plan - Mini Program_V0.1.xlsx" \
   --users 10 --days 7
 
 # 中规模（默认，功能测试）
 python3 scripts/generate_mock_data.py \
   --rules ./rules/business_logic.yaml \
-  --tracking-plan "$TRACKING_PLAN_PATH" \
+  --tracking-plan "./references/Annex 6 - Tracking Plan - Mini Program_V0.1.xlsx" \
   --users 100 --days 30 --sessions-per-day 5
 
 # 大规模（压测）
 python3 scripts/generate_mock_data.py \
   --rules ./rules/business_logic.yaml \
-  --tracking-plan "$TRACKING_PLAN_PATH" \
+  --tracking-plan "./references/Annex 6 - Tracking Plan - Mini Program_V0.1.xlsx" \
   --users 500 --days 30 --sessions-per-day 10
 ```
+
+**注意**：
+- `--tracking-plan` 建议显式指定，避免多端方案混淆
+- 未指定时，脚本自动选择 `references/` 下最新 `.xlsx`
 
 ## 输出文件
 

@@ -60,10 +60,10 @@ CONFIG_SCHEMA = {
         "help": "神策后台 → 数据接入 → HTTP API → 复制接入地址",
     },
     "tracking_plan": {
-        "env_key": "TRACKING_PLAN_PATH",
-        "prompt": "埋点方案路径",
-        "example": "./references/tracking-plan.xlsx",
-        "help": "埋点方案 Excel 文件的路径",
+        "env_key": "TRACKING_PLAN_DIR",
+        "prompt": "埋点方案目录",
+        "example": "./references",
+        "help": "埋点方案 Excel 文件所在目录（不推荐在 .env 中硬编码具体文件名）",
     },
 }
 

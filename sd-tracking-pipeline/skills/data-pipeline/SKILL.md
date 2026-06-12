@@ -25,11 +25,12 @@ allowed-tools:
 
 ### 2. 前置检查优先
 Phase 1 之前检查 `.env` 完整性：
-- `TRACKING_PLAN_PATH` 必须存在
 - `SA_HOST`、`SA_PROJECT` 必须设置
-- `SA_TOKEN`（Phase 6 需要）
-- `API_KEY`（Phase 5/7 需要）— **如果缺失，警告但不阻塞，询问是否跳过相关 Phase**
+- `SA_TRACK_URL`（Phase 7 数据导入需要）
+- `API_KEY`（Phase 6/8 需要，Open API）— **如果缺失，警告但不阻塞，询问是否跳过相关 Phase**
 - `mock_data/` 历史文件 — **扫描并询问是否清理/备份**
+
+Tracking Plan 文件不放在 `.env` 中，而是放在 `references/` 目录，由脚本自动发现或通过 `--tracking-plan` 指定。
 
 ### 3. Phase 失败立即停止
 - 任一 Phase 失败（error 或脚本 crash）→ 停止执行
@@ -133,10 +134,10 @@ python3 <skill-repo>/sd-tracking-pipeline/scripts/<script>.py
 
 | 凭证 | 用途 | 获取方式 |
 |------|------|----------|
-| `SA_TOKEN` | HTTP API 数据导入（Phase 6） | 神策后台 → 数据接入 → HTTP API |
-| `API_KEY` | Open API 元数据管理 + 数据查询（Phase 5/7） | 神策后台 → 项目管理 → 权限管理 → 创建 API Key |
+| `SA_TRACK_URL` | HTTP API 数据导入（Phase 7） | 神策后台 → 数据接入 → HTTP API |
+| `API_KEY` | Open API 元数据管理 + 数据查询（Phase 6/8） | 神策后台 → 项目管理 → 权限管理 → 创建 API Key |
 
-**注意**：Phase 5/7 需要 `API_KEY`，如果缺失可以跳过，但元数据不会导入到 CDP，校验也无法执行。
+**注意**：Phase 6/8 需要 `API_KEY`，如果缺失可以跳过，但元数据不会导入到 CDP，校验也无法执行。
 
 ## 常见问题
 

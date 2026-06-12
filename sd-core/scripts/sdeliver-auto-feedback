@@ -5,7 +5,7 @@
 #   sdeliver-auto-feedback <project-dir>
 #
 # 自动检测项:
-#   - tracking-plan-not-found   TRACKING_PLAN_PATH 配置但文件不存在
+#   - tracking-plan-not-found   references/ 目录没有 .xlsx 埋点方案
 #   - sa-host-unreachable       SA_HOST 无法连通
 #   - stale-business-logic      business_logic.yaml 超过 30 天未更新
 #   - stale-delivery            DELIVERY.md 超过 14 天未更新
@@ -104,26 +104,19 @@ _is_url_reachable() {
 # ── 检测逻辑 ──────────────────────────────────────────────────────────────────
 
 _detect_tracking_plan() {
-  local env_file="$PROJECT_DIR/.env"
-  [ ! -f "$env_file" ] && return
+  local refs_dir="$PROJECT_DIR/references"
+  [ ! -d "$refs_dir" ] && return
 
-  local track_plan
-  track_plan=$(grep '^TRACKING_PLAN_PATH=' "$env_file" 2>/dev/null | cut -d= -f2- | tr -d '"')
-  [ -z "$track_plan" ] && return
+  local xlsx_count
+  xlsx_count=$(find "$refs_dir" -maxdepth 1 -name "*.xlsx" | wc -l | tr -d ' ')
+  [ "$xlsx_count" -gt 0 ] && return
 
-  # 处理相对路径
-  if [[ "$track_plan" != /* ]]; then
-    track_plan="$PROJECT_DIR/$track_plan"
-  fi
-
-  if [ ! -f "$track_plan" ]; then
-    _record_feedback \
-      "sd-tracking-setup-e2e" \
-      "tracking-plan-not-found" \
-      "high" \
-      "TRACKING_PLAN_PATH 配置为 '$track_plan'，但文件不存在。" \
-      "请确认埋点方案 Excel 文件路径正确，或重新放置文件到指定路径。"
-  fi
+  _record_feedback \
+    "sd-tracking-setup-e2e" \
+    "tracking-plan-not-found" \
+    "high" \
+    "references/ 目录下没有找到 .xlsx 埋点方案文件。" \
+    "请将客户确认的埋点方案 Excel 放入 references/ 目录。"
 }
 
 _detect_sa_host() {

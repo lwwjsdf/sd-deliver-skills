@@ -63,8 +63,10 @@ argument-hint: "[--jsonl ./mock_data/<project>.jsonl --skip-metadata]"
 
 ```bash
 python3 <skill-repo>/sd-tracking-pipeline/scripts/import_meta_data.py \
-  --tracking-plan "$TRACKING_PLAN_PATH"
+  --tracking-plan "./references/<tracking-plan>.xlsx"
 ```
+
+未指定 `--tracking-plan` 时，脚本自动选择 `references/` 下最新 `.xlsx`。
 
 ### Step 3：元数据预检查
 

@@ -14,7 +14,7 @@ argument-hint: "[--skip-generate|--skip-validate|--skip-import]"
 >
 > **前置条件：**
 > - 项目已初始化（`sdeliver init` 完成）
-> - 埋点方案已确认（`.env` 中 `TRACKING_PLAN_PATH` 已设置）
+> - 埋点方案已确认，放在 `references/` 目录或通过 `--tracking-plan` 指定
 > - `rules/business_logic.yaml` 已存在或可生成
 > - **⚠️ 关键：需要 Open API 密钥（`API_KEY`）用于元数据导入和导入后校验**
 >
@@ -65,12 +65,17 @@ Phase 1 之前，必须先检查：
 | 检查项 | 通过标准 | 失败处理 |
 |--------|----------|----------|
 | `.env` 存在 | 文件存在 | 停止，提示运行 `sdeliver init` |
-| `TRACKING_PLAN_PATH` | 已设置且文件存在 | 停止，提示先执行 `/design-tracking` |
+| `references/*.xlsx` | 至少存在一个埋点方案文件 | 停止，提示先执行 `/design-tracking` 或放入方案文件 |
 | `SA_HOST` | 已设置 | 停止，提示填写 |
 | `SA_PROJECT` | 已设置 | 停止，提示填写 |
-| `SA_TOKEN` | 已设置 | 警告，Phase 6 需要 |
-| `API_KEY` | 已设置 | **警告，Phase 5/7 需要** |
+| `SA_TRACK_URL` | 已设置 | 警告，Phase 7 数据导入需要 |
+| `API_KEY` | 已设置 | **警告，Phase 6/8 需要** |
 | `mock_data/` 历史文件 | 扫描并报告 | 询问是否清理/备份 |
+
+**Tracking Plan 选择**：
+- 如果 `references/` 只有一个 `.xlsx`，默认用它
+- 如果有多个，必须询问用户用哪一个
+- 不要从 `.env` 读取 `TRACKING_PLAN_PATH`
 
 ### 规则 3：Phase 失败立即停止
 
@@ -140,15 +145,15 @@ python3 <skill-repo>/sd-tracking-pipeline/scripts/mock_data_manager.py clean --r
 🔍 前置检查
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 [✓] .env 存在
-[✓] TRACKING_PLAN_PATH: ./references/tracking-plan.xlsx
+[✓] references/Annex 6 - Tracking Plan - Mini Program_V0.1.xlsx  （唯一方案）
 [✓] SA_HOST: https://demo.sensorsdata.cn
 [✓] SA_PROJECT: mpdev
-[✓] SA_TOKEN: 已设置
-[✗] API_KEY: 未设置 ⚠️ Phase 5/7 需要
+[✓] SA_TRACK_URL: 已设置
+[✗] API_KEY: 未设置 ⚠️ Phase 6/8 需要
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 ⚠️ 发现 1 个问题：
-  - API_KEY 未设置，Phase 5（元数据导入）和 Phase 7（结果校验）将跳过
+  - API_KEY 未设置，Phase 6（元数据导入）和 Phase 8（导入后校验）将跳过
 
 📦 mock_data/ 历史文件扫描：
   - 发现 12 个历史文件，共 6.5GB
@@ -173,7 +178,7 @@ python3 <skill-repo>/sd-tracking-pipeline/scripts/mock_data_manager.py clean --r
 ```bash
 python3 scripts/yaml_validator.py \
   ./rules/business_logic.yaml \
-  --tracking-plan "$TRACKING_PLAN_PATH"
+  --tracking-plan ""./references/<tracking-plan>.xlsx""
 ```
 
 - **error**：停止，报告问题，询问修复方式
@@ -184,7 +189,7 @@ python3 scripts/yaml_validator.py \
 
 ```bash
 python3 scripts/list_enum_values.py \
-  --tracking-plan "$TRACKING_PLAN_PATH"
+  --tracking-plan ""./references/<tracking-plan>.xlsx""
 ```
 
 分四批向客户确认，所有批次确认完毕后更新 YAML。
@@ -197,7 +202,7 @@ python3 scripts/list_enum_values.py \
 # 小规模（示例）
 python3 scripts/generate_mock_data.py \
   --rules ./rules/business_logic.yaml \
-  --tracking-plan "$TRACKING_PLAN_PATH" \
+  --tracking-plan ""./references/<tracking-plan>.xlsx"" \
   --users 100 --days 30 --sessions-per-day 5
 ```
 
@@ -218,7 +223,7 @@ python3 scripts/generate_mock_data.py \
 ```bash
 python3 scripts/validate_pre_import.py \
   --jsonl "./mock_data/<project>.jsonl" \
-  --tracking-plan "$TRACKING_PLAN_PATH" \
+  --tracking-plan ""./references/<tracking-plan>.xlsx"" \
   --iterations "./references/MOCK_DATA_ITERATIONS.md"
 ```
 
@@ -246,7 +251,7 @@ python3 scripts/validate_pre_import.py \
 
 ```bash
 python3 scripts/import_meta_data.py \
-  --tracking-plan "$TRACKING_PLAN_PATH"
+  --tracking-plan ""./references/<tracking-plan>.xlsx""
 ```
 
 如果缺少 `API_KEY`：

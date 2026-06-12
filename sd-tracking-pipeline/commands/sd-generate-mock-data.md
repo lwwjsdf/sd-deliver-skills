@@ -14,7 +14,7 @@ argument-hint: "[--users 100 --days 30 --sessions-per-day 5]"
 >
 > **前置条件：**
 > - 项目已初始化（`.env` 存在）
-> - `TRACKING_PLAN_PATH` 已设置且文件存在
+> - 埋点方案 Excel 已确认，放在 `references/` 目录或通过 `--tracking-plan` 指定
 > - `rules/business_logic.yaml` 已存在（可先用 `/sd-setup-tracking` 生成）
 >
 > **输出文件：**
@@ -57,7 +57,7 @@ argument-hint: "[--users 100 --days 30 --sessions-per-day 5]"
 
 检查项：
 - `.env` 存在
-- `TRACKING_PLAN_PATH` 存在且有效
+- `references/` 目录中存在埋点方案 `.xlsx` 文件（或通过 `--tracking-plan` 显式指定）
 - `rules/business_logic.yaml` 存在
 - 必要时询问数据规模
 
@@ -66,7 +66,7 @@ argument-hint: "[--users 100 --days 30 --sessions-per-day 5]"
 ```bash
 python3 <skill-repo>/sd-tracking-pipeline/scripts/generate_mock_data.py \
   --rules ./rules/business_logic.yaml \
-  --tracking-plan "$TRACKING_PLAN_PATH" \
+  --tracking-plan "./references/<tracking-plan>.xlsx" \
   --users <N> --days <D> --sessions-per-day <S>
 ```
 

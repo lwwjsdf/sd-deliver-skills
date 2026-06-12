@@ -257,21 +257,40 @@ def _resolve_jsonl(args_jsonl: str) -> str:
     return str(jsonl_files[0])
 
 
+def _resolve_tracking_plan(args_tracking_plan: str) -> str:
+    """Resolve tracking plan path: explicit arg -> auto-discover in references/."""
+    if args_tracking_plan:
+        return args_tracking_plan
+
+    refs_dir = Path(__file__).parent.parent / "references"
+    if refs_dir.exists():
+        xlsx_files = sorted(
+            refs_dir.glob("*.xlsx"),
+            key=lambda p: p.stat().st_mtime,
+            reverse=True,
+        )
+        if xlsx_files:
+            print(f"⚠️  未指定 --tracking-plan，自动选择最新方案: {xlsx_files[0].name}")
+            return str(xlsx_files[0])
+
+    print("❌ 缺少 --tracking-plan 参数，且 references/ 目录未找到 .xlsx 方案文件")
+    sys.exit(1)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="导入前数据校验：对比 JSONL 与 Tracking Plan",
         formatter_class=argparse.RawDescriptionHelpFormatter,
         epilog="""
 示例:
-  python3 %(prog)s
-  python3 %(prog)s --jsonl ./mock_data/westk.jsonl
+  python3 %(prog)s --tracking-plan ./references/plan.xlsx
   python3 %(prog)s --jsonl ./mock_data/westk.jsonl --tracking-plan ./references/plan.xlsx
-  python3 %(prog)s --jsonl ./mock_data/westk.jsonl --iterations ./references/MOCK_DATA_ITERATIONS.md
+  python3 %(prog)s --jsonl ./mock_data/westk.jsonl --tracking-plan ./references/plan.xlsx --iterations ./references/MOCK_DATA_ITERATIONS.md
         """,
     )
     parser.add_argument("--jsonl", dest="jsonl", default="", help="JSONL 数据文件路径")
     parser.add_argument("--tracking-plan", dest="tracking_plan", default="",
-                        help="埋点方案 Excel 路径（默认从 .env TRACKING_PLAN_PATH）")
+                        help="埋点方案 Excel 路径（未指定时自动选择 references/ 下最新 .xlsx）")
     parser.add_argument("--iterations", dest="iterations", default="",
                         help="迭代记录 Markdown 路径（默认 ./references/MOCK_DATA_ITERATIONS.md）")
     parser.add_argument("--sample-size", dest="sample_size", type=int, default=1000,
@@ -281,7 +300,7 @@ def main():
     args = parser.parse_args()
 
     jsonl_file = _resolve_jsonl(args.jsonl)
-    tracking_plan_path = get_config("tracking_plan", args.tracking_plan)
+    tracking_plan_path = _resolve_tracking_plan(args.tracking_plan)
 
     iterations = args.iterations
     if not iterations:

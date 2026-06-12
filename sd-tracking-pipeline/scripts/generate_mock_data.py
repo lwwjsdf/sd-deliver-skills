@@ -9,7 +9,7 @@ generate_mock_data.py — 从埋点方案 Excel 生成模拟数据
 
 前置条件（在项目根目录的 .env 中配置，或通过命令行参数传入）：
     SA_PROJECT          项目 ID
-    TRACKING_PLAN_PATH  埋点方案 Excel 路径
+    埋点方案 Excel       通过 --tracking-plan 传入，或放在 references/ 目录自动发现
 
 依赖：
     pip install openpyxl python-dotenv
@@ -715,14 +715,26 @@ def main():
         run_rules_mode(args)
         return
 
-    # 简单模式：支持命令行参数覆盖 .env
+    # 简单模式：支持命令行参数，未指定时从 references/ 自动发现
     sa_project = args.project or os.getenv("SA_PROJECT", "default")
-    tracking_plan_path = args.tracking_plan or os.getenv("TRACKING_PLAN_PATH", "")
+    tracking_plan_path = args.tracking_plan
+    if not tracking_plan_path:
+        refs_dir = Path.cwd() / "references"
+        if refs_dir.exists():
+            xlsx_files = sorted(
+                refs_dir.glob("*.xlsx"),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
+            if xlsx_files:
+                tracking_plan_path = str(xlsx_files[0])
+                print(f"⚠️  未指定 --tracking-plan，自动选择最新方案: {xlsx_files[0].name}")
 
     # 验证必要配置
     if not tracking_plan_path:
         print(
-            "错误：缺少必要配置，请通过 --tracking-plan 参数或在 .env 中设置 TRACKING_PLAN_PATH"
+            "错误：缺少必要配置，请通过 --tracking-plan 参数指定埋点方案，"
+            "或确保 references/ 目录存在 .xlsx 方案文件"
         )
         sys.exit(1)
 

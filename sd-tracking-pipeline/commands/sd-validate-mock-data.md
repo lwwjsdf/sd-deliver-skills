@@ -14,7 +14,7 @@ argument-hint: "[--jsonl ./mock_data/<project>.jsonl]"
 >
 > **前置条件：**
 > - 模拟数据已生成（`mock_data/*.jsonl` 存在）
-> - `TRACKING_PLAN_PATH` 已设置
+> - 埋点方案 Excel 放在 `references/` 目录，或通过 `--tracking-plan` 指定
 > - 推荐同时存在 `references/MOCK_DATA_ITERATIONS.md`
 >
 > **校验内容：**
@@ -73,7 +73,7 @@ argument-hint: "[--jsonl ./mock_data/<project>.jsonl]"
 
 ### Step 1：前置检查
 
-- 检查 `.env` 中 `TRACKING_PLAN_PATH`
+- 检查 `references/` 目录中是否存在埋点方案 `.xlsx`（或通过 `--tracking-plan` 显式指定）
 - 查找最新生成的 `.jsonl` 文件
 - 检查 `MOCK_DATA_ITERATIONS.md` 是否存在
 
@@ -89,9 +89,11 @@ python3 <skill-repo>/sd-tracking-pipeline/scripts/scan_jsonl.py \
 ```bash
 python3 <skill-repo>/sd-tracking-pipeline/scripts/validate_pre_import.py \
   --jsonl "./mock_data/<project>.jsonl" \
-  --tracking-plan "$TRACKING_PLAN_PATH" \
+  --tracking-plan "./references/<tracking-plan>.xlsx" \
   --iterations "./references/MOCK_DATA_ITERATIONS.md"
 ```
+
+未指定 `--tracking-plan` 时，脚本自动选择 `references/` 下最新 `.xlsx`。
 
 ### Step 3：结果处理
 

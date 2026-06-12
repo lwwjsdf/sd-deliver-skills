@@ -13,7 +13,7 @@ allowed-tools:
 ## 前置条件
 
 - 模拟数据已生成并通过本地校验
-- `.env` 中配置了 `SA_HOST`、`SA_PROJECT`、`SA_TRACK_URL`
+- `.env` 中配置了 `SA_HOST`、`SA_PROJECT`、`SA_TRACK_URL`、`API_KEY`
 - 元数据导入需要 `API_KEY`
 - 导入后校验需要 `API_KEY`
 
@@ -46,8 +46,10 @@ Step 4: 导入后校验（validate_import.py / validate_post_import.py）
 
 ```bash
 python3 <skill-repo>/sd-tracking-pipeline/scripts/import_meta_data.py \
-  --tracking-plan "$TRACKING_PLAN_PATH"
+  --tracking-plan "./references/<tracking-plan>.xlsx"
 ```
+
+未指定 `--tracking-plan` 时，脚本自动选择 `references/` 下最新 `.xlsx`。
 
 ### 元数据预检查
 

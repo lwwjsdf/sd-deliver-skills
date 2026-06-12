@@ -125,9 +125,9 @@ def test_main_json_output(tmp_path, monkeypatch, capsys):
          "properties": {"orderId": "ORD-001", "applicationName": "App"}},
     ])
 
-    monkeypatch.setenv("TRACKING_PLAN_PATH", plan_path)
+    monkeypatch.setenv("TRACKING_PLAN_PATH", "/nonexistent")
     import sys
-    sys.argv = ["validate_pre_import.py", "--jsonl", jsonl_path, "--output-json"]
+    sys.argv = ["validate_pre_import.py", "--jsonl", jsonl_path, "--tracking-plan", plan_path, "--output-json"]
 
     with pytest.raises(SystemExit) as exc_info:
         main()

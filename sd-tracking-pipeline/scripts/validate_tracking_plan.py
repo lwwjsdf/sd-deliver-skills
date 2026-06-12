@@ -398,9 +398,21 @@ def main():
 
     print("=== UAT 数据校验（Phase 4d）===")
 
-    tracking_plan = args.tracking_plan or os.getenv("TRACKING_PLAN_PATH", "")
+    tracking_plan = args.tracking_plan
     if not tracking_plan:
-        print("错误：缺少 --tracking-plan 参数或 TRACKING_PLAN_PATH 环境变量")
+        refs_dir = Path.cwd() / "references"
+        if refs_dir.exists():
+            xlsx_files = sorted(
+                refs_dir.glob("*.xlsx"),
+                key=lambda p: p.stat().st_mtime,
+                reverse=True,
+            )
+            if xlsx_files:
+                tracking_plan = str(xlsx_files[0])
+                print(f"⚠️  未指定 --tracking-plan，自动选择最新方案: {xlsx_files[0].name}")
+
+    if not tracking_plan:
+        print("错误：缺少 --tracking-plan 参数，且 references/ 目录未找到 .xlsx 方案文件")
         sys.exit(1)
 
     jsonl_file = args.jsonl

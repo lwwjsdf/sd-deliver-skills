@@ -174,9 +174,13 @@ cmd_check() {
 
   log ""
   log "── 按需填写 ──"
-  _check_var TRACKING_PLAN_PATH "埋点方案路径"
   _check_var API_KEY            "Open API 密钥"
   _check_var SA_TRACK_URL       "数据接收地址"
+
+  log ""
+  log "── Tracking Plan ──"
+  log "  ℹ️  埋点方案 Excel 建议放在 references/ 目录，不强制写入 .env"
+  log "     运行脚本时通过 --tracking-plan 指定，或让脚本自动发现"
 
   log ""
   if [ "$ok" -eq 1 ]; then

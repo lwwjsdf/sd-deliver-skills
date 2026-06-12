@@ -13,8 +13,8 @@ status: draft
 > 执行数据全流程校验（导入前 + 导入后 + UAT 场景），输出技术报告和客户报告，自动收集反馈并生成下一轮 Checklist。
 >
 > **前置条件：**
-> - 埋点方案存在（`TRACKING_PLAN_PATH` 已设置）
-> - 导入后校验需要 `API_KEY`
+> - 埋点方案 Excel 放在 `references/` 目录，或通过 `--tracking-plan` 指定
+> - 导入后校验需要 `.env` 中配置 `API_KEY`（Open API）
 > - UAT 校验需要 `uat_test_logic.yaml`（可选，无文件跳过）
 >
 > **执行步骤概览：**
@@ -110,9 +110,11 @@ status: draft
 ```bash
 python3 <skill-repo>/sd-tracking-pipeline/scripts/validate_pre_import.py \
   --jsonl "./mock_data/<project>.jsonl" \
-  --tracking-plan "$TRACKING_PLAN_PATH" \
+  --tracking-plan "./references/<tracking-plan>.xlsx" \
   --iterations "./references/MOCK_DATA_ITERATIONS.md"
 ```
+
+未指定 `--tracking-plan` 时，脚本自动选择 `references/` 下最新 `.xlsx`。
 
 ### Stage 2：导入后校验
 
