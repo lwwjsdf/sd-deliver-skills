@@ -324,12 +324,9 @@ elif [ -f "$REPO_DIR/bin/sdeliver-auto-feedback" ]; then
   _link "$REPO_DIR/bin/sdeliver-auto-feedback" "$BIN_DIR/sdeliver-auto-feedback"
 fi
 
-# Install Python deps used by tracking-setup-e2e scripts
-if command -v pip3 >/dev/null 2>&1; then
-  log "→ Installing Python dependencies (requests, beautifulsoup4, ruamel.yaml)..."
-  pip3 install requests beautifulsoup4 ruamel.yaml 2>/dev/null || \
-    log "  ⚠️ pip3 install failed — run manually: pip3 install requests beautifulsoup4 ruamel.yaml"
-fi
+# Note: Python dependencies are now managed per-skill/per-script.
+# Each script checks and installs its own dependencies on first run.
+# No global pip install during setup.
 
 log ""
 log "→ Initializing sdeliver config..."

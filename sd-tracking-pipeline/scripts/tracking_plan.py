@@ -2,6 +2,9 @@
 tracking_plan.py — Parse the Tracking Plan Excel and expose event/property schemas.
 
 Supports sheets: Custom Event, Preset Event, Public Property (with double space), User Attribute.
+
+Dependencies:
+    pip install openpyxl
 """
 
 from __future__ import annotations
@@ -9,8 +12,35 @@ from __future__ import annotations
 import random
 import re
 import string
+import subprocess
+import sys
 from dataclasses import dataclass, field
 from typing import Dict, List, Optional
+
+# ── Dependency check & auto-install ───────────────────────────────────────────
+
+
+def _ensure_dependencies():
+    """Ensure required packages are installed."""
+    missing = []
+    try:
+        import openpyxl
+    except ImportError:
+        missing.append("openpyxl")
+
+    if missing:
+        print(f"Missing dependencies: {', '.join(missing)}")
+        print("Installing...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install"] + missing)
+            print("Dependencies installed successfully.")
+        except subprocess.CalledProcessError as e:
+            print(f"Failed to install dependencies: {e}")
+            print(f"Please run manually: pip install {' '.join(missing)}")
+            sys.exit(1)
+
+
+_ensure_dependencies()
 
 import openpyxl
 
@@ -104,7 +134,9 @@ def _extract_enum_values(
     if ";" in text and text.count(";") >= 1:
         parts = text.split(";")
         values = [p.strip().strip('"').strip('"').strip('"').strip() for p in parts]
-        values = [v for v in values if v and len(v) < max_item_len and " " not in v.strip()]
+        values = [
+            v for v in values if v and len(v) < max_item_len and " " not in v.strip()
+        ]
         if min_count <= len(values) <= max_count:
             return values
 
@@ -142,86 +174,96 @@ def _reg(pattern: str, fn):
 
 
 # ── ID / Code formats (universal) ────────────────────────────────────────────
-_reg(r"orderid|refundid|ordernum",
-     lambda: f"ORD-{random.randint(100000, 999999)}")
-_reg(r"productid|productcode",
-     lambda: f"P{random.randint(10000, 99999):05d}")
-_reg(r"ticketid(?!list)|ticketid$",
-     lambda: f"TK-{random.randint(100000, 999999)}")
-_reg(r"membershipcardid|membershipnumber",
-     lambda: f"M-{_dt.date.today().year}-{random.randint(100000, 999999):06d}")
-_reg(r"voucherid(?!list)|voucherid$",
-     lambda: f"VC-{random.randint(10000, 99999)}")
-_reg(r"\bid\b|_id$|id$",
-     lambda: f"ID-{random.randint(10000, 99999)}")
-_reg(r"code$",
-     lambda: f"C{random.randint(1000, 9999)}")
+_reg(r"orderid|refundid|ordernum", lambda: f"ORD-{random.randint(100000, 999999)}")
+_reg(r"productid|productcode", lambda: f"P{random.randint(10000, 99999):05d}")
+_reg(r"ticketid(?!list)|ticketid$", lambda: f"TK-{random.randint(100000, 999999)}")
+_reg(
+    r"membershipcardid|membershipnumber",
+    lambda: f"M-{_dt.date.today().year}-{random.randint(100000, 999999):06d}",
+)
+_reg(r"voucherid(?!list)|voucherid$", lambda: f"VC-{random.randint(10000, 99999)}")
+_reg(r"\bid\b|_id$|id$", lambda: f"ID-{random.randint(10000, 99999)}")
+_reg(r"code$", lambda: f"C{random.randint(1000, 9999)}")
 
 # ── Page / URL (universal format, project overrides paths via property_enums) ─
-_reg(r"pagename|landingpagename",
-     lambda: random.choice(["首页", "列表页", "详情页", "搜索结果页", "个人中心"]))
-_reg(r"url|pageurl|landingpageurl",
-     lambda: random.choice([
-         "/pages/index/index", "/pages/list/index",
-         "/pages/detail/index", "/pages/search/result",
-         "/pages/profile/index",
-     ]))
+_reg(
+    r"pagename|landingpagename",
+    lambda: random.choice(["首页", "列表页", "详情页", "搜索结果页", "个人中心"]),
+)
+_reg(
+    r"url|pageurl|landingpageurl",
+    lambda: random.choice(
+        [
+            "/pages/index/index",
+            "/pages/list/index",
+            "/pages/detail/index",
+            "/pages/search/result",
+            "/pages/profile/index",
+        ]
+    ),
+)
 
 # ── Amounts (universal ranges) ────────────────────────────────────────────────
-_reg(r"discountamount|promotionamount",
-     lambda: round(random.uniform(0, 200), 2))
-_reg(r"paidamount|refundamount",
-     lambda: round(random.uniform(100, 2000), 2))
-_reg(r"price|amount|value",
-     lambda: round(random.uniform(50, 3000), 2))
+_reg(r"discountamount|promotionamount", lambda: round(random.uniform(0, 200), 2))
+_reg(r"paidamount|refundamount", lambda: round(random.uniform(100, 2000), 2))
+_reg(r"price|amount|value", lambda: round(random.uniform(50, 3000), 2))
 
 # ── Quantities / rankings (universal) ────────────────────────────────────────
-_reg(r"quantity|numer|number(?!$)",
-     lambda: random.randint(1, 5))
-_reg(r"sort|rank|depth",
-     lambda: random.randint(1, 20))
-_reg(r"duration",
-     lambda: round(random.uniform(5, 300), 1))
+_reg(r"quantity|numer|number(?!$)", lambda: random.randint(1, 5))
+_reg(r"sort|rank|depth", lambda: random.randint(1, 20))
+_reg(r"duration", lambda: round(random.uniform(5, 300), 1))
 
 # ── Dates (universal formats, anchored to event timestamp) ───────────────────
 # These lambdas accept an optional base_date; _semantic_value injects it.
-_reg(r"calendar",
-     lambda base=None: (
-         (base or _dt.date.today()) + _dt.timedelta(days=random.randint(1, 180))
-     ).strftime("%Y.%m.%d"))
-_reg(r"expirationdate|expiry",
-     lambda base=None: (
-         _dt.datetime.combine(base or _dt.date.today(), _dt.time()) +
-         _dt.timedelta(days=random.randint(30, 730))
-     ).strftime("%Y-%m-%dT%H:%M:%S"))
+_reg(
+    r"calendar",
+    lambda base=None: (
+        (base or _dt.date.today()) + _dt.timedelta(days=random.randint(1, 180))
+    ).strftime("%Y.%m.%d"),
+)
+_reg(
+    r"expirationdate|expiry",
+    lambda base=None: (
+        _dt.datetime.combine(base or _dt.date.today(), _dt.time())
+        + _dt.timedelta(days=random.randint(30, 730))
+    ).strftime("%Y-%m-%dT%H:%M:%S"),
+)
 
 # ── Contact / identity (universal formats) ───────────────────────────────────
-_reg(r"email",
-     lambda: f"user{random.randint(100, 999)}@example.com")
-_reg(r"mobile|phone",
-     lambda: f"+86 138-{random.randint(1000,9999)}-{random.randint(1000,9999)}")
-_reg(r"residence",
-     lambda: random.choice(["中国 香港", "中国 北京市", "中国 上海市", "中国 广州市", "海外"]))
-_reg(r"transferperson",
-     lambda: f"1{random.randint(30,99)}****{random.randint(1000,9999)}")
+_reg(r"email", lambda: f"user{random.randint(100, 999)}@example.com")
+_reg(
+    r"mobile|phone",
+    lambda: f"+86 138-{random.randint(1000, 9999)}-{random.randint(1000, 9999)}",
+)
+_reg(
+    r"residence",
+    lambda: random.choice(
+        ["中国 香港", "中国 北京市", "中国 上海市", "中国 广州市", "海外"]
+    ),
+)
+_reg(
+    r"transferperson",
+    lambda: f"1{random.randint(30, 99)}****{random.randint(1000, 9999)}",
+)
 
 # ── UTM (universal channel names) ────────────────────────────────────────────
-_reg(r"utm_source",
-     lambda: random.choice(["wechat", "weibo", "xiaohongshu", "douyin", "direct"]))
-_reg(r"utm_medium",
-     lambda: random.choice(["social", "cpc", "email", "organic"]))
+_reg(
+    r"utm_source",
+    lambda: random.choice(["wechat", "weibo", "xiaohongshu", "douyin", "direct"]),
+)
+_reg(r"utm_medium", lambda: random.choice(["social", "cpc", "email", "organic"]))
 
 # ── Version (universal format) ───────────────────────────────────────────────
-_reg(r"^version$",
-     lambda: random.choice(["1.0.0", "1.0.1", "1.1.0"]))
+_reg(r"^version$", lambda: random.choice(["1.0.0", "1.0.1", "1.1.0"]))
 
 # ── List fields fallback (universal) ─────────────────────────────────────────
 # Project-specific list content should be set via property_enums in business_logic.yaml
-_reg(r"idlist$|typelist$|namelist$",
-     lambda: _rand_string(8))
+_reg(r"idlist$|typelist$|namelist$", lambda: _rand_string(8))
 
 
-def _semantic_value(prop_name: str, ref_dt: "_dt.datetime | None" = None) -> "object | None":
+def _semantic_value(
+    prop_name: str, ref_dt: "_dt.datetime | None" = None
+) -> "object | None":
     """Return a semantically appropriate value based on field name, or None if no pattern matches.
 
     ref_dt: the event timestamp to use as reference for date/time generation.
@@ -579,7 +621,9 @@ class TrackingPlan:
             for name in self.list_events()
         )
 
-    def generate_value(self, prop: PropertyDef, event_ts: "_dt.datetime | None" = None) -> object:
+    def generate_value(
+        self, prop: PropertyDef, event_ts: "_dt.datetime | None" = None
+    ) -> object:
         """
         Generate a plausible mock value for a property.
 

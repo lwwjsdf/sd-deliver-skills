@@ -112,6 +112,23 @@ python3 <skill-repo>/sd-tracking-pipeline/scripts/<script>.py
 
 其中 `<skill-repo>` 由 Preamble 自动获取（`sdeliver-config get skill_repo_path`）。
 
+## 依赖管理
+
+脚本采用**按需自动安装**策略：
+- 每个脚本在运行时自动检查所需 Python 依赖
+- 缺失时自动调用 `pip install` 安装
+- 安装失败时给出手动安装命令
+
+**常见依赖：**
+| 脚本 | 依赖 |
+|------|------|
+| `generate_mock_data.py` | `openpyxl`, `python-dotenv` |
+| `import_meta_data.py` | `openpyxl`, `python-dotenv`, `requests` |
+| `crawl_web_pages.py` | `requests`, `beautifulsoup4` |
+| `tracking_plan.py` | `openpyxl` |
+
+**注意**：首次运行某个脚本时可能需要等待依赖安装完成。
+
 ## 凭证说明
 
 | 凭证 | 用途 | 获取方式 |

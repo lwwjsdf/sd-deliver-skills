@@ -29,3 +29,6 @@ reports/
 
 # Local config (but keep .env.example)
 .env
+
+# Mock data
+mock_data

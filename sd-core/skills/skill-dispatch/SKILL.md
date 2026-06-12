@@ -16,13 +16,13 @@ allowed-tools:
 
 | 用户描述 | 推荐 Command |
 |---------|-------------|
-| 项目状态、项目档案、onboard、初始化 | `/onboard` / `/status` |
-| 埋点、数据采集、tracking、造数、模拟数据、元数据导入 | `/setup-tracking` |
-| 数据异常、校验、验证、数据上线后、数据质量 | `/validate-data` |
-| 服务器、资源评估、扩容、部署配置 | `/size-server` |
-| 技术方案、架构图、评审材料 | `/design-tech` |
-| SIT、UAT、测试、上线验收 | `/run-sit` |
-| 容量评估、带宽、信创、ID3、排查 SOP | `/ask-faq` |
+| 项目状态、项目档案、onboard、初始化 | `/sd-onboard` / `/sd-status` |
+| 埋点、数据采集、tracking、造数、模拟数据、元数据导入 | `/sd-setup-tracking` |
+| 数据异常、校验、验证、数据上线后、数据质量 | `/sd-validate-data` |
+| 服务器、资源评估、扩容、部署配置 | `/sd-size-server` |
+| 技术方案、架构图、评审材料 | `/sd-design-tech` |
+| SIT、UAT、测试、上线验收 | `/sd-run-sit` |
+| 容量评估、带宽、信创、ID3、排查 SOP | `/sd-ask-faq` |
 
 ## 故障排查
 

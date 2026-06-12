@@ -1,0 +1,91 @@
+[2026-05-21T06:00:35.765Z] [warning] No satisfying version (^3.2.1) of shared module jsencrypt found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:00:35.766Z] [warning] No satisfying version (^3.3.0) of shared module crypto-js found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:00:36.053Z] [warning] No satisfying version (=6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:00:36.055Z] [warning] No satisfying version (^6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:00:37.059Z] [log] Error Code:  {unit: 55, number: 2, code: SBP-R-55-2, version: 2, context: Object}
+[2026-05-21T06:00:37.194Z] [log] %c[@sens-extension/sensors-ai-assistant INFO] background: #d0eef7; color: #3880ff; border-radius: 4px; padding: 2px 4px; font-weight: 700; Extension@safeInvoke debug=> _sbp_unit_passport false init
+[2026-05-21T06:00:37.358Z] [verbose] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o
+[2026-05-21T06:16:39.081Z] [warning] No satisfying version (^3.2.1) of shared module jsencrypt found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:16:39.081Z] [warning] No satisfying version (^3.3.0) of shared module crypto-js found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:16:39.279Z] [log] Error Code:  {unit: 55, number: 2, code: SBP-R-55-2, version: 2, context: Object}
+[2026-05-21T06:16:39.480Z] [warning] No satisfying version (=6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:16:39.481Z] [warning] No satisfying version (^6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:16:39.591Z] [log] %c[@sens-extension/sensors-ai-assistant INFO] background: #d0eef7; color: #3880ff; border-radius: 4px; padding: 2px 4px; font-weight: 700; Extension@safeInvoke debug=> _sbp_unit_passport false init
+[2026-05-21T06:16:39.710Z] [verbose] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o
+[2026-05-21T06:17:00.629Z] [warning] No satisfying version (^3.2.1) of shared module jsencrypt found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:17:00.629Z] [warning] No satisfying version (^3.3.0) of shared module crypto-js found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:17:00.683Z] [log] Error Code:  {unit: 55, number: 2, code: SBP-R-55-2, version: 2, context: Object}
+[2026-05-21T06:17:00.856Z] [warning] No satisfying version (=6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:17:00.857Z] [warning] No satisfying version (^6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:17:00.988Z] [log] %c[@sens-extension/sensors-ai-assistant INFO] background: #d0eef7; color: #3880ff; border-radius: 4px; padding: 2px 4px; font-weight: 700; Extension@safeInvoke debug=> _sbp_unit_passport false init
+[2026-05-21T06:17:01.107Z] [verbose] [DOM] Input elements should have autocomplete attributes (suggested: "current-password"): (More info: https://goo.gl/9p2vKq) %o
+[2026-05-21T06:30:19.455Z] [error] Failed to load resource: the server responded with a status of 401 (Unauthorized)
+[2026-05-21T06:31:19.802Z] [warning] [SEF] RouteManager: routing before any router match hits will cause mismatch on current module, try set `currentModule` to current module name
+[2026-05-21T06:31:19.969Z] [warning] No satisfying version (^3.2.1) of shared module jsencrypt found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:31:19.969Z] [warning] No satisfying version (^3.3.0) of shared module crypto-js found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:31:20.071Z] [warning] No satisfying version (=6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:31:20.072Z] [warning] No satisfying version (^6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:31:20.475Z] [log] Error Code:  {unit: 55, number: 2, code: SBP-R-55-2, version: 2, context: Object}
+[2026-05-21T06:31:21.251Z] [warning] No satisfying version (^4.1.2) of shared module react-router-dom found in shared scope default.
+Available versions: 5.3.4 from @app/sbp-app
+[2026-05-21T06:31:23.363Z] [log] %c[@sens-extension/sensors-ai-assistant INFO] background: #d0eef7; color: #3880ff; border-radius: 4px; padding: 2px 4px; font-weight: 700; Extension@safeInvoke debug=> _sensorsdata_srp_report true init
+[2026-05-21T06:31:30.647Z] [warning] No satisfying version (^3.3.0) of shared module crypto-js found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:31:30.647Z] [warning] No satisfying version (^3.2.1) of shared module jsencrypt found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:32:29.767Z] [error] Failed to load resource: the server responded with a status of 500 ()
+[2026-05-21T06:32:44.561Z] [error] Failed to load resource: the server responded with a status of 500 ()
+[2026-05-21T06:32:58.106Z] [error] Failed to load resource: the server responded with a status of 500 ()
+[2026-05-21T06:33:11.135Z] [error] Failed to load resource: the server responded with a status of 500 ()
+[2026-05-21T06:33:27.834Z] [error] Failed to load resource: the server responded with a status of 500 ()
+[2026-05-21T06:33:42.392Z] [warning] No satisfying version (^3.2.1) of shared module jsencrypt found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:33:42.392Z] [warning] No satisfying version (^3.3.0) of shared module crypto-js found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:33:42.565Z] [warning] [SEF] RouteManager: routing before any router match hits will cause mismatch on current module, try set `currentModule` to current module name
+[2026-05-21T06:33:42.839Z] [log] Error Code:  {unit: 55, number: 2, code: SBP-R-55-2, version: 2, context: Object}
+[2026-05-21T06:33:42.998Z] [warning] No satisfying version (=6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:33:43.018Z] [warning] No satisfying version (^6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:33:43.638Z] [warning] No satisfying version (^4.1.2) of shared module react-router-dom found in shared scope default.
+Available versions: 5.3.4 from @app/sbp-app
+[2026-05-21T06:33:44.345Z] [log] %c[@sens-extension/sensors-ai-assistant INFO] background: #d0eef7; color: #3880ff; border-radius: 4px; padding: 2px 4px; font-weight: 700; Extension@safeInvoke debug=> _sensorsdata_srp_report true init
+[2026-05-21T06:33:48.399Z] [warning] No satisfying version (^3.3.0) of shared module crypto-js found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:33:48.400Z] [warning] No satisfying version (^3.2.1) of shared module jsencrypt found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:34:18.926Z] [warning] No satisfying version (^3.2.1) of shared module jsencrypt found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:34:18.926Z] [warning] No satisfying version (^3.3.0) of shared module crypto-js found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:34:19.124Z] [warning] [SEF] RouteManager: routing before any router match hits will cause mismatch on current module, try set `currentModule` to current module name
+[2026-05-21T06:34:19.309Z] [log] Error Code:  {unit: 55, number: 2, code: SBP-R-55-2, version: 2, context: Object}
+[2026-05-21T06:34:19.672Z] [warning] No satisfying version (=6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:34:19.672Z] [warning] No satisfying version (^6.14.1) of shared module query-string found in shared scope default.
+Available versions: 7.1.1 from @app/sbp-app
+[2026-05-21T06:34:20.067Z] [warning] No satisfying version (^4.1.2) of shared module react-router-dom found in shared scope default.
+Available versions: 5.3.4 from @app/sbp-app
+[2026-05-21T06:34:20.874Z] [log] %c[@sens-extension/sensors-ai-assistant INFO] background: #d0eef7; color: #3880ff; border-radius: 4px; padding: 2px 4px; font-weight: 700; Extension@safeInvoke debug=> _sensorsdata_srp_report true init
+[2026-05-21T06:34:24.322Z] [warning] No satisfying version (^3.3.0) of shared module crypto-js found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:34:24.322Z] [warning] No satisfying version (^3.2.1) of shared module jsencrypt found in shared scope default.
+Available versions: 1.0.0 from @app/sbp-app
+[2026-05-21T06:35:03.136Z] [error] Failed to load resource: the server responded with a status of 500 ()

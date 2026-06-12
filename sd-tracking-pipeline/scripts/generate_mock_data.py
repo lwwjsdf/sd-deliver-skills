@@ -22,17 +22,43 @@ import json
 import os
 import random
 import string
+import subprocess
 import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
 
-try:
-    import openpyxl
-    from dotenv import load_dotenv
-except ImportError:
-    print("缺少依赖，请先运行: pip install openpyxl python-dotenv")
-    sys.exit(1)
+# ── Dependency check & auto-install ───────────────────────────────────────────
+
+
+def _ensure_dependencies():
+    """Ensure required packages are installed."""
+    missing = []
+    try:
+        import openpyxl
+    except ImportError:
+        missing.append("openpyxl")
+    try:
+        from dotenv import load_dotenv
+    except ImportError:
+        missing.append("python-dotenv")
+
+    if missing:
+        print(f"缺少依赖: {', '.join(missing)}")
+        print("正在安装...")
+        try:
+            subprocess.check_call([sys.executable, "-m", "pip", "install"] + missing)
+            print("依赖安装成功。")
+        except subprocess.CalledProcessError as e:
+            print(f"安装失败: {e}")
+            print(f"请手动运行: pip install {' '.join(missing)}")
+            sys.exit(1)
+
+
+_ensure_dependencies()
+
+import openpyxl
+from dotenv import load_dotenv
 
 # 规则驱动模式依赖（可选）
 sys.path.insert(0, str(Path(__file__).parent))
@@ -695,7 +721,9 @@ def main():
 
     # 验证必要配置
     if not tracking_plan_path:
-        print("错误：缺少必要配置，请通过 --tracking-plan 参数或在 .env 中设置 TRACKING_PLAN_PATH")
+        print(
+            "错误：缺少必要配置，请通过 --tracking-plan 参数或在 .env 中设置 TRACKING_PLAN_PATH"
+        )
         sys.exit(1)
 
     excel_path = Path(tracking_plan_path)
