@@ -162,7 +162,7 @@ def import_data(batch_file: str, data_url: str, skip_confirm: bool = False):
             elif record["type"] == "profile_set":
                 sa.profile_set(
                     distinct_id=record["distinct_id"],
-                    properties=record.get("properties", {}),
+                    profiles=record.get("properties", {}),
                 )
                 success_count += 1
         except Exception as e:
