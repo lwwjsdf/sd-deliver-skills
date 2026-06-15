@@ -35,3 +35,10 @@ htmlcov/
 
 # Mock data
 mock_data
+
+# Customer confidential reference documents
+# Keep templates (md) in repo; do not commit customer-specific docx/xlsx/pdf
+refrences/*.docx
+refrences/*.xlsx
+refrences/*.pdf
+refrences/*.doc
