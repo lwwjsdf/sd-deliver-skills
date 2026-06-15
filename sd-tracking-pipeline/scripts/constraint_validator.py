@@ -156,45 +156,65 @@ class ConstraintValidator:
         if not order_events:
             return violations
 
-        # Use the first order event as reference
-        order = order_events[0]
-        tickets_qty = order.properties.get("ticketsQuantity")
-        total_amount = order.properties.get("totalOrderAmount")
+        # Sort orders and details by time
+        orders = sorted(order_events, key=lambda e: e.timestamp_ms)
+        details = sorted(detail_events, key=lambda e: e.timestamp_ms)
 
-        # Check ticket count
-        if tickets_qty is not None:
-            try:
-                expected = int(tickets_qty)
-                actual = len(detail_events)
-                if actual != expected:
-                    violations.append(Violation(
-                        rule="field_consistency",
-                        description="票数明细数量等于订单票数",
-                        user_id=user.user_id,
-                        event_name="Product_Payment_Detail",
-                        detail=f"expected {expected} details, got {actual}",
-                    ))
-            except (ValueError, TypeError):
-                pass
+        # Group each detail with the nearest preceding order
+        grouped: Dict[int, List[Event]] = {i: [] for i in range(len(orders))}
+        detail_idx = 0
+        for d in details:
+            # Find the last order that happened before this detail
+            assigned = -1
+            for i, o in enumerate(orders):
+                if o.timestamp_ms < d.timestamp_ms:
+                    assigned = i
+                else:
+                    break
+            if assigned >= 0:
+                grouped[assigned].append(d)
+            else:
+                # Detail before any order: assign to first order
+                grouped[0].append(d)
 
-        # Check amount sum
-        if total_amount is not None and detail_events:
-            try:
-                total = float(total_amount)
-                detail_sum = sum(
-                    float(e.properties.get("ticketPaidAmount", 0))
-                    for e in detail_events
-                )
-                if detail_sum > total + 0.01:  # small float tolerance
-                    violations.append(Violation(
-                        rule="field_consistency",
-                        description="明细金额之和不超过订单金额",
-                        user_id=user.user_id,
-                        event_name="Product_Payment_Detail",
-                        detail=f"detail sum {detail_sum:.2f} > order amount {total:.2f}",
-                    ))
-            except (ValueError, TypeError):
-                pass
+        # Validate each order with its grouped details
+        for i, order in enumerate(orders):
+            order_details = grouped[i]
+            tickets_qty = order.properties.get("ticketsQuantity")
+            total_amount = order.properties.get("totalOrderAmount")
+
+            if tickets_qty is not None:
+                try:
+                    expected = int(tickets_qty)
+                    actual = len(order_details)
+                    if actual != expected:
+                        violations.append(Violation(
+                            rule="field_consistency",
+                            description="票数明细数量等于订单票数",
+                            user_id=user.user_id,
+                            event_name="Product_Payment_Detail",
+                            detail=f"expected {expected} details, got {actual}",
+                        ))
+                except (ValueError, TypeError):
+                    pass
+
+            if total_amount is not None and order_details:
+                try:
+                    total = float(total_amount)
+                    detail_sum = sum(
+                        float(e.properties.get("ticketPaidAmount", 0))
+                        for e in order_details
+                    )
+                    if detail_sum > total + 0.01:  # small float tolerance
+                        violations.append(Violation(
+                            rule="field_consistency",
+                            description="明细金额之和不超过订单金额",
+                            user_id=user.user_id,
+                            event_name="Product_Payment_Detail",
+                            detail=f"detail sum {detail_sum:.2f} > order amount {total:.2f}",
+                        ))
+                except (ValueError, TypeError):
+                    pass
 
         return violations
 

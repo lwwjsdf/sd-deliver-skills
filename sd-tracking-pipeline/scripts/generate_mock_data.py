@@ -16,7 +16,6 @@ generate_mock_data.py — 从埋点方案 Excel 生成模拟数据
 """
 
 import argparse
-import base64
 import csv
 import json
 import os
@@ -450,10 +449,7 @@ def build_profile_record(
 # ---------------------------------------------------------------------------
 
 
-def to_batch_payload(records: list) -> str:
-    """Encode records as base64 for Sensors Data batch HTTP API."""
-    data = json.dumps(records, ensure_ascii=False, cls=_JSONEncoder)
-    return base64.b64encode(data.encode("utf-8")).decode("utf-8")
+
 
 
 class _JSONEncoder(json.JSONEncoder):
@@ -494,19 +490,18 @@ def write_identity_map(users: list, identity_defs: list, output_dir: str) -> str
 def write_outputs(records: list, output_dir: str, prefix: str):
     os.makedirs(output_dir, exist_ok=True)
 
-    # Raw JSON (one record per line, for readability and streaming import)
+    # Raw JSONL (one record per line, for readability and streaming import)
     jsonl_path = os.path.join(output_dir, f"{prefix}.jsonl")
     with open(jsonl_path, "w", encoding="utf-8") as f:
         for r in records:
             f.write(json.dumps(r, ensure_ascii=False, cls=_JSONEncoder) + "\n")
 
-    # Batch payload (base64, ready to POST to /sa?token=xxx)
-    batch_path = os.path.join(output_dir, f"{prefix}_batch.txt")
-    with open(batch_path, "w", encoding="utf-8") as f:
-        data = json.dumps(records, ensure_ascii=False, cls=_JSONEncoder)
-        f.write(base64.b64encode(data.encode("utf-8")).decode("utf-8"))
+    # Optional: pretty-printed JSON summary for human review (first 100 records)
+    sample_path = os.path.join(output_dir, f"{prefix}_sample.json")
+    with open(sample_path, "w", encoding="utf-8") as f:
+        json.dump(records[:100], f, ensure_ascii=False, indent=2, cls=_JSONEncoder)
 
-    return jsonl_path, batch_path
+    return jsonl_path, sample_path
 
 
 # ---------------------------------------------------------------------------
@@ -608,7 +603,7 @@ def run_rules_mode(args):
             datetime.now().timestamp() * 1000
         )
 
-    jsonl_path, batch_path = write_outputs(all_records, output_dir, prefix)
+    jsonl_path, sample_path = write_outputs(all_records, output_dir, prefix)
 
     # ID Mapping CSV
     identity_names = [idef.sa_key for idef in identity_defs]
@@ -638,10 +633,10 @@ def run_rules_mode(args):
         f"用户数: {len(users)}  事件数: {len(all_records)}  违规数: {total_violations}"
     )
     print(f"\n输出文件:")
-    print(f"  JSONL:         {jsonl_path}")
-    print(f"  Batch (b64):   {batch_path}")
-    print(f"  Identity map:  {csv_path}")
-    print(f"  验证报告:      {report_path}")
+    print(f"  JSONL:        {jsonl_path}")
+    print(f"  Sample JSON:  {sample_path}")
+    print(f"  Identity map: {csv_path}")
+    print(f"  验证报告:     {report_path}")
     if total_violations > 0:
         print(f"\n⚠️  发现 {total_violations} 个违规，请查看验证报告")
 

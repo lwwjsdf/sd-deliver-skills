@@ -224,33 +224,75 @@ class RuleEngine:
           - "segment in [L1, L2, L3]"          → segment membership test
           - "has SomeEvent"                     → event in completed_events
           - "not SomeEvent"                     → event not in completed_events
-
-        Raises ValueError for unrecognised patterns.
+          - "A and B"                           → both atomic conditions true
+          - "A or B"                            → either atomic condition true
         """
         if condition is None or condition.strip() == "":
             return True
 
         cond = condition.strip()
 
-        # Pattern: segment in [L0, L1, ...]
+        # Handle parentheses by stripping outer ones
+        while cond.startswith("(") and cond.endswith(")"):
+            cond = cond[1:-1].strip()
+
+        # Compound: OR
+        for op in (" or ", " OR "):
+            parts = self._split_top_level(cond, op.strip())
+            if len(parts) > 1:
+                return any(self.evaluate_condition(p, context) for p in parts)
+
+        # Compound: AND
+        for op in (" and ", " AND "):
+            parts = self._split_top_level(cond, op.strip())
+            if len(parts) > 1:
+                return all(self.evaluate_condition(p, context) for p in parts)
+
+        # Atomic: segment in [L0, L1, ...]
         m = re.fullmatch(r"segment\s+in\s+\[([^\]]+)\]", cond)
         if m:
             allowed = [v.strip() for v in m.group(1).split(",")]
             return context.get("segment", "") in allowed
 
-        # Pattern: has EventName
+        # Atomic: has EventName
         m = re.fullmatch(r"has\s+(\S+)", cond)
         if m:
             event_name = m.group(1)
             return event_name in context.get("completed_events", [])
 
-        # Pattern: not EventName
+        # Atomic: not EventName
         m = re.fullmatch(r"not\s+(\S+)", cond)
         if m:
             event_name = m.group(1)
             return event_name not in context.get("completed_events", [])
 
         raise ValueError(f"Unrecognised condition pattern: {condition!r}")
+
+    @staticmethod
+    def _split_top_level(expr: str, op: str) -> List[str]:
+        """Split expression by operator, respecting parentheses."""
+        parts = []
+        depth = 0
+        current = []
+        tokens = expr.replace("(", "( ").replace(")", " )").split()
+        i = 0
+        while i < len(tokens):
+            token = tokens[i]
+            if token == "(":
+                depth += 1
+                current.append(token)
+            elif token == ")":
+                depth -= 1
+                current.append(token)
+            elif depth == 0 and token.lower() == op.lower():
+                parts.append(" ".join(current).strip())
+                current = []
+            else:
+                current.append(token)
+            i += 1
+        if current:
+            parts.append(" ".join(current).strip())
+        return parts
 
     # ------------------------------------------------------------------
     # Validation

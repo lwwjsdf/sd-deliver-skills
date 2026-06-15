@@ -12,7 +12,6 @@ from generate_mock_data import (
     generate_identities,
     build_track_record,
     build_profile_record,
-    to_batch_payload,
     write_outputs,
     _JSONEncoder,
 )
@@ -144,13 +143,6 @@ def test_build_profile_record():
     assert record["properties"]["user_type"] == "vip"
 
 
-def test_to_batch_payload():
-    records = [{"type": "track", "event": "A"}]
-    payload = to_batch_payload(records)
-    decoded = json.loads(__import__("base64").b64decode(payload))
-    assert decoded == records
-
-
 def test_json_encoder_datetime():
     data = {"ts": datetime(2024, 1, 1, 12, 0, 0)}
     encoded = json.dumps(data, cls=_JSONEncoder)
@@ -159,11 +151,13 @@ def test_json_encoder_datetime():
 
 def test_write_outputs(tmp_path):
     records = [{"type": "track", "event": "A"}]
-    jsonl_path, batch_path = write_outputs(records, str(tmp_path), "test")
+    jsonl_path, sample_path = write_outputs(records, str(tmp_path), "test")
     assert Path(jsonl_path).exists()
-    assert Path(batch_path).exists()
+    assert Path(sample_path).exists()
     with open(jsonl_path) as f:
         assert json.loads(f.read()) == records[0]
+    with open(sample_path) as f:
+        assert json.load(f) == records
 
 
 def test_write_outputs_creates_directory(tmp_path):
