@@ -135,7 +135,7 @@ def test_get_event_sequences_with_derive(tmp_path):
                         "derive": {
                             "event": "OrderDetail",
                             "count_ref": "{Order.ticketsQuantity}",
-                            "distribute_fields": {"paidAmount": "divide_evenly"},
+                            "distribute_fields": {"ticketPaidAmount": {"source": "paidAmount", "strategy": "divide_evenly"}},
                             "prefix_fields": {"ticketID": "TK-{orderIndex:03d}-{detailIndex:03d}"},
                             "carry_fields": ["paymentMethod"],
                         },
@@ -151,7 +151,7 @@ def test_get_event_sequences_with_derive(tmp_path):
     assert edef.derive is not None
     assert edef.derive.event == "OrderDetail"
     assert edef.derive.count_ref == "{Order.ticketsQuantity}"
-    assert edef.derive.distribute_fields == {"paidAmount": "divide_evenly"}
+    assert edef.derive.distribute_fields == {"ticketPaidAmount": {"source": "paidAmount", "strategy": "divide_evenly"}}
 
 
 def test_get_preset_events_and_property_enums(tmp_path):

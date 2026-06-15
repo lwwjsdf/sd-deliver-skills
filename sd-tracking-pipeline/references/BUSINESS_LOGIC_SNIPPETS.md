@@ -12,30 +12,45 @@ event_sequences:
     events:
       - event: Product_Order_Payment
         fields:
-          ticketsQuantity: 2
-          paidAmount: 500.00
-          paymentMethod: "微信支付"
+          productName: "Special Exhibition"
           businessUnit: "M+"
+          productType: "展览"
+          ticketsQuantity: 2
+          orderPaidAmount: 500.00
+          paymentMethod: "微信支付"
+          isSuccess: true
+          ifAdditionalPurchase: false
         derive:
           event: Product_Payment_Detail
           count_ref: "{Product_Order_Payment.ticketsQuantity}"
           distribute_fields:
-            paidAmount: divide_evenly
+            ticketPaidAmount:
+              source: orderPaidAmount
+              strategy: divide_evenly
           prefix_fields:
-            ticketID: "TK-{orderIndex:03d}-{detailIndex:03d}"
+            ticketID: "TICKET-{timestamp}-{detailIndex:03d}"
           carry_fields:
-            - paymentMethod
+            - productName
             - businessUnit
-            - venueName
-          gap_seconds: 2
+            - productType
+            - paymentMethod
+            - isSuccess
+          gap_seconds: 1
 ```
 
 说明：
 - `count_ref`: 从父事件字段读取派生事件数量（这里用 ticketsQuantity）
-- `distribute_fields`: 把父事件字段均分到每个子事件
-- `prefix_fields`: 为每个子事件生成不同 ID
+- `distribute_fields`: 把父事件字段均分到每个子事件；支持 `source` 指定父事件字段名，目标字段名可不同
+- `prefix_fields`: 为每个子事件生成不同 ID，支持 `{timestamp}`、`{random}`、`{orderIndex}`、`{detailIndex}` 变量
 - `carry_fields`: 子事件继承父事件的字段
 - `gap_seconds`: 子事件与父事件的时间间隔
+
+旧写法（仍兼容）：
+
+```yaml
+          distribute_fields:
+            paidAmount: divide_evenly   # 父事件字段与子事件字段同名
+```
 
 ## 2. 会员过期时间分布
 

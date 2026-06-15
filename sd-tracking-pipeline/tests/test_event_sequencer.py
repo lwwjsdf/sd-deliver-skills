@@ -110,3 +110,87 @@ def test_property_enum_resolver_range():
     })
     val = resolver.resolve("paidAmount")
     assert 100 <= val <= 200
+
+
+def test_derive_events_with_source_mapping_and_dynamic_prefix(tmp_path):
+    from rule_engine import RuleEngine
+    from tracking_plan import TrackingPlan
+    import openpyxl
+
+    rules = tmp_path / "rules.yaml"
+    rules.write_text("""
+user_segments:
+  S:
+    ratio: 1.0
+identity_priority:
+  crm_master_id:
+    priority: 1
+    sa_key: $identity_cookie_id
+event_sequences:
+  - name: purchase
+    events:
+      - event: Order
+        fields:
+          ticketsQuantity: 3
+          orderPaidAmount: 300.00
+          paymentMethod: "微信支付"
+        derive:
+          event: OrderDetail
+          count_ref: "{Order.ticketsQuantity}"
+          distribute_fields:
+            ticketPaidAmount:
+              source: orderPaidAmount
+              strategy: divide_evenly
+          prefix_fields:
+            ticketID: "TK-{timestamp}-{detailIndex:03d}"
+          carry_fields:
+            - paymentMethod
+          gap_seconds: 1
+""")
+
+    # Create an empty-ish tracking plan workbook so TrackingPlan initialises
+    tp_path = tmp_path / "tp.xlsx"
+    wb = openpyxl.Workbook()
+    ws = wb.active
+    ws.title = "Events"
+    ws.append([
+        "event variable name", "event display name", "", "", "", "", "", "", "", "", ""
+    ])
+    ws.append(["Order", "Order", "", "", "", "", "", "", "", "", ""])
+    ws.append(["OrderDetail", "OrderDetail", "", "", "", "", "", "", "", "", ""])
+    wb.save(tp_path)
+
+    plan = TrackingPlan(str(tp_path))
+
+    engine = RuleEngine(str(rules))
+    sequencer = EventSequencer(engine, plan)
+
+    user = User(
+        user_id="u1",
+        segment="S",
+        region="CN",
+        identities={"crm_master_id": "CRM-001"},
+        profile={},
+        created_at=datetime.datetime.now(),
+    )
+
+    start = int(datetime.datetime(2025, 1, 1).timestamp() * 1000)
+    events = sequencer.generate_all_events(user, start, sessions_per_day=1, days=1)
+
+    parent = [e for e in events if e.event_name == "Order"]
+    details = [e for e in events if e.event_name == "OrderDetail"]
+
+    assert len(parent) == 1
+    assert len(details) == 3
+
+    amounts = [d.properties["ticketPaidAmount"] for d in details]
+    assert amounts[0] == 100.00
+    assert amounts[1] == 100.00
+    assert amounts[2] == 100.00
+    assert sum(amounts) == 300.00
+
+    for d in details:
+        assert d.properties["paymentMethod"] == "微信支付"
+        assert d.properties["ticketID"].startswith("TK-")
+        assert "{timestamp}" not in d.properties["ticketID"]
+        assert d.timestamp_ms > parent[0].timestamp_ms

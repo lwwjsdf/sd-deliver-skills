@@ -443,17 +443,34 @@ class EventSequencer:
         parent_props = parent_event.properties
         derived_events: List[Event] = []
 
-        # Calculate distributed values
-        distributed: Dict[str, float] = {}
+        # Calculate distributed values (support both simple and mapped configs)
+        distributed: Dict[str, Dict[str, Any]] = {}
         if derive.distribute_fields:
-            for field, strategy in derive.distribute_fields.items():
-                total = parent_props.get(field, 0)
+            for target_field, config in derive.distribute_fields.items():
+                if isinstance(config, str):
+                    # Simple form: field_name: strategy
+                    source_field = target_field
+                    strategy = config
+                else:
+                    # Mapped form: target_field: {source: source_field, strategy: strategy}
+                    source_field = config.get("source", target_field)
+                    strategy = config.get("strategy", "divide_evenly")
+
+                total = parent_props.get(source_field, 0)
                 if not isinstance(total, (int, float)):
                     total = 0
+
                 if strategy == "divide_evenly":
                     base = round(total / count, 2)
-                    # Adjust last one so sum matches total
-                    distributed[field] = base
+                    distributed[target_field] = {
+                        "source": source_field,
+                        "base": base,
+                        "total": total,
+                        "strategy": strategy,
+                    }
+
+        import random as _random
+        import time as _time
 
         for i in range(count):
             ts = parent_event.timestamp_ms + (i + 1) * derive.gap_seconds * 1000
@@ -466,13 +483,18 @@ class EventSequencer:
                         props[field] = parent_props[field]
 
             # Apply distributed values
-            for field, base_value in distributed.items():
+            for target_field, dist in distributed.items():
                 if i == count - 1:
                     # Adjust last detail to ensure sum equals parent total
-                    current_sum = sum(distributed[field] for _ in range(count - 1))
-                    props[field] = round(parent_props.get(field, 0) - current_sum, 2)
+                    current_sum = sum(
+                        distributed[f]["base"] for f in distributed if f != target_field
+                    )
+                    current_sum += sum(
+                        distributed[target_field]["base"] for _ in range(count - 1)
+                    )
+                    props[target_field] = round(dist["total"] - current_sum, 2)
                 else:
-                    props[field] = base_value
+                    props[target_field] = dist["base"]
 
             # Apply prefix-generated fields
             if derive.prefix_fields:
@@ -482,6 +504,8 @@ class EventSequencer:
                             orderIndex=parent_index,
                             detailIndex=i,
                             parentEvent=parent_event.event_name,
+                            timestamp=int(_time.time() * 1000),
+                            random="".join(_random.choices("0123456789ABCDEF", k=6)),
                         )
                     except (KeyError, ValueError):
                         props[field] = template

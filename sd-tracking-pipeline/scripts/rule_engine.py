@@ -28,7 +28,7 @@ class DeriveConfig:
     event: str
     count_ref: Optional[str] = None
     count: Optional[int] = None
-    distribute_fields: Optional[Dict[str, str]] = None
+    distribute_fields: Optional[Dict[str, Any]] = None
     prefix_fields: Optional[Dict[str, str]] = None
     carry_fields: Optional[List[str]] = None
     gap_seconds: int = 1
