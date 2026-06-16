@@ -2,7 +2,7 @@
 
 > 从工具箱到操作系统。不只是更快交付，而是更好的交付决策。
 
-**7 个 Plugin，19 Skills，19 Commands，46 Scripts。** 覆盖项目 onboarding、埋点设计、数据管道、基础设施评估、质量保障、交付文档和知识库。
+**7 个 Plugin，19 Skills，20 Commands，46 Scripts。** 覆盖项目 onboarding、埋点设计、数据管道、基础设施评估、质量保障、交付文档和知识库。
 
 支持 Hermes、OpenCode、Cursor、Claude Code 等主流 Agent 框架。
 
