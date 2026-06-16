@@ -1,0 +1,1402 @@
+<!doctype html>
+<html lang="zh">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<title>Sensors Data CDP / MA / ETL Cloud Sizing Estimator v4.2</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx-js-style@1.2.0/dist/xlsx.bundle.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js"></script>
+<style>
+:root{--bg:#f6f8fb;--card:#fff;--ink:#172033;--muted:#65738a;--line:#d7deea;--brand:#00A870;--warn:#b45309;--bad:#b91c1c;--head:#E8F7F0;--section:#DDF5EB}*{box-sizing:border-box}body{margin:0;font-family:-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,"Noto Sans",sans-serif;color:var(--ink);background:var(--bg)}header{background:linear-gradient(135deg,#043D2F,#00A870);color:#fff;padding:28px 36px}h1{margin:0 0 8px;font-size:26px}h2{margin:0 0 14px;font-size:20px}.wrap{max-width:1480px;margin:0 auto;padding:22px}.grid{display:grid;grid-template-columns:440px 1fr;gap:18px;align-items:start}.card{background:var(--card);border:1px solid var(--line);border-radius:14px;padding:18px;box-shadow:0 2px 10px rgba(25,35,60,.04)}.panel-head{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:14px}.panel-head h2{margin:0}.sys-lang-toggle{display:flex;align-items:center;gap:6px;background:#F3FBF7;border:1px solid #A9DCC8;border-radius:999px;padding:3px}.flag-btn{width:32px;height:28px;border-radius:999px;padding:0;background:transparent;font-size:17px;line-height:1;border:1px solid transparent;filter:grayscale(.75);opacity:.65}.flag-btn.active{background:#00A870;border-color:#00A870;filter:none;opacity:1;box-shadow:0 1px 5px rgba(0,168,112,.25)}label{display:block;font-size:13px;color:var(--muted);margin-bottom:6px}input,select{width:100%;padding:10px 11px;border:1px solid var(--line);border-radius:9px;font-size:14px;background:#fff}.row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:12px}.single{margin-bottom:12px}.checkrow{display:flex;gap:12px;flex-wrap:wrap}.checkrow label{color:var(--ink);display:flex;align-items:center;gap:6px;margin:0}.checkrow input{width:auto}button{border:0;border-radius:9px;padding:10px 14px;cursor:pointer;font-weight:600}.primary{background:var(--brand);color:#fff}.secondary{background:#E8F7F0;color:#045C43}.ghost{background:#f1f5f9;color:#334155}.kpis{display:grid;grid-template-columns:repeat(4,minmax(140px,1fr));gap:10px;margin-bottom:14px}.kpi{background:#f8fafc;border:1px solid var(--line);border-radius:12px;padding:12px}.kpi .v{font-size:18px;font-weight:700;margin-top:5px}table{width:100%;border-collapse:collapse;font-size:13px;margin:10px 0 18px;table-layout:auto}th,td{border:1px solid var(--line);padding:8px 9px;vertical-align:top}th{background:var(--head);text-align:left;font-weight:700}.config-table th,.config-table td{font-size:12px}.summary-table th,.summary-table td,.perf-table th,.perf-table td,.price-table th,.price-table td{font-size:13px}.small{font-size:12px;color:var(--muted)}.note{border-left:4px solid var(--brand);background:#f8fbff;padding:10px 12px;margin:10px 0}.warning{border-left:4px solid var(--warn);background:#fffbeb;padding:10px 12px;margin:10px 0}.error{border-left:4px solid var(--bad);background:#fef2f2;padding:10px 12px;margin:10px 0}details{margin:10px 0}summary{cursor:pointer;font-weight:700}footer{color:var(--muted);font-size:12px;padding:20px 0}.advanced-card{margin:18px 0 22px;border:1px solid #A9DCC8;background:linear-gradient(180deg,#F3FBF7,#FFFFFF);border-radius:12px;padding:0;box-shadow:0 2px 8px rgba(0,168,112,.08)}.utility-card{margin:18px 0 0;border:1px solid #D7DEEA;background:#FFFFFF;border-radius:12px;padding:0}.storage-card{margin:16px 0 14px;border:1px solid #A9DCC8;background:#F8FBFA;border-radius:12px;padding:12px 14px}.storage-title{font-weight:800;color:#045C43;margin-bottom:6px}.storage-preview{margin-top:8px;border-left:3px solid #00A870;background:#fff;padding:8px 10px;border-radius:8px;white-space:pre-line}.utility-card summary{cursor:pointer;padding:12px 14px;font-weight:800;color:#045C43;background:#F3FBF7;border-radius:12px}.utility-card[open] summary{border-bottom:1px solid #DDF5EB;border-radius:12px 12px 0 0}.utility-content{padding:12px 14px}.log-box{display:none;margin-top:10px;white-space:pre-wrap;background:#f8fafc;border:1px solid var(--line);border-radius:8px;padding:10px;max-height:240px;overflow:auto}.log-actions{margin-top:10px;display:flex;gap:8px;flex-wrap:wrap}.logic-toggle-box{margin-top:18px;padding-top:14px;border-top:1px dashed #A9DCC8}.logic-toggle-box button{width:100%;}.price-status{margin-top:8px;border:1px solid #DDF5EB;background:#F8FBFA;border-radius:8px;padding:8px 10px;color:#045C43}.advanced-card summary{list-style:none;display:flex;align-items:center;justify-content:space-between;gap:10px;padding:13px 14px;color:#045C43}.advanced-card summary::-webkit-details-marker{display:none}.advanced-card .summary-main{display:flex;align-items:center;gap:8px}.advanced-card .summary-main:before{content:'⚙';display:inline-flex;align-items:center;justify-content:center;width:22px;height:22px;border-radius:999px;background:#DDF5EB;color:#045C43;font-size:13px}.advanced-card .summary-hint{font-size:12px;font-weight:600;color:#0F766E;background:#E8F7F0;border:1px solid #A9DCC8;padding:3px 8px;border-radius:999px;white-space:nowrap}.advanced-card[open] .summary-hint{background:#00A870;color:white;border-color:#00A870}.advanced-content{padding:0 14px 14px;border-top:1px solid #DDF5EB}.action-row{margin-top:18px;padding-top:16px;border-top:1px dashed #A9DCC8}.advparams{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}.report-title{font-size:22px;font-weight:800;margin:0 0 12px}.report-section-title{background:var(--section);color:#045C43;padding:7px 10px;border-radius:8px;margin-top:18px;font-weight:800}.result-card{position:sticky;top:18px;max-height:calc(100vh - 36px);overflow:auto}@media(max-width:960px){.result-card{position:static;max-height:none}.grid{grid-template-columns:1fr}.kpis{grid-template-columns:1fr 1fr}.advparams{grid-template-columns:1fr}}@media print{*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}body{background:#fff}.no-print{display:none!important}.wrap{max-width:none;padding:0}.card{border:0;box-shadow:none}table{page-break-inside:auto}tr{page-break-inside:avoid;page-break-after:auto}th{background:#E8F7F0!important;color:#045C43!important}.report-section-title{page-break-after:avoid;background:#DDF5EB!important;color:#045C43!important}}
+</style>
+</head>
+<body>
+<header class="no-print"><h1 id="pageTitle">Sensors Data CDP / MA Cloud Configuration Recommendation</h1><div id="subtitle">x86 standard configuration recommendation for CDP / MA and supporting ETL data integration nodes</div></header>
+<div class="wrap">
+<div class="grid no-print"><section class="card"><div class="panel-head"><h2 data-i18n="inputTitle">评估输入</h2><div class="sys-lang-toggle" title="System language / 系统语言"><button type="button" id="sysZh" class="flag-btn active" aria-label="中文系统语言">🇨🇳</button><button type="button" id="sysEn" class="flag-btn" aria-label="English system language">🇺🇸</button></div></div>
+<div class="row"><div><label data-i18n="outputLanguage">输出配置语言</label><select id="lang"><option value="zh">中文</option><option value="en">English</option></select></div><div><label data-i18n="customer">客户名称（可选）</label><input id="customerName" placeholder="Optional" /></div></div>
+<div class="row"><div><label data-i18n="cloud">云厂商</label><select id="cloud"></select></div><div><label data-i18n="region">区域</label><select id="region"></select></div></div>
+<div class="row"><div><label data-i18n="industry">行业场景</label><select id="industry"></select></div><div><label data-i18n="ratio">DAU/MAU 比例</label><input id="ratio" type="number" value="15" min="1" max="100" step="1" /></div></div>
+<div class="small" style="margin:-4px 0 12px" data-i18n="ratioGuidance">如果已提供 DAU，DAU/MAU 比例不会写入报告。</div>
+<div class="row"><div><label>MAU</label><input id="mau" type="number" placeholder="e.g. 5000000" /></div><div><label>DAU</label><input id="dau" type="number" placeholder="If available, use actual DAU" /></div></div>
+<div class="row"><div><label data-i18n="eventsPerUser">单用户日事件数</label><input id="eventsPerUser" type="number" value="100" min="1" /></div><div><label data-i18n="dailyEvents">日事件处理量（可覆盖）</label><input id="dailyEvents" type="number" placeholder="Optional" /></div></div>
+<div class="row"><div><label data-i18n="audience">MA 每天受众上限（可选）</label><input id="dailyAudience" type="number" placeholder="Optional" /></div><div><label data-i18n="solutionScope">产品范围</label><div class="checkrow" style="padding-top:9px"><label><input type="checkbox" id="includeCDP" checked disabled /> CDP</label><label><input type="checkbox" id="includeMA" checked /> MA</label></div><div style="height:8px"></div><label data-i18n="supportingComponent">辅助组件</label><div class="checkrow" style="padding-top:6px"><label><input type="checkbox" id="includeETL" checked /> <span data-i18n="etlNodes">ETL 数据接入节点</span></label></div></div></div>
+<div class="storage-card"><div class="storage-title" data-i18n="storageTitle">CDP 存储估算</div><div class="small" data-i18n="storageHelp">用于根据日事件量和数据保留周期动态调整 CDP 顺序数据盘容量。</div><div class="row" style="margin-top:10px"><div><label data-i18n="retentionValue">存储估算周期</label><input id="retentionValue" type="number" value="1" min="1" step="1" /></div><div><label data-i18n="retentionUnit">周期单位</label><select id="retentionUnit"><option value="years" data-i18n="years">年</option><option value="months" data-i18n="months">月</option><option value="days" data-i18n="days">天</option></select></div></div><div class="row"><div><label data-i18n="eventGbPer100M">单亿事件单副本存储估算（GB）</label><input id="eventGbPer100M" type="number" value="35" min="1" step="0.1" /></div><div><label data-i18n="storageReplica">存储副本 / 冗余系数</label><input id="storageReplica" type="number" value="1.1" min="1" step="0.1" /></div></div><div class="row"><div><label data-i18n="storageUtilization">磁盘使用率上限</label><input id="storageUtilization" type="number" value="80" min="50" max="95" step="1" /></div><div><label data-i18n="maxSingleDisk">顺序盘单盘规划大小（GB）</label><select id="maxSingleDiskSelect"></select><input id="maxSingleDiskCustom" type="number" value="4096" min="1" step="100" style="display:none;margin-top:8px" /></div></div><div class="row"><div><label data-i18n="seqDisksPerNode">单节点顺序盘数量上限</label><input id="seqDisksPerNode" type="number" value="10" min="1" max="16" step="1" /></div><div><label data-i18n="seqDiskHelpLabel">顺序盘调整原则</label><div class="small" data-i18n="seqDiskHelp">先按文档中的 DAU / 日事件量规则确定基础集群；存储估算后，优先在单节点顺序盘数量上限内增加磁盘或容量，若仍不满足则按文档模板升级 CDP Data Node（3+4 / 3+5 / 3+6）。</div></div></div><details class="utility-card" id="cdpOtherDiskPanel"><summary data-i18n="otherDiskConfig">CDP 其他磁盘容量配置（可选）</summary><div class="utility-content"><div class="small" data-i18n="otherDiskHelp">以下为 CDP 非顺序盘单盘容量的最低建议值。默认使用模板值；如填写更大值，将写入最终配置建议。</div><div class="row" style="margin-top:10px"><div><label data-i18n="cdpSystemDiskGb">CDP 系统盘单盘容量（GB）</label><input id="cdpSystemDiskGb" type="number" value="50" min="40" step="10" /></div><div><label data-i18n="cdpMetadataDiskGb">CDP 元数据盘单盘容量（GB）</label><input id="cdpMetadataDiskGb" type="number" value="400" min="100" step="50" /></div></div><div class="row"><div><label data-i18n="cdpRandomDiskGb">CDP 随机数据盘单盘容量（GB）</label><input id="cdpRandomDiskGb" type="number" value="500" min="100" step="50" /></div><div><label data-i18n="cdpIngestDiskGb">CDP 接入暂存盘单盘容量（GB）</label><input id="cdpIngestDiskGb" type="number" value="250" min="100" step="50" /></div></div></div></details><div id="storagePreview" class="storage-preview small"></div></div>
+<div class="single"><label data-i18n="exportOptions">导出选项</label><div class="checkrow"><label><input type="checkbox" id="includePriceExport" /> <span data-i18n="includePriceExport">导出的文件中包含价格参考</span></label><label><input type="checkbox" id="includeInstanceType" checked /> <span data-i18n="includeInstanceType">导出的文件中包含云机器类型</span></label></div></div>
+<details class="advanced-card" id="advancedPanel"><summary><span class="summary-main" data-i18n="advanced">MA 高级影响因素</span><span class="summary-hint" data-i18n="clickToExpand">可选，点击展开</span></summary><div class="advanced-content"><div class="small" style="margin-top:10px" data-i18n="advancedHelp">这些参数不是必填项，用于提示是否需要专项评估或升级 MA 架构。</div>
+<div class="checkrow" style="margin-top:10px"><label><input type="checkbox" class="adv" value="highQps" /> <span data-i18n="highQps">高 QPS 实时资源位</span></label><label><input type="checkbox" class="adv" value="personalization" /> <span data-i18n="personalization">个性化召回/推荐</span></label><label><input type="checkbox" class="adv" value="complexJourney" /> <span data-i18n="complexJourney">复杂旅程/多分支实时触发</span></label><label><input type="checkbox" class="adv" value="largeRealtime" /> <span data-i18n="largeRealtime">大规模实时触达</span></label><label><input type="checkbox" class="adv" value="highImport" /> <span data-i18n="highImport">大量历史导入/高并发任务</span></label><label><input type="checkbox" class="adv" value="manyChannels" /> <span data-i18n="manyChannels">多触达通道/外部通道限速</span></label></div>
+<div class="advparams"><div><label data-i18n="placementListQps">列表资源位在线 QPS（可选）</label><input id="placementListQps" type="number" placeholder="Optional" /></div><div><label data-i18n="placementCarouselQps">轮播资源位在线 QPS（可选）</label><input id="placementCarouselQps" type="number" placeholder="Optional" /></div><div><label data-i18n="cartesianTotal">个性化召回物品笛卡尔积总数（可选）</label><input id="cartesianTotal" type="number" placeholder="Optional" /></div><div><label data-i18n="peakActivationPerHour">峰值触达/触发量 每小时（可选）</label><input id="peakActivationPerHour" type="number" placeholder="Optional" /></div><div><label data-i18n="activeJourneys">同时运行旅程/策略数量（可选）</label><input id="activeJourneys" type="number" placeholder="Optional" /></div><div><label data-i18n="channelQps">外部通道吞吐/QPS（可选）</label><input id="channelQps" type="number" placeholder="Optional" /></div></div></div></details>
+<div class="checkrow action-row"><button class="primary" onclick="calculate()" data-i18n="calculate">生成推荐配置</button><button class="secondary" onclick="tryFetchPrice()" data-i18n="fetchPrice">尝试获取实时报价</button><button class="ghost" onclick="downloadExcel()" data-i18n="downloadExcel">下载 Excel</button><button class="ghost" onclick="downloadWord()" data-i18n="downloadWord">下载 Word</button><button class="ghost" onclick="downloadPDF()" data-i18n="downloadPDF">下载 PDF</button></div>
+<div class="small" style="margin-top:10px" data-i18n="pricingNote">价格仅用于参考，最终以云厂商官网、合同折扣和目标区域可用规格为准。</div>
+<details class="utility-card" id="recordsPanel"><summary data-i18n="localRecordsPanel">本地评估记录（可选）</summary><div class="utility-content"><div class="small" data-i18n="localRecordsHelp">本地记录仅保存在当前浏览器，不会上传。适合个人跟踪曾经为哪些客户生成过配置建议。</div><div class="log-actions"><button class="ghost" onclick="saveEvaluation()" data-i18n="saveEval">保存本次评估</button><button class="ghost" onclick="viewLogs()" data-i18n="viewLogs">查看本地记录</button><button class="ghost" onclick="exportLogs()" data-i18n="exportLogs">导出记录</button><button class="ghost" onclick="clearLogs()" data-i18n="clearLogs">清空记录</button></div><div id="logBox" class="small log-box"></div></div></details><div class="logic-toggle-box"><button id="logicToggleBtn" class="secondary" onclick="toggleInternalLogic()" data-i18n="logicExpand">配置逻辑与使用说明（点击展开）</button><div class="small" data-i18n="logicHint">给神策内部使用人员查看，不会写入客户版导出文件。</div></div></section>
+<section class="card result-card"><h2 data-i18n="resultTitle">配置建议</h2><div id="result"></div></section></div>
+<section class="card no-print" id="internalLogicCard" style="display:none;margin-top:18px"><h2 id="internalLogicTitle" data-i18n="logicTitle">配置逻辑与使用说明</h2><div id="internalLogicContent"></div></section>
+<section class="card" id="reportCard" style="display:none"><div id="report"></div></section>
+<footer><div>Version v3.9 · Generated 2026-06-14</div><div>Sources: Sensors Data internal sizing templates + official cloud region/pricing references.</div></footer></div>
+<script>
+const DATA = {"cdpRules": [{"id": "CDP_MINI_STANDARD", "name_cn": "CDP Mini 标配", "name_en": "CDP Mini Standard", "maxDau": 999999, "maxEvents": 65000000, "nodes": [{"role_cn": "CDP 混合节点", "role_en": "CDP Mixed Node", "count": 3, "vcpu": 8, "mem": 64, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 400, "SSD / IOPS >=5000"], ["顺序数据盘", "Sequential Data Disk", 3, 1000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 1, 500, "SSD / IOPS >=5000"], ["数据接入暂存盘", "Ingestion Temp Disk", 1, 250, "High-performance disk"]]}]}, {"id": "CDP_MINI_HIGH", "name_cn": "CDP Mini 高配", "name_en": "CDP Mini High", "maxDau": 4999999, "maxEvents": 150000000, "nodes": [{"role_cn": "CDP 混合节点", "role_en": "CDP Mixed Node", "count": 3, "vcpu": 16, "mem": 128, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 400, "SSD / IOPS >=5000"], ["顺序数据盘", "Sequential Data Disk", 6, 1000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 1, 500, "SSD / IOPS >=5000"], ["数据接入暂存盘", "Ingestion Temp Disk", 1, 250, "High-performance disk"]]}]}, {"id": "CDP_STANDARD_3_3", "name_cn": "CDP 标准集群（3+3 标配）", "name_en": "CDP Standard Cluster (3+3 Standard)", "maxDau": 7999999, "maxEvents": 420000000, "nodes": [{"role_cn": "元数据节点", "role_en": "Metadata Node", "count": 3, "vcpu": 8, "mem": 32, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 400, "SSD / IOPS >=5000"]]}, {"role_cn": "数据节点", "role_en": "Data Node", "count": 3, "vcpu": 16, "mem": 128, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["顺序数据盘", "Sequential Data Disk", 6, 1000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 1, 500, "SSD / IOPS >=5000"], ["数据接入暂存盘", "Ingestion Temp Disk", 1, 250, "High-performance disk"]]}]}, {"id": "CDP_STANDARD_HIGH_3_3", "name_cn": "CDP 标准集群（3+3 高配）", "name_en": "CDP Standard Cluster (3+3 High)", "maxDau": 13999999, "maxEvents": 840000000, "nodes": [{"role_cn": "元数据节点", "role_en": "Metadata Node", "count": 3, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 400, "SSD / IOPS >=5000"]]}, {"role_cn": "数据节点", "role_en": "Data Node", "count": 3, "vcpu": 32, "mem": 128, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["顺序数据盘", "Sequential Data Disk", 6, 1500, "High-performance disk"], ["随机数据盘", "Random Data Disk", 1, 500, "SSD / IOPS >=5000"], ["数据接入暂存盘", "Ingestion Temp Disk", 1, 250, "High-performance disk"]]}]}, {"id": "CDP_STANDARD_3_4", "name_cn": "CDP 标准集群（3+4 标配）", "name_en": "CDP Standard Cluster (3+4 Standard)", "maxDau": 9999999, "maxEvents": 620000000, "nodes": [{"role_cn": "元数据节点", "role_en": "Metadata Node", "count": 3, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 400, "SSD / IOPS >=5000"]]}, {"role_cn": "数据节点", "role_en": "Data Node", "count": 4, "vcpu": 16, "mem": 128, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["顺序数据盘", "Sequential Data Disk", 6, 1000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 1, 500, "SSD / IOPS >=5000"], ["数据接入暂存盘", "Ingestion Temp Disk", 1, 250, "High-performance disk"]]}]}, {"id": "CDP_STANDARD_HIGH_3_4", "name_cn": "CDP 标准集群（3+4 高配）", "name_en": "CDP Standard Cluster (3+4 High)", "maxDau": 15999999, "maxEvents": 1000000000, "nodes": [{"role_cn": "元数据节点", "role_en": "Metadata Node", "count": 3, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 400, "SSD / IOPS >=5000"]]}, {"role_cn": "数据节点", "role_en": "Data Node", "count": 4, "vcpu": 32, "mem": 128, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["顺序数据盘", "Sequential Data Disk", 6, 2000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 1, 500, "SSD / IOPS >=5000"], ["数据接入暂存盘", "Ingestion Temp Disk", 1, 250, "High-performance disk"]]}]}, {"id": "CDP_STANDARD_HIGH_3_5", "name_cn": "CDP 标准集群（3+5 高配）", "name_en": "CDP Standard Cluster (3+5 High)", "maxDau": 18999999, "maxEvents": 1310000000, "nodes": [{"role_cn": "元数据节点", "role_en": "Metadata Node", "count": 3, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 400, "SSD / IOPS >=5000"]]}, {"role_cn": "数据节点", "role_en": "Data Node", "count": 5, "vcpu": 32, "mem": 128, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["顺序数据盘", "Sequential Data Disk", 6, 3000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 1, 500, "SSD / IOPS >=5000"], ["数据接入暂存盘", "Ingestion Temp Disk", 1, 250, "High-performance disk"]]}]}, {"id": "CDP_STANDARD_HIGH_3_6", "name_cn": "CDP 标准集群（3+6 高配）", "name_en": "CDP Standard Cluster (3+6 High)", "maxDau": 21999999, "maxEvents": 1600000000, "nodes": [{"role_cn": "元数据节点", "role_en": "Metadata Node", "count": 3, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 400, "SSD / IOPS >=5000"]]}, {"role_cn": "数据节点", "role_en": "Data Node", "count": 6, "vcpu": 32, "mem": 128, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["顺序数据盘", "Sequential Data Disk", 6, 4000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 1, 500, "SSD / IOPS >=5000"], ["数据接入暂存盘", "Ingestion Temp Disk", 1, 250, "High-performance disk"]]}]}], "maRules": [{"id": "MA_3NODE_LOW", "name_cn": "MA 3节点低配", "name_en": "MA 3-node Low", "maxDau": 200000, "maxEvents": 20000000, "maxAudience": 10000000, "nodes": [{"role_cn": "混合节点", "role_en": "Mixed Node", "count": 3, "vcpu": 8, "mem": 64, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 250, "SSD / IOPS >=5000"], ["顺序数据盘", "Sequential Data Disk", 3, 1000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 3, 500, "SSD / IOPS >=5000"]]}]}, {"id": "MA_3NODE_MID", "name_cn": "MA 3节点中配", "name_en": "MA 3-node Medium", "maxDau": 500000, "maxEvents": 50000000, "maxAudience": 25000000, "nodes": [{"role_cn": "混合节点", "role_en": "Mixed Node", "count": 3, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 250, "SSD / IOPS >=5000"], ["顺序数据盘", "Sequential Data Disk", 3, 1000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 3, 500, "SSD / IOPS >=5000"]]}]}, {"id": "MA_3NODE_HIGH", "name_cn": "MA 3节点高配", "name_en": "MA 3-node High", "maxDau": 1000000, "maxEvents": 100000000, "maxAudience": 50000000, "nodes": [{"role_cn": "混合节点", "role_en": "Mixed Node", "count": 3, "vcpu": 32, "mem": 128, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 250, "SSD / IOPS >=5000"], ["顺序数据盘", "Sequential Data Disk", 3, 1000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 3, 500, "SSD / IOPS >=5000"]]}]}, {"id": "MA_3PLUS3", "name_cn": "MA 3+3 标准集群", "name_en": "MA 3+3 Standard Cluster", "maxDau": 3000000, "maxEvents": 300000000, "maxAudience": 100000000, "nodes": [{"role_cn": "元数据节点", "role_en": "Metadata Node", "count": 3, "vcpu": 8, "mem": 64, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 250, "SSD / IOPS >=5000"]]}, {"role_cn": "MA 混合节点", "role_en": "MA Mixed Node", "count": 3, "vcpu": 32, "mem": 128, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["顺序数据盘", "Sequential Data Disk", 3, 1000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 3, 500, "SSD / IOPS >=5000"]]}]}, {"id": "MA_3PLUSNPLUS3_BASE", "name_cn": "MA 3+N+3 基础扩展集群", "name_en": "MA 3+N+3 Base Scalable Cluster", "maxDau": 10000000, "maxEvents": 500000000, "maxAudience": 100000000, "nodes": [{"role_cn": "元数据节点", "role_en": "Metadata Node", "count": 3, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 250, "SSD / IOPS >=5000"]]}, {"role_cn": "数据节点", "role_en": "Data Node", "count": 3, "vcpu": 32, "mem": 128, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["顺序数据盘", "Sequential Data Disk", 3, 1000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 3, 500, "SSD / IOPS >=5000"]]}, {"role_cn": "MA 在线节点", "role_en": "MA Online Node", "count": 3, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["随机数据盘", "Random Data Disk", 3, 500, "SSD / IOPS >=5000"]]}]}, {"id": "MA_3PLUSNPLUS3_EXPANDED", "name_cn": "MA 3+N+3 扩展集群", "name_en": "MA 3+N+3 Expanded Scalable Cluster", "maxDau": 10000000, "maxEvents": 500000000, "maxAudience": 300000000, "nodes": [{"role_cn": "元数据节点", "role_en": "Metadata Node", "count": 5, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 250, "SSD / IOPS >=5000"]]}, {"role_cn": "数据节点", "role_en": "Data Node", "count": 5, "vcpu": 32, "mem": 128, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["顺序数据盘", "Sequential Data Disk", 3, 1000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 3, 500, "SSD / IOPS >=5000"]]}, {"role_cn": "MA 在线节点", "role_en": "MA Online Node", "count": 3, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["随机数据盘", "Random Data Disk", 3, 500, "SSD / IOPS >=5000"]]}]}, {"id": "MA_3PLUSNPLUS3_HIGH", "name_cn": "MA 3+N+3 高配扩展集群", "name_en": "MA 3+N+3 High Scalable Cluster", "maxDau": 20000000, "maxEvents": 1000000000, "maxAudience": 500000000, "nodes": [{"role_cn": "元数据节点", "role_en": "Metadata Node", "count": 3, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["元数据盘", "Metadata Disk", 1, 250, "SSD / IOPS >=5000"]]}, {"role_cn": "数据节点", "role_en": "Data Node", "count": 8, "vcpu": 32, "mem": 128, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["顺序数据盘", "Sequential Data Disk", 3, 1000, "High-performance disk"], ["随机数据盘", "Random Data Disk", 3, 500, "SSD / IOPS >=5000"]]}, {"role_cn": "MA 在线节点", "role_en": "MA Online Node", "count": 3, "vcpu": 16, "mem": 64, "disks": [["系统盘", "System Disk", 1, 40, "High-performance / system disk"], ["随机数据盘", "Random Data Disk", 3, 500, "SSD / IOPS >=5000"]]}]}], "etlRule": {"id": "ETL_DEFAULT", "name_cn": "ETL 默认集群", "name_en": "ETL Default Cluster", "nodes": [{"role_cn": "ETL 节点", "role_en": "ETL Node", "count": 3, "vcpu": 8, "mem": 32, "disks": [["系统盘", "System Disk", 1, 50, "High-performance / system disk"], ["数据盘", "Data Disk", 1, 500, "High-performance disk"]]}]}, "clouds": [{"id": "AWS", "name": "AWS", "region": "ap-southeast-1 (Singapore)", "pricing": "AWS Price List API/Bulk API can be attempted. Browser CORS or file size may fail; fallback to AWS Pricing Calculator.", "calculator": "https://calculator.aws/#/", "instanceMap": {"8_32": "m7i.2xlarge", "8_64": "r7i.2xlarge", "16_32": "m7i.4xlarge", "16_64": "m7i.4xlarge", "16_128": "r7i.4xlarge", "32_64": "m7i.8xlarge", "32_128": "m7i.8xlarge", "32_256": "r7i.8xlarge"}, "diskMap": {"系统盘": {"zh": "gp3 通用型 SSD", "en": "gp3 / general purpose SSD"}, "元数据盘": {"zh": "io2 或 gp3（预配置至 ≥5000 IOPS）", "en": "io2 or gp3 provisioned to >=5000 IOPS"}, "顺序数据盘": {"zh": "gp3 通用型 SSD（需确认吞吐量，必要时预配置吞吐）", "en": "gp3 with baseline/provisioned throughput verified"}, "随机数据盘": {"zh": "io2 或 gp3（预配置至 ≥5000 IOPS）", "en": "io2 or gp3 provisioned to >=5000 IOPS"}, "数据接入暂存盘": {"zh": "gp3 通用型 SSD（需确认吞吐量）", "en": "gp3 with baseline/provisioned throughput verified"}, "数据盘": {"zh": "gp3 通用型 SSD（需确认吞吐量）", "en": "gp3 with throughput verified"}}, "regions": [{"id": "ap-southeast-1", "label": "Singapore"}, {"id": "ap-southeast-3", "label": "Jakarta, Indonesia"}, {"id": "ap-southeast-5", "label": "Malaysia"}, {"id": "ap-southeast-7", "label": "Thailand"}, {"id": "ap-east-1", "label": "Hong Kong"}, {"id": "ap-northeast-1", "label": "Tokyo, Japan"}]}, {"id": "Azure", "name": "Azure", "region": "southeastasia (Southeast Asia / Singapore)", "pricing": "Azure Retail Prices API is public and unauthenticated. Real-time price button can fetch compute prices for selected VM SKUs.", "calculator": "https://azure.microsoft.com/en-us/pricing/calculator/", "instanceMap": {"8_32": "Standard_D8s_v5", "8_64": "Standard_E8s_v5", "16_32": "Standard_D16s_v5", "16_64": "Standard_D16s_v5", "16_128": "Standard_E16s_v5", "32_64": "Standard_D32s_v5", "32_128": "Standard_D32s_v5", "32_256": "Standard_E32s_v5"}, "diskMap": {"系统盘": {"zh": "高级 SSD / 标准 SSD", "en": "Premium SSD / Standard SSD"}, "元数据盘": {"zh": "高级 SSD P30 或 Premium SSD v2（≥5000 IOPS）", "en": "Premium SSD P30 or Premium SSD v2 >=5000 IOPS"}, "顺序数据盘": {"zh": "Premium SSD v2 或高级 SSD（需确认吞吐量）", "en": "Premium SSD v2 or Premium SSD with throughput verified"}, "随机数据盘": {"zh": "高级 SSD P30 或 Premium SSD v2（≥5000 IOPS）", "en": "Premium SSD P30 or Premium SSD v2 >=5000 IOPS"}, "数据接入暂存盘": {"zh": "Premium SSD v2 或高级 SSD（需确认吞吐量）", "en": "Premium SSD v2 or Premium SSD with throughput verified"}, "数据盘": {"zh": "高级 SSD / 标准 SSD", "en": "Premium SSD / Standard SSD"}}, "regions": [{"id": "southeastasia", "label": "Southeast Asia / Singapore"}, {"id": "eastasia", "label": "East Asia / Hong Kong"}, {"id": "japaneast", "label": "Japan East"}, {"id": "koreacentral", "label": "Korea Central"}, {"id": "australiaeast", "label": "Australia East"}, {"id": "indonesiacentral", "label": "Indonesia Central"}, {"id": "malaysiawest", "label": "Malaysia West"}]}, {"id": "GCP", "name": "Google Cloud", "region": "asia-southeast1 (Singapore)", "pricing": "Google Cloud Billing Catalog API can be used, but browser-side direct fetching may require API access. Fallback to Google Cloud Pricing Calculator.", "calculator": "https://cloud.google.com/products/calculator", "instanceMap": {"8_32": "n2-standard-8", "8_64": "n2-highmem-8", "16_32": "n2-standard-16", "16_64": "n2-standard-16", "16_128": "n2-highmem-16", "32_64": "n2-standard-32", "32_128": "n2-standard-32", "32_256": "n2-highmem-32"}, "diskMap": {"系统盘": {"zh": "均衡型持久磁盘", "en": "Balanced Persistent Disk"}, "元数据盘": {"zh": "SSD 持久磁盘 / Hyperdisk Balanced（≥5000 IOPS）", "en": "SSD Persistent Disk / Hyperdisk Balanced >=5000 IOPS"}, "顺序数据盘": {"zh": "标准或均衡型持久磁盘（需确认吞吐量）", "en": "Standard or Balanced Persistent Disk with throughput verified"}, "随机数据盘": {"zh": "SSD 持久磁盘 / Hyperdisk Balanced（≥5000 IOPS）", "en": "SSD Persistent Disk / Hyperdisk Balanced >=5000 IOPS"}, "数据接入暂存盘": {"zh": "标准或均衡型持久磁盘（需确认吞吐量）", "en": "Standard or Balanced Persistent Disk with throughput verified"}, "数据盘": {"zh": "均衡型持久磁盘", "en": "Balanced Persistent Disk"}}, "regions": [{"id": "asia-southeast1", "label": "Singapore"}, {"id": "asia-southeast2", "label": "Jakarta, Indonesia"}, {"id": "asia-southeast3", "label": "Bangkok, Thailand"}, {"id": "asia-east2", "label": "Hong Kong"}, {"id": "asia-northeast1", "label": "Tokyo, Japan"}]}, {"id": "Alibaba", "name": "Alibaba Cloud International", "region": "ap-southeast-1 (Singapore)", "pricing": "Alibaba Cloud DescribePrice requires signed API credentials. The real-time button opens the pricing calculator/API docs for confirmation.", "calculator": "https://www.alibabacloud.com/pricing-calculator", "instanceMap": {"8_32": "ecs.g8i/g9i.2xlarge; fallback: ecs.g7.2xlarge", "8_64": "ecs.r8i/r9i.2xlarge; fallback: ecs.r7.2xlarge", "16_32": "ecs.g8i/g9i.4xlarge; fallback: ecs.g7.4xlarge", "16_64": "ecs.g8i/g9i.4xlarge; fallback: ecs.g7.4xlarge", "16_128": "ecs.r8i/r9i.4xlarge; fallback: ecs.r7.4xlarge", "32_64": "ecs.g8i/g9i.8xlarge; fallback: ecs.g7.8xlarge", "32_128": "ecs.g8i/g9i.8xlarge; fallback: ecs.g7.8xlarge", "32_256": "ecs.r8i/r9i.8xlarge; fallback: ecs.r7.8xlarge"}, "diskMap": {"系统盘": {"zh": "ESSD PL0 / 高效云盘", "en": "ESSD PL0 / Ultra Disk"}, "元数据盘": {"zh": "ESSD PL1 或更高规格（IOPS ≥5000）", "en": "ESSD PL1 or higher, IOPS >=5000"}, "顺序数据盘": {"zh": "ESSD PL0 / 高效云盘（需确认吞吐量）", "en": "ESSD PL0 / Ultra Disk with throughput verified"}, "随机数据盘": {"zh": "ESSD PL1 或更高规格（IOPS ≥5000）", "en": "ESSD PL1 or higher, IOPS >=5000"}, "数据接入暂存盘": {"zh": "ESSD PL0 / 高效云盘（需确认吞吐量）", "en": "ESSD PL0 / Ultra Disk with throughput verified"}, "数据盘": {"zh": "ESSD PL0 / 高效云盘", "en": "ESSD PL0 / Ultra Disk"}}, "regions": [{"id": "ap-southeast-1", "label": "Singapore"}, {"id": "ap-southeast-3", "label": "Malaysia / Kuala Lumpur"}, {"id": "ap-southeast-5", "label": "Indonesia / Jakarta"}, {"id": "ap-southeast-6", "label": "Philippines / Manila"}, {"id": "ap-southeast-7", "label": "Thailand / Bangkok"}, {"id": "cn-hongkong", "label": "Hong Kong"}]}, {"id": "Huawei", "name": "Huawei Cloud International", "region": "ap-southeast-3 (Singapore)", "pricing": "Huawei Cloud public pricing page/calculator should be used for final confirmation. Real-time browser API is not assumed.", "calculator": "https://www.huaweicloud.com/intl/en-us/pricing.html", "instanceMap": {"8_32": "x86 ECS, >=8 vCPU / 32 GB", "8_64": "x86 ECS, >=8 vCPU / 64 GB", "16_32": "x86 ECS, >=16 vCPU / 32 GB", "16_64": "x86 ECS, >=16 vCPU / 64 GB", "16_128": "x86 ECS, >=16 vCPU / 128 GB", "32_64": "x86 ECS, >=32 vCPU / 64 GB", "32_128": "x86 ECS, >=32 vCPU / 128 GB", "32_256": "x86 ECS, >=32 vCPU / 256 GB"}, "diskMap": {"系统盘": {"zh": "高 IO 云硬盘", "en": "High I/O"}, "元数据盘": {"zh": "超高 IO 云硬盘", "en": "Ultra-high I/O"}, "顺序数据盘": {"zh": "高 IO 云硬盘", "en": "High I/O"}, "随机数据盘": {"zh": "超高 IO 云硬盘", "en": "Ultra-high I/O"}, "数据接入暂存盘": {"zh": "高 IO 云硬盘", "en": "High I/O"}, "数据盘": {"zh": "高 IO 云硬盘", "en": "High I/O"}}, "regions": [{"id": "ap-southeast-3", "label": "Singapore"}, {"id": "ap-southeast-2", "label": "Bangkok, Thailand"}, {"id": "ap-southeast-1", "label": "Hong Kong"}, {"id": "ap-southeast-4", "label": "Jakarta, Indonesia"}, {"id": "ap-southeast-5", "label": "Manila, Philippines"}]}], "industryProfiles": [{"id": "generic", "cn": "通用 App", "en": "Generic App", "ratio": 0.1}, {"id": "bank", "cn": "银行", "en": "Bank", "ratio": 0.15}, {"id": "payment", "cn": "支付 / 钱包", "en": "Payment / Wallet", "ratio": 0.3}, {"id": "ecommerce", "cn": "电商", "en": "E-commerce", "ratio": 0.2}, {"id": "highfreq_wallet", "cn": "高频钱包 / 超级 App", "en": "High-frequency Wallet / Super App", "ratio": 0.4}, {"id": "custom", "cn": "自定义", "en": "Custom", "ratio": 0.5}], "diskPerf": [["System / Sequential / Ingestion / ETL Data Disk", "系统盘 / 顺序数据盘 / 接入暂存盘 / ETL数据盘", ">=120 MB/s", ">=120 IOPS"], ["Metadata / Random Data Disk", "元数据盘 / 随机数据盘", ">=150 MB/s", ">=5000 IOPS"]], "sources": [["Official", "https://docs.aws.amazon.com/ebs/latest/userguide/general-purpose.html", "AWS gp3 baseline IOPS/throughput and 1GiB-64TiB size range"], ["Official", "https://docs.aws.amazon.com/AWSEC2/latest/UserGuide/volume_limits.html", "AWS EBS volume attachment limits depend on instance type and size"], ["Official", "https://learn.microsoft.com/en-us/azure/virtual-machines/disks-types", "Azure disk type capacity, IOPS and throughput limits"], ["Official", "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/general-purpose/dsv5-series", "Azure Dsv5 remote disk count and throughput/IOPS limits"], ["Official", "https://learn.microsoft.com/en-us/azure/virtual-machines/sizes/memory-optimized/esv5-series", "Azure Esv5 remote disk count and throughput/IOPS limits"], ["Official", "https://docs.cloud.google.com/compute/docs/disks/performance", "Google Cloud Persistent Disk performance scales with disk size and vCPU count"], ["Official", "https://www.alibabacloud.com/help/en/ecs/user-guide/block-storage-performance", "Alibaba Cloud block storage capacity/performance formulas"], ["Official", "https://support.huaweicloud.com/intl/en-us/productdesc-evs/en-us_topic_0014580744.html", "Huawei Cloud EVS disk capacity/performance formulas"], ["Internal", "虚拟机 SA mini 集群模版-V3.7_20250929.xlsx", "CDP Mini cluster data scale and disk/CPU/memory rules"], ["Internal", "虚拟机 SA 标准集群模版-V3.7-20250929.xlsx", "CDP standard cluster data scale and disk/CPU/memory rules"], ["Internal", "SFN 3 节点集群v2.4.4.xlsx", "MA 3-node data scale, audience limit, CPU/memory and disk rules"], ["Internal", "SFN 3+3 集群 v2.4.4.xlsx", "MA 3+3 standard cluster data scale and node role rules"], ["Internal", "SFN 3+N+3 集群 v2.4.4.xlsx", "MA 3+N+3 scalable cluster data scale and node role rules"], ["Official", "https://docs.aws.amazon.com/awsaccountbilling/latest/aboutv2/price-changes.html", "AWS Price List API/Bulk API pricing information"], ["Official", "https://learn.microsoft.com/en-us/rest/api/cost-management/retail-prices/azure-retail-prices", "Azure Retail Prices API"], ["Official", "https://cloud.google.com/billing/docs/how-to/get-pricing-information-api", "Google Cloud Billing Catalog/Pricing API"], ["Official", "https://www.alibabacloud.com/help/en/ecs/developer-reference/api-ecs-2014-05-26-describeprice", "Alibaba Cloud DescribePrice API"], ["Official", "https://www.huaweicloud.com/intl/en-us/pricing.html", "Huawei Cloud International pricing page"], ["Public", "https://www.reuters.com/world/asia-pacific/philippine-e-wallet-firm-mynt-aiming-8-billion-valuation-ipo-sources-say-2026-05-14/", "GCash/Mynt public user scale reference; public sources mention user count but do not disclose official DAU."], ["Public", "https://en.wikipedia.org/wiki/Active_users", "DAU/MAU is an engagement/stickiness metric; definitions vary by provider, so actual DAU should be preferred."]], "version": "v3.9", "generatedAt": "2026-06-14"};
+let LANG='zh'; let SYS_LANG='zh'; let lastResult=null; let lastPrice={status:'not_fetched',lines:[],notes:[]};
+const I18N={zh:{inputTitle:'评估输入',language:'语言',outputLanguage:'输出配置语言',customer:'客户名称（可选）',cloud:'云厂商',region:'区域',industry:'行业场景',ratio:'DAU/MAU 比例',eventsPerUser:'单用户日事件数',dailyEvents:'日事件量（可覆盖）',audience:'MA 每天受众上限（可选）',solutionScope:'产品范围',supportingComponent:'辅助组件',etlNodes:'ETL 数据接入节点',products:'产品范围',exportOptions:'导出选项',includePriceExport:'导出的文件中包含价格参考',includeInstanceType:'导出的文件中包含云机器类型',ratioGuidance:'如果已提供实际 DAU，DAU/MAU 比例不会写入配置建议；只有用 MAU 估算 DAU 时才会显示。',advanced:'MA 高级影响因素',clickToExpand:'可选，点击展开',highQps:'高 QPS 实时资源位',personalization:'个性化召回/推荐',complexJourney:'复杂旅程/多分支实时触发',largeRealtime:'大规模实时触达',highImport:'大量历史导入/高并发任务',manyChannels:'多触达通道/外部通道限速',advancedHelp:'这些参数不是必填项。填写后不会简单替代基础 DAU / 日事件量规则，但会用于提示是否需要专项评估或升级 MA 架构。',storageTitle:'CDP 存储估算',storageHelp:'根据日事件量与数据保留周期估算 CDP 顺序数据盘容量，并动态调整最终磁盘建议。',eventGbPer100M:'单亿事件基础存储估算（GB）',storageReplica:'顺序数据综合修正系数',eventCalcRules:'事件大小与存储计算规则',eventSizeFormula:'顺序存储估算 = 周期内事件量（亿） × 单亿事件基础存储估算 × 顺序数据综合修正系数；再按磁盘使用率上限折算需配置容量。默认采用 Word 中顺序数据盘评估逻辑：35GB/亿事件，并乘以 1.1 综合修正系数。',logicExpand:'配置逻辑与使用说明（点击展开）',logicCollapse:'配置逻辑与使用说明（点击收起）',logicHint:'给神策内部使用人员查看，不会写入客户版导出文件。',cloudInstanceOptions:'云机器可选类型',dataNodeScaleNote:'CDP 已超过当前模板的 DAU 或日事件量上限，需要专项评估数据节点扩展；在模板范围内的存储容量调整不应被视为超出配置范围。',retentionValue:'存储估算周期',retentionUnit:'周期单位',years:'年',months:'月',days:'天',storageEstimation:'CDP 存储估算',storagePeriod:'存储估算周期',estimatedStorageRequired:'预估所需 CDP 顺序存储',templateSeqStorage:'模板基线 CDP 顺序盘容量',recommendedSeqStorage:'建议 CDP 顺序盘总容量',storageFormulaNote:'按日事件量 × 存储周期估算实际使用容量，并按磁盘使用率上限折算需配置容量；标准集群优先按模板增加 CDP Data Node；Word 模板基线通常为每个数据节点 6 块顺序盘；本工具的单节点顺序盘数量上限默认设为 10，可在左侧调整。最终会在文档定义的节点规模、单节点盘数、单盘容量之间综合选择，避免在少量节点上无限堆盘。',storageUtilization:'磁盘使用率上限',maxSingleDisk:'顺序盘单盘规划大小（GB）',seqDisksPerNode:'单节点顺序盘数量上限',seqDiskHelpLabel:'顺序盘调整原则',seqDiskHelp:'先按文档中的 DAU / 日事件量规则确定基础集群；再按存储周期计算需要的顺序盘总容量。顺序盘单盘大小来自下拉选择或自定义输入；系统会在云厂商挂载数量和性能约束内自动计算磁盘数量，不满足时升级 CDP Data Node（3+4 / 3+5 / 3+6）。',otherDiskConfig:'CDP 其他磁盘容量配置（可选）',otherDiskHelp:'以下为 CDP 非顺序盘单盘容量的最低建议值。默认使用模板值；如填写更大值，将写入最终配置建议。',cdpSystemDiskGb:'CDP 系统盘单盘容量（GB）',cdpMetadataDiskGb:'CDP 元数据盘单盘容量（GB）',cdpRandomDiskGb:'CDP 随机数据盘单盘容量（GB）',cdpIngestDiskGb:'CDP 接入暂存盘单盘容量（GB）',estimatedStorageUsed:'估算实际使用容量',usableCapacityRequired:'按使用率折算需配置容量',storageDiskPlan:'顺序盘调整策略',storagePreviewEmpty:'输入 MAU/DAU 后可查看 CDP 顺序盘容量估算。',placementListQps:'列表资源位在线 QPS（可选）',placementCarouselQps:'轮播资源位在线 QPS（可选）',cartesianTotal:'个性化召回物品笛卡尔积总数（可选）',peakActivationPerHour:'峰值触达/触发量 每小时（可选）',activeJourneys:'同时运行旅程/策略数量（可选）',channelQps:'外部通道吞吐/QPS（可选）',calculate:'生成推荐配置',fetchPrice:'尝试获取实时报价',downloadExcel:'下载 Excel',downloadWord:'下载 Word（.docx）',downloadPDF:'导出 PDF / 打开打印页面',resultTitle:'配置建议',pricingNote:'价格仅用于参考，最终以云厂商官网、合同折扣和目标区域可用规格为准。',summary:'评估摘要',disk:'磁盘性能要求',price:'价格参考',noInput:'请至少输入 MAU 或 DAU。',special:'超出自动评估范围，需要专项评估。',warningAdvanced:'已选择 MA 高级影响因素，建议进行专项评估或复核 MA 架构。',noReport:'请先生成配置建议。',confirmDownload:'请确认下载内容',includedProducts:'包含产品',supportingComponents:'辅助组件',cloudInstance:'云机器类型',component:'产品/组件',estimatedDailyEvents:'预估日事件量',manualDailyEvents:'日事件量（手动输入）',tableNote:'配置建议已按当前语言和勾选项生成。自动计算的事件量为预估值，最终容量需结合实际埋点和业务高峰复核。',regionNote:'区域不会改变神策容量评估逻辑，但会影响云主机规格可用性、云盘类型、价格、网络延迟和数据驻留要求；最终以目标区域云厂商控制台为准。',preparedFor:'适用客户',saveEval:'保存本次评估',viewLogs:'查看本地记录',exportLogs:'导出记录',clearLogs:'清空记录',localLogs:'本地评估记录',localRecordsPanel:'本地评估记录（可选）',localRecordsHelp:'本地记录仅保存在当前浏览器，不会上传。适合个人跟踪曾经为哪些客户生成过配置建议。',logicTitle:'配置逻辑与使用说明',etlNote:'ETL 数据接入节点为辅助组件，默认配置仅作为基线参考；实际节点数、CPU、内存和磁盘容量应根据客户数据源数量、同步频率、历史数据导入量、清洗复杂度和任务并发进行调整。',priceSource:'价格来源',priceSourceLive:'尝试实时 API',priceSourceSnapshot:'参考价快照/云厂商计算器',priceSourceCalculator:'需云厂商计算器确认',priceSourceNote:'价格仅供参考，不包含折扣、预留实例、Savings Plan、税费、网络流量、支持服务费和实施服务费。'},en:{inputTitle:'Evaluation Inputs',language:'Language',outputLanguage:'Output Configuration Language',customer:'Customer Name (optional)',cloud:'Cloud Vendor',region:'Region',industry:'Industry',ratio:'DAU/MAU Ratio',eventsPerUser:'Events per Active User per Day',dailyEvents:'Daily Event Volume (override)',audience:'Daily Audience Limit for MA (optional)',solutionScope:'Product Scope',supportingComponent:'Supporting Component',etlNodes:'ETL Data Integration Nodes',products:'Product Scope',exportOptions:'Export Options',includePriceExport:'Include price reference in exported files',includeInstanceType:'Include cloud instance type in exported files',ratioGuidance:'If actual DAU is provided, the DAU/MAU ratio will not be written into the configuration recommendation; it is shown only when DAU is estimated from MAU.',advanced:'Advanced MA Factors',clickToExpand:'Optional · Click to expand',highQps:'High-QPS real-time placements',personalization:'Personalized recall/recommendation',complexJourney:'Complex journeys / real-time branching',largeRealtime:'Large-scale real-time activation',highImport:'Large historical import / high-concurrency jobs',manyChannels:'Multiple channels / external channel throttling',advancedHelp:'These fields are optional. They do not replace the basic DAU / daily event volume rules, but they help flag whether special evaluation or MA architecture review is needed.',storageTitle:'CDP Storage Estimation',storageHelp:'Estimate CDP sequential data disk capacity based on daily event volume and retention period, then adjust the final disk recommendation dynamically.',eventGbPer100M:'Estimated GB per 100M Events per Replica',storageReplica:'Storage Replica / Redundancy Factor',eventCalcRules:'Event Size & Storage Calculation Rules',eventSizeFormula:'Estimated storage = events in retention period (100M) × estimated GB per 100M events per replica × replica/redundancy factor; then converted to provisioned capacity by the maximum disk utilization threshold.',logicExpand:'Sizing Logic & Usage Notes (Click to Expand)',logicCollapse:'Sizing Logic & Usage Notes (Click to Collapse)',logicHint:'For Sensors Data internal users only. This section will not be included in customer-facing exports.',cloudInstanceOptions:'Cloud Instance Type Options',dataNodeScaleNote:'CDP exceeds the current template DAU or daily event limit. Data node scaling requires special assessment; storage capacity adjustment within template limits should not be treated as out of range.',retentionValue:'Storage Estimation Period',retentionUnit:'Period Unit',years:'Year(s)',months:'Month(s)',days:'Day(s)',storageEstimation:'CDP Storage Estimation',storagePeriod:'Storage Estimation Period',estimatedStorageRequired:'Estimated CDP Sequential Storage Required',templateSeqStorage:'Template Baseline CDP Sequential Capacity',recommendedSeqStorage:'Recommended CDP Sequential Capacity',storageFormulaNote:'Estimated used capacity is calculated from daily event volume × retention period and then converted to provisioned capacity based on the maximum disk utilization threshold. The final recommendation first follows the documented CDP cluster scale, then considers maximum sequential disks per node and preferred per-disk size. If storage cannot fit, it upgrades to the next documented Data Node template instead of putting excessive disks on a small number of nodes.',storageUtilization:'Maximum Disk Utilization',maxSingleDisk:'Planned Sequential Disk Size (GB)',seqDisksPerNode:'Max Sequential Disks per Node',seqDiskHelpLabel:'Sequential Disk Adjustment Logic',seqDiskHelp:'First select the base CDP cluster by documented DAU / daily-event rules. Then estimate total sequential storage by retention period. The planned per-disk size comes from the dropdown or custom input; the system calculates disk count within provider attachment/performance constraints and upgrades CDP Data Nodes (3+4 / 3+5 / 3+6) when needed.',otherDiskConfig:'CDP Other Disk Capacity Settings (Optional)',otherDiskHelp:'The following values are minimum recommended capacity for CDP non-sequential disks. Template values are used by default; larger values will be applied to the final recommendation.',cdpSystemDiskGb:'CDP System Disk Size (GB)',cdpMetadataDiskGb:'CDP Metadata Disk Size (GB)',cdpRandomDiskGb:'CDP Random Data Disk Size (GB)',cdpIngestDiskGb:'CDP Ingestion Temp Disk Size (GB)',estimatedStorageUsed:'Estimated Used Storage',usableCapacityRequired:'Provisioned Capacity Required by Utilization',storageDiskPlan:'Sequential Disk Adjustment Strategy',storagePreviewEmpty:'Enter MAU/DAU to view CDP sequential disk capacity estimation.',placementListQps:'List placement online QPS (optional)',placementCarouselQps:'Carousel placement online QPS (optional)',cartesianTotal:'Item Cartesian product total for personalized recall (optional)',peakActivationPerHour:'Peak activations/triggers per hour (optional)',activeJourneys:'Concurrent active journeys/strategies (optional)',channelQps:'External channel throughput/QPS (optional)',calculate:'Generate Recommendation',fetchPrice:'Try Real-time Price',downloadExcel:'Download Excel',downloadWord:'Download Word (.docx)',downloadPDF:'Export PDF / Open Print Dialog',resultTitle:'Configuration Recommendation',pricingNote:'Prices are for reference only. Final cost depends on official cloud pricing, contract discounts, target region availability, tax and service scope.',summary:'Evaluation Summary',disk:'Disk Performance Requirements',price:'Price Reference',noInput:'Please enter at least MAU or DAU.',special:'Out of automatic sizing range. Special evaluation is required.',warningAdvanced:'Advanced MA factors selected. Special evaluation or MA architecture review is recommended.',noReport:'Please generate a configuration recommendation first.',confirmDownload:'Please confirm download content',includedProducts:'Included Products',supportingComponents:'Supporting Components',cloudInstance:'Cloud Instance Type',component:'Product / Component',estimatedDailyEvents:'Estimated Daily Event Volume',manualDailyEvents:'Daily Event Volume — Manual Input',tableNote:'Configuration recommendation generated based on the current language and selected options. Automatically calculated event volume is an estimate and should be verified against actual tracking design and peak business load.',regionNote:'Region does not change Sensors Data capacity sizing logic, but it may affect instance availability, disk type availability, pricing, latency and data residency. Final availability must be verified in the target cloud console.',preparedFor:'Prepared for',saveEval:'Save This Evaluation',viewLogs:'View Local Records',exportLogs:'Export Records',clearLogs:'Clear Records',localLogs:'Local Evaluation Records',localRecordsPanel:'Local Evaluation Records (optional)',localRecordsHelp:'Local records are stored only in the current browser and are not uploaded. Use them to track which customers you generated recommendations for.',logicTitle:'Sizing Logic & Usage Notes',etlNote:'ETL Data Integration Nodes are supporting components. The default configuration is only a baseline reference. Actual node count, CPU, memory and disk capacity should be adjusted based on the customer’s data sources, sync frequency, historical import volume, transformation complexity and job concurrency.',priceSource:'Price Source',priceSourceLive:'Live API Attempt',priceSourceSnapshot:'Reference Snapshot / Cloud Calculator',priceSourceCalculator:'Official Calculator Required',priceSourceNote:'Prices are for reference only and exclude discounts, reserved instances, Savings Plans, tax, network traffic, support fees and implementation service fees.'}};
+function t(k){return I18N[LANG][k]||k;} function ui(k){return I18N[SYS_LANG][k]||k;} function withLang(lang,fn){const old=LANG;LANG=lang;try{return fn();}finally{LANG=old;}} function fmt(n){if(n==null||isNaN(n))return'-';if(LANG==='en'){if(n>=1e6)return(n/1e6).toFixed(n%1e6===0?0:2)+'M';if(n>=1e3)return(n/1e3).toFixed(n%1e3===0?0:1)+'K';return String(Math.round(n));}else{if(n>=1e8)return(n/1e8).toFixed(n%1e8===0?0:2)+'亿';if(n>=1e4)return(n/1e4).toFixed(n%1e4===0?0:1)+'万';return String(Math.round(n));}}
+function gb(v){return v>=1000?(v/1000)+'T':v+'G';} function keyFor(vcpu,mem){return vcpu+'_'+mem;} function currentCloud(){return DATA.clouds.find(c=>c.id===document.getElementById('cloud').value);} function currentRegionObj(){const c=currentCloud();const rid=document.getElementById('region').value;return(c.regions||[]).find(r=>r.id===rid)||{id:rid,label:rid};}
+function industryName(id){const p=DATA.industryProfiles.find(x=>x.id===id);return p?(LANG==='zh'?p.cn:p.en):id;} function diskName(d){return LANG==='zh'?d[0]:d[1];} function diskCloudType(d,cloud){const m=cloud.diskMap?.[d[0]]; if(!m)return d[4]||''; return typeof m==='string'?m:(m[LANG]||m.en||m.zh);}
+function refreshIndustryOptions(){const indSel=document.getElementById('industry');if(!indSel)return;const old=indSel.value||'bank';indSel.innerHTML='';DATA.industryProfiles.forEach(p=>{let o=document.createElement('option');o.value=p.id;o.textContent=SYS_LANG==='zh'?p.cn:p.en;indSel.appendChild(o);});indSel.value=[...indSel.options].some(o=>o.value===old)?old:'bank';}
+function baseReportTitle(){return LANG==='zh'?'Sensors Data 云资源配置建议':'Sensors Data Cloud Configuration Recommendation';}
+function preparedForText(input){return input&&input.customerName?(t('preparedFor')+': '+input.customerName):'';}
+function cloudPriceSource(cloud){
+  if(!cloud)return t('priceSourceSnapshot');
+  if(cloud.id==='Azure')return t('priceSourceLive')+' / '+t('priceSourceCalculator');
+  if(cloud.id==='AWS')return t('priceSourceSnapshot')+' / AWS Pricing Calculator';
+  if(['GCP','Alibaba','Huawei'].includes(cloud.id))return t('priceSourceCalculator');
+  return t('priceSourceSnapshot');
+}
+
+function cloudPolicy(cloudId){
+ const policies={
+  AWS:{singleDiskMaxGb:65536, maxTotalVolumes:28, maxDataDisks:27, notes:{zh:'AWS gp3 支持 1GiB–64TiB，性能可与容量相对解耦；多数 Nitro 实例有卷挂载数量限制，需按实例规格复核。',en:'AWS gp3 supports 1GiB–64TiB and can provision performance largely independently of capacity; EBS volume attachment limits still depend on instance type.'}},
+  Azure:{singleDiskMaxGb:65536, notes:{zh:'Azure Premium SSD v2 / Ultra Disk 最大 64TiB，Premium SSD v2 可独立配置 IOPS/吞吐；VM 数据盘数量取决于 VM size。',en:'Azure Premium SSD v2 / Ultra Disk supports up to 64TiB and can provision IOPS/throughput separately; max data disks depend on VM size.'}},
+  GCP:{singleDiskMaxGb:65536, maxTotalVolumes:16, maxDataDisks:15, notes:{zh:'Google Persistent Disk 性能随磁盘总容量和 vCPU 规模增长，并受单实例上限约束。',en:'Google Persistent Disk performance scales with combined disk size and vCPU count, subject to per-instance limits.'}},
+  Alibaba:{singleDiskMaxGb:65536, maxDataDisks:16, notes:{zh:'阿里云 ESSD 单盘最高 65,536GiB，部分盘型 IOPS/吞吐随容量线性增长并有上限。',en:'Alibaba Cloud ESSD supports up to 65,536GiB per disk; IOPS/throughput of several disk types scale with capacity until capped.'}},
+  Huawei:{singleDiskMaxGb:32768, maxDataDisks:23, notes:{zh:'华为云 EVS 数据盘通常最大 32,768GiB；高 IO/超高 IO 的 IOPS/吞吐受容量、盘型和实例 QoS 影响。',en:'Huawei Cloud EVS data disks are commonly up to 32,768GiB; IOPS/throughput depend on disk type, capacity and instance QoS.'}}
+ };
+ return policies[cloudId]||{singleDiskMaxGb:32768,maxDataDisks:16,notes:{zh:'需以目标云区域控制台为准。',en:'Verify in the target cloud region console.'}};
+}
+function azureDataDiskLimit(node){
+ const v=Number(node?.vcpu||0);
+ if(v>=96)return 64;
+ if(v>=16)return 32;
+ if(v>=8)return 16;
+ if(v>=4)return 8;
+ return 4;
+}
+function diskCountValidationLimit(cloudId,node){
+ if(cloudId==='Azure')return {data:azureDataDiskLimit(node),total:null,source:'Azure VM size'};
+ const p=cloudPolicy(cloudId);
+ return {data:p.maxDataDisks||null,total:p.maxTotalVolumes||null,source:cloudId};
+}
+function requiredPerfForDiskPurpose(purpose){
+ if(['元数据盘','随机数据盘'].includes(purpose))return {iops:5000,throughput:150};
+ return {iops:120,throughput:120};
+}
+function perfEstimate(cloudId,purpose,sizeGb){
+ const size=Number(sizeGb||0);
+ const isMetaRandom=['元数据盘','随机数据盘'].includes(purpose);
+ if(cloudId==='AWS'){
+   if(isMetaRandom)return {iops:Math.min(80000,Math.max(5000,3000)),throughput:Math.max(125,150),mode:'provisioned'};
+   return {iops:3000,throughput:125,mode:'gp3-baseline'};
+ }
+ if(cloudId==='Azure'){
+   if(purpose==='系统盘'){
+     // Premium SSD classic P-tier: P15 (256GiB) is the first common tier >=125MB/s.
+     const iops=size>=256?1100:(size>=128?500:240);
+     const throughput=size>=256?125:(size>=128?100:50);
+     return {iops,throughput,mode:'Premium SSD classic estimate'};
+   }
+   // Premium SSD v2 data disk can provision at least the required values when capacity is sufficient.
+   const maxIops=size>=10?80000:3000;
+   const maxThroughput=size>=16?2000:125;
+   return {iops:maxIops,throughput:maxThroughput,mode:'Premium SSD v2 provisioned'};
+ }
+ if(cloudId==='GCP'){
+   // pd-balanced baseline + per-GiB model. For metadata/random assume pd-ssd.
+   if(isMetaRandom)return {iops:Math.min(100000,6000+30*size),throughput:Math.min(1200,240+0.48*size),mode:'pd-ssd estimate'};
+   return {iops:Math.min(80000,3000+6*size),throughput:Math.min(1200,140+0.28*size),mode:'pd-balanced estimate'};
+ }
+ if(cloudId==='Alibaba'){
+   if(isMetaRandom)return {iops:Math.min(50000,1800+50*size),throughput:Math.min(350,120+0.5*size),mode:'ESSD PL1 estimate'};
+   return {iops:Math.min(10000,1800+12*size),throughput:Math.min(180,100+0.25*size),mode:'ESSD PL0 estimate'};
+ }
+ if(cloudId==='Huawei'){
+   if(isMetaRandom)return {iops:Math.min(50000,1800+50*size),throughput:Math.min(350,120+0.5*size),mode:'Ultra-high I/O estimate'};
+   return {iops:Math.min(5000,1800+8*size),throughput:Math.min(150,100+0.15*size),mode:'High I/O estimate'};
+ }
+ return {iops:999999,throughput:999999,mode:'not checked'};
+}
+function diskPurposeLabel(p){return LANG==='zh'?p:({系统盘:'System Disk',元数据盘:'Metadata Disk',顺序数据盘:'Sequential Data Disk',随机数据盘:'Random Data Disk',数据接入暂存盘:'Ingestion Temp Disk',数据盘:'Data Disk'}[p]||p);}
+function nodeRoleLabel(n){return LANG==='zh'?(n.role_cn||n.role):(n.role_en||n.role||'Node');}
+function validateCloudDiskPlan(res){
+ const input=res?.input||{}; const cloud=input.cloud||currentCloud(); const cloudId=cloud?.id; const p=cloudPolicy(cloudId);
+ const issues=[];
+ const checkRule=(component,rule)=>{
+   if(!rule||!rule.nodes)return;
+   rule.nodes.forEach(n=>{
+     let total=0, data=0;
+     (n.disks||[]).forEach(d=>{const cnt=Number(d[2]||0); total+=cnt; if(d[0]!=='系统盘')data+=cnt;});
+     const lim=diskCountValidationLimit(cloudId,n);
+     if(lim.data && data>lim.data)issues.push({level:'error',msg:(LANG==='zh'?`${component} ${nodeRoleLabel(n)} 每台数据盘数量为 ${data}，超过 ${cloud?.name||cloudId} 当前估算限制 ${lim.data}。建议增加节点、降低单节点顺序盘数量，或改用支持更多磁盘的实例规格。`:`${component} ${nodeRoleLabel(n)} has ${data} data disks per node, exceeding the estimated ${cloud?.name||cloudId} limit of ${lim.data}. Increase node count, reduce disks per node, or choose an instance type that supports more disks.`)});
+     if(lim.total && total>lim.total)issues.push({level:'error',msg:(LANG==='zh'?`${component} ${nodeRoleLabel(n)} 每台总磁盘数为 ${total}，超过 ${cloud?.name||cloudId} 当前估算挂载限制 ${lim.total}。建议增加节点或减少单节点磁盘数量。`:`${component} ${nodeRoleLabel(n)} has ${total} total disks per node, exceeding the estimated ${cloud?.name||cloudId} attachment limit of ${lim.total}. Increase node count or reduce disks per node.`)});
+     (n.disks||[]).forEach(d=>{
+       const purpose=d[0], cnt=Number(d[2]||0), size=Number(d[3]||0); if(!cnt||!size)return;
+       if(size>p.singleDiskMaxGb)issues.push({level:'error',msg:(LANG==='zh'?`${component} ${nodeRoleLabel(n)} 的${diskPurposeLabel(purpose)}单盘 ${size}GB 超过 ${cloud?.name||cloudId} 当前内置单盘上限 ${p.singleDiskMaxGb}GB。建议拆分磁盘、增加节点或复核云厂商限制。`:`${component} ${nodeRoleLabel(n)} ${diskPurposeLabel(purpose)} size ${size}GB exceeds the built-in ${cloud?.name||cloudId} per-disk limit of ${p.singleDiskMaxGb}GB. Split disks, add nodes, or verify provider limits.`)});
+       const req=requiredPerfForDiskPurpose(purpose); const perf=perfEstimate(cloudId,purpose,size);
+       if(perf.iops<req.iops || perf.throughput<req.throughput){
+         const text=LANG==='zh'?`${component} ${nodeRoleLabel(n)} 的${diskPurposeLabel(purpose)} ${size}GB 在 ${cloud?.name||cloudId} 的估算性能约为 ${Math.round(perf.iops)} IOPS / ${Math.round(perf.throughput)} MB/s，低于要求 ${req.iops} IOPS / ${req.throughput} MB/s。建议增大单盘容量、提高盘型/预配置性能，或调整磁盘数量与节点数。`:`${component} ${nodeRoleLabel(n)} ${diskPurposeLabel(purpose)} ${size}GB estimated ${cloud?.name||cloudId} performance is ${Math.round(perf.iops)} IOPS / ${Math.round(perf.throughput)} MB/s, below the requirement ${req.iops} IOPS / ${req.throughput} MB/s. Increase disk size, choose/provision a higher disk tier, or adjust disk/node count.`;
+         issues.push({level:'error',msg:text});
+       }
+     });
+   });
+ };
+ checkRule('CDP',res?.cdp?.rule);
+ if(input.includeMA)checkRule('MA',res?.ma?.rule);
+ if(input.includeETL)checkRule('ETL',DATA.etlRule);
+ return issues;
+}
+function splitIssueMessages(warnings){
+ const errors=[], warns=[];
+ (warnings||[]).forEach(w=>{if(!w)return; if(typeof w==='string'&&w.startsWith('ERROR:'))errors.push(w.slice(6)); else warns.push(w);});
+ return {errors,warns};
+}
+function warningHtml(warnings){
+ const sp=splitIssueMessages(warnings);
+ let html='';
+ if(sp.errors.length)html+='<div class="error">'+sp.errors.join('<br>')+'</div>';
+ if(sp.warns.length)html+='<div class="warning">'+sp.warns.join('<br>')+'</div>';
+ return html;
+}
+function cleanWarningText(w){return typeof w==='string'?w.replace(/^ERROR:/,''):w;}
+function nodeSummaryForLogic(rule){
+ const roleLabel=LANG==='zh'?'节点组成':'Node Composition';
+ return rule.nodes.map(n=>{
+   const role=(LANG==='zh'?n.role_cn:n.role_en);
+   return n.count+' × '+role+' ('+n.vcpu+'C / '+n.mem+'G)';
+ }).join('\n');
+}
+function internalLogicHtml(){
+ const h1=LANG==='zh'?['配置类型','DAU 边界','日事件量边界','节点组成']:['Configuration Type','DAU Boundary','Daily Event Boundary','Node Composition'];
+ const cdpRows=DATA.cdpRules.map(r=>({[h1[0]]:LANG==='zh'?r.name_cn:r.name_en,[h1[1]]:'< '+fmt(r.maxDau),[h1[2]]:'≤ '+fmt(r.maxEvents),[h1[3]]:nodeSummaryForLogic(r)}));
+ const h2=LANG==='zh'?['配置类型','DAU 边界','日事件量边界','每天受众上限','节点组成']:['Configuration Type','DAU Boundary','Daily Event Boundary','Daily Audience Limit','Node Composition'];
+ const maRows=DATA.maRules.map(r=>({[h2[0]]:LANG==='zh'?r.name_cn:r.name_en,[h2[1]]:'≤ '+fmt(r.maxDau),[h2[2]]:'≤ '+fmt(r.maxEvents),[h2[3]]:'≤ '+fmt(r.maxAudience),[h2[4]]:nodeSummaryForLogic(r)}));
+ const notes=LANG==='zh'
+  ? ['该区域是给神策内部使用者查看的后台逻辑说明，不建议直接放入客户版文档。','本工具按 x86 云主机模板评估，不采用单机模板、物理机模板，也不采用华为 ARM / 鲲鹏翻倍逻辑。','CDP 和 MA 分别评估，不使用统一 Tier；客户侧仅展示最终节点、CPU、内存、磁盘建议。','DAU 优先；只有未提供 DAU 时，才使用 MAU × 行业比例估算 DAU。','日事件量如未手动输入，则按 DAU × 单用户日事件数进行预估；如果客户提供真实日事件量，则以手动输入为准。','MA 除 DAU 和日事件量外，还会参考每天受众上限；高级 MA 因素只用于提示专项评估或架构复核，不简单自动扩容。','CDP 顺序数据盘容量会根据日事件量和存储估算周期动态计算，并按磁盘使用率上限折算所需配置容量；只要 DAU 和日事件量仍在 CDP 模板范围内，存储估算只调整顺序盘容量/数量，不触发“超出模板”或“数据节点扩展”警告。只有超过已内置的 CDP 标准集群 3+6 边界（约 <2200万 DAU 或 16亿/天事件量）时，才提示专项评估；在边界内，系统会优先按 3+3/3+4/3+5/3+6 及必要的 3+N 扩展逻辑调整 Data Node、顺序盘数量和单盘容量。其他历史数据导入、复杂查询和高并发任务仍需专项评估。','CDP 标准集群 3+3 高配的边界为 <1400万 DAU / <8.4亿日事件；3+4 标配为 <1000万 DAU / <6.2亿日事件。两者不是简单按行递增关系，而是“高配 3+3”和“标配 3+4”两种不同资源组合。系统会按 DAU、日事件量和存储需求综合选择满足条件的配置。','云机器类型是等效规格建议，最终需以目标区域云厂商控制台可用规格为准；工具会基于云厂商公开规则对单盘容量、挂载磁盘数量、IOPS 和吞吐量做基础校验，不满足时会用红色提示。','ETL 数据接入节点是辅助组件，默认 3 台 8C/32G，仅作为基线参考，需按客户数据源数量、同步频率、历史导入量、清洗复杂度和任务并发调整。','系统功能说明：可生成网页配置建议，并可导出 Excel、Word（.docx）和 PDF/打印版本；价格模块优先尝试云厂商公开接口，无法实时获取时需使用官方计算器或合同报价确认；本地记录为可选功能，仅保存到当前浏览器，可手动保存、查看、导出或清空。']
+  : ['This section is for Sensors Data internal users and is not recommended for customer-facing documents.','The tool uses x86 cloud VM templates only. Standalone templates, physical-machine templates, and Huawei ARM/Kunpeng scaling logic are not used.','CDP and MA are sized independently. No unified customer-facing tier is shown; only nodes, CPU, memory and disks are displayed.','Actual DAU has priority. MAU × industry ratio is used only when DAU is not provided.','If daily event volume is not manually provided, it is estimated as DAU × events per active user per day. If actual daily event volume is provided, the manual value is used.','MA sizing considers DAU, daily event volume and daily audience limit. Advanced MA factors only flag special assessment or architecture review; they do not simply auto-scale the result.','CDP sequential data disk capacity is calculated from daily event volume and retention period, then converted to provisioned capacity based on the disk utilization threshold. Sizing is performed in two steps: first select the base CDP cluster by the Word DAU / daily-event table; then calculate sequential storage from event volume and retention period. If the base cluster cannot fit within the configured per-disk size and per-node disk-count limit, the tool upgrades to the next documented CDP Data Node template: 3+4, 3+5 or 3+6. It does not silently create arbitrary node counts beyond the documented table. Large historical imports, complex queries and high-concurrency jobs still require special assessment.','CDP Standard 3+3 High is <14M DAU / <840M daily events, while 3+4 Standard is <10M DAU / <620M daily events. These rows are not a simple monotonic sequence; they represent different resource profiles. The tool selects a configuration based on DAU, daily events and storage demand together.','Cloud instance types are equivalent recommendations and must be validated in the selected cloud region. The tool performs basic validation on per-disk capacity, disk attachment count, IOPS and throughput according to public cloud rules; blocking issues are shown in red.','ETL Data Integration Nodes are supporting components. The default 3 × 8C/32G baseline should be adjusted based on data sources, sync frequency, historical import volume, transformation complexity and job concurrency.','System features: the tool generates an on-page recommendation and can export Excel, Word (.docx) and PDF/print versions. The pricing module attempts public cloud pricing APIs when feasible; otherwise official calculators or contract quotations are required. Local records are optional, stored only in the current browser, and can be saved, viewed, exported or cleared manually.'];
+ let html='<div class="note"><b>'+(LANG==='zh'?'内部使用说明':'Internal Usage Note')+'</b><ul style="margin:8px 0 0 20px;padding:0">'+notes.map(x=>'<li>'+x+'</li>').join('')+'</ul></div>';
+ html+='<div class="report-section-title">CDP '+(LANG==='zh'?'评估档次':'Sizing Boundaries')+'</div>'+htmlTable(h1,cdpRows,'perf-table');
+ html+='<div class="report-section-title">MA '+(LANG==='zh'?'评估档次':'Sizing Boundaries')+'</div>'+htmlTable(h2,maRows,'perf-table');
+ html+='<div class="report-section-title">'+t('eventCalcRules')+'</div><div class="note">'+t('eventSizeFormula')+'<br>'+ (LANG==='zh'?'默认值：35 GB/亿事件，顺序数据综合修正系数 1.1，磁盘使用率上限 80%。这些值可在左侧 CDP 存储估算区域调整。该默认值来自 Word 中顺序数据盘评估逻辑：日导入事件量（亿）× 35GB × 存储天数 ÷ 0.8 × 1.1。历史事件公式可作为另一类参考，但当前顺序盘动态估算优先采用 Word 中顺序数据盘评估逻辑。':'Defaults: 35 GB per 100M events, sequential-data adjustment factor 1.1, and maximum disk utilization 80%. These values can be adjusted in the CDP Storage Estimation panel on the left. The default follows the sequential data disk estimation logic in the Word document: daily imported events (100M) × 35GB × retention days ÷ 0.8 × 1.1. Historical-event formulas can be used as another reference, but this tool prioritizes the Word sequential-disk estimation logic for dynamic sequential disk planning.') +'</div>';
+ html+='<div class="report-section-title">ETL '+(LANG==='zh'?'辅助组件说明':'Supporting Component Note')+'</div><div class="note">'+t('etlNote')+'</div>';
+ return html;
+}
+function toggleInternalLogic(){
+ const card=document.getElementById('internalLogicCard');
+ const content=document.getElementById('internalLogicContent');
+ const title=document.getElementById('internalLogicTitle');
+ const btn=document.getElementById('logicToggleBtn');
+ if(!card||!content)return;
+ if(card.style.display==='none'||!card.style.display){
+   if(title)title.textContent=ui('logicTitle');
+   content.innerHTML=withLang(SYS_LANG,()=>internalLogicHtml());
+   card.style.display='block';
+   if(btn)btn.textContent=ui('logicCollapse');
+   card.scrollIntoView({behavior:'smooth',block:'start'});
+ }else{
+   card.style.display='none';
+   if(btn)btn.textContent=ui('logicExpand');
+ }
+}
+function noteRows(res){const rows=[];const k=LANG==='zh'?'说明项':'Note';const v=LANG==='zh'?'内容':'Description';rows.push({[k]:LANG==='zh'?'区域与云规格':'Region and cloud instance availability',[v]:t('regionNote')});if(res?.input?.includeETL)rows.push({[k]:LANG==='zh'?'ETL 配置调整':'ETL sizing adjustment',[v]:t('etlNote')});rows.push({[k]:LANG==='zh'?'价格说明':'Pricing note',[v]:t('priceSourceNote')});return rows;}
+
+function bindAutoRecalculate(){
+  const recalc=(e)=>{
+    const el=e&&e.target;
+    if(!el)return;
+    if(el.matches && el.matches('input,select,textarea')){
+      if(el.id==='lang'){return;}
+      calculate();
+    }
+  };
+  const ids=['customerName','cloud','region','industry','mau','dau','ratio','eventsPerUser','dailyEvents','dailyAudience','includeMA','includeETL','includePriceExport','includeInstanceType','retentionValue','retentionUnit','storageUtilization','eventGbPer100M','storageReplica','maxSingleDisk','seqDisksPerNode','cdpSystemDiskGb','cdpMetadataDiskGb','cdpRandomDiskGb','cdpIngestDiskGb','placementListQps','placementCarouselQps','cartesianTotal','peakActivationPerHour','activeJourneys','channelQps'];
+  ids.forEach(id=>{const el=document.getElementById(id);if(el){el.addEventListener('input',calculate);el.addEventListener('change',calculate);}});
+  document.querySelectorAll('.adv').forEach(el=>el.addEventListener('change',calculate));
+  document.addEventListener('input',recalc,true);
+  document.addEventListener('change',recalc,true);
+}
+function init(){const cloudSel=document.getElementById('cloud');DATA.clouds.forEach(c=>{let o=document.createElement('option');o.value=c.id;o.textContent=c.name;cloudSel.appendChild(o);});const indSel=document.getElementById('industry');refreshIndustryOptions();indSel.value='bank';cloudSel.onchange=()=>{populateRegions();calculate();};indSel.onchange=()=>{const p=DATA.industryProfiles.find(x=>x.id===indSel.value);document.getElementById('ratio').value=Math.round((p?.ratio||0.15)*100);calculate();};document.getElementById('lang').onchange=()=>{LANG=document.getElementById('lang').value;calculate();};document.getElementById('sysZh')?.addEventListener('click',()=>{SYS_LANG='zh';applyLang();updateStoragePreview(lastResult?.cdp?.storage||null);if(lastResult)renderAll();});document.getElementById('sysEn')?.addEventListener('click',()=>{SYS_LANG='en';applyLang();updateStoragePreview(lastResult?.cdp?.storage||null);if(lastResult)renderAll();});populateRegions();applyLang();bindAutoRecalculate();calculate();}
+function populateRegions(keep=false){const c=currentCloud();const sel=document.getElementById('region');const old=sel.value;sel.innerHTML='';(c.regions||[]).forEach(r=>{let o=document.createElement('option');o.value=r.id;o.textContent=r.id+' ('+r.label+')';sel.appendChild(o);});if(keep&&[...sel.options].some(o=>o.value===old))sel.value=old;}
+
+function applyPlaceholders(){
+ const ph=SYS_LANG==='zh'?{
+  customerName:'可选，例如 GCash / SHB',mau:'例如 5000000',dau:'如已知，请填写实际 DAU',dailyEvents:'可选；填写后覆盖自动估算',dailyAudience:'可选；用于 MA 受众上限评估',placementListQps:'可选',placementCarouselQps:'可选',cartesianTotal:'可选',peakActivationPerHour:'可选',activeJourneys:'可选',channelQps:'可选'
+ }:{
+  customerName:'Optional, e.g. GCash / SHB',mau:'e.g. 5000000',dau:'If available, use actual DAU',dailyEvents:'Optional; overrides auto estimate',dailyAudience:'Optional; used for MA audience limit sizing',placementListQps:'Optional',placementCarouselQps:'Optional',cartesianTotal:'Optional',peakActivationPerHour:'Optional',activeJourneys:'Optional',channelQps:'Optional'
+ };
+ Object.entries(ph).forEach(([id,val])=>{const el=document.getElementById(id);if(el)el.placeholder=val;});
+}
+
+function applyLang(){document.documentElement.lang=SYS_LANG==='zh'?'zh':'en';document.querySelectorAll('[data-i18n]').forEach(el=>{el.textContent=ui(el.dataset.i18n);});{const pt=document.getElementById('pageTitle');if(pt)pt.textContent=SYS_LANG==='zh'?'神策 CDP / MA 云资源配置建议工具':'Sensors Data CDP / MA Cloud Configuration Recommendation Tool';}document.getElementById('subtitle').textContent=SYS_LANG==='zh'?'国际云 CDP / MA x86 配置建议工具（含 ETL 数据接入节点）':'x86 standard configuration recommendation for CDP / MA and supporting ETL data integration nodes';document.getElementById('sysZh')?.classList.toggle('active',SYS_LANG==='zh');document.getElementById('sysEn')?.classList.toggle('active',SYS_LANG==='en');refreshIndustryOptions();applyPlaceholders();const card=document.getElementById('internalLogicCard');const content=document.getElementById('internalLogicContent');const title=document.getElementById('internalLogicTitle');const btn=document.getElementById('logicToggleBtn');if(btn)btn.textContent=(card&&card.style.display!=='none')?ui('logicCollapse'):ui('logicExpand');if(card&&content&&card.style.display!=='none'){if(title)title.textContent=ui('logicTitle');content.innerHTML=withLang(SYS_LANG,()=>internalLogicHtml());}}
+function getInputs(){const mau=Number(document.getElementById('mau').value||0),dauInput=Number(document.getElementById('dau').value||0),ratio=Number(document.getElementById('ratio').value||15)/100,eventsPerUser=Number(document.getElementById('eventsPerUser').value||100),manualEvents=Number(document.getElementById('dailyEvents').value||0),dailyAudience=Number(document.getElementById('dailyAudience').value||0);const dau=dauInput>0?dauInput:(mau>0?mau*ratio:0),events=manualEvents>0?manualEvents:dau*eventsPerUser;return{customerName:document.getElementById('customerName').value||'',cloud:currentCloud(),region:currentRegionObj(),industry:document.getElementById('industry').value,ratio,mau,dauInput,dau,eventsPerUser,events,manualEvents,dailyAudience:dailyAudience>0?dailyAudience:null,retentionValue:Number(document.getElementById('retentionValue')?.value||1),retentionUnit:document.getElementById('retentionUnit')?.value||'years',storageUtilization:Number(document.getElementById('storageUtilization')?.value||80)/100,maxSingleDisk:Number(document.getElementById('maxSingleDisk')?.value||4096),seqDisksPerNode:Number(document.getElementById('seqDisksPerNode')?.value||10),eventGbPer100M:Number(document.getElementById('eventGbPer100M')?.value||35),storageReplica:Number(document.getElementById('storageReplica')?.value||1.1),cdpDiskSizes:{system:Number(document.getElementById('cdpSystemDiskGb')?.value||50),metadata:Number(document.getElementById('cdpMetadataDiskGb')?.value||400),random:Number(document.getElementById('cdpRandomDiskGb')?.value||500),ingest:Number(document.getElementById('cdpIngestDiskGb')?.value||250)},includeMA:document.getElementById('includeMA').checked,includeETL:document.getElementById('includeETL').checked,includePriceExport:document.getElementById('includePriceExport').checked,includeInstanceType:document.getElementById('includeInstanceType').checked,advanced:Array.from(document.querySelectorAll('.adv:checked')).map(x=>x.value),advParams:{placementListQps:Number(document.getElementById('placementListQps')?.value||0),placementCarouselQps:Number(document.getElementById('placementCarouselQps')?.value||0),cartesianTotal:Number(document.getElementById('cartesianTotal')?.value||0),peakActivationPerHour:Number(document.getElementById('peakActivationPerHour')?.value||0),activeJourneys:Number(document.getElementById('activeJourneys')?.value||0),channelQps:Number(document.getElementById('channelQps')?.value||0)}};}
+function selectRule(rules,dau,events,audience){for(const r of rules){if(dau<=r.maxDau&&events<=r.maxEvents&&(audience==null||!r.maxAudience||audience<=r.maxAudience))return{rule:r,special:false};}return{rule:null,special:true};}
+function deepClone(o){return JSON.parse(JSON.stringify(o));}
+function retentionDays(value,unit){const v=Math.max(1,Number(value||1));if(unit==='months')return Math.round(v*30);if(unit==='days')return Math.round(v);return Math.round(v*365);}
+function fmtGb(v){if(v==null||isNaN(v))return'-';if(v>=1024)return (v/1024).toFixed(v%1024===0?0:1)+' TB';return Math.round(v)+' GB';}
+function ceilTo(v,step){return Math.ceil(v/step)*step;}
+function cdpSequentialCapacityGb(rule){let total=0;if(!rule)return 0;(rule.nodes||[]).forEach(n=>(n.disks||[]).forEach(d=>{if(d[0]==='顺序数据盘')total+=Number(n.count||0)*Number(d[2]||0)*Number(d[3]||0);}));return total;}
+function cdpSequentialDiskUnits(rule){let total=0;if(!rule)return 0;(rule.nodes||[]).forEach(n=>(n.disks||[]).forEach(d=>{if(d[0]==='顺序数据盘')total+=Number(n.count||0)*Number(d[2]||0);}));return total;}
+function cdpSequentialNodeCount(rule){let total=0;if(!rule)return 0;(rule.nodes||[]).forEach(n=>{if((n.disks||[]).some(d=>d[0]==='顺序数据盘'))total+=Number(n.count||0);});return total;}
+function estimateCdpStorage(input,rule){
+ if(!rule||!input?.events)return null;
+ const days=retentionDays(input.retentionValue,input.retentionUnit);
+ const eventsYi=(input.events*days)/1e8;
+ const gbPer100M=Math.max(1,Number(input.eventGbPer100M||35));
+ const overhead=Math.max(1,Number(input.storageReplica||1.1));
+ const estimatedUsedGb=ceilTo(eventsYi*gbPer100M*overhead,100);
+ const utilization=Math.min(0.95,Math.max(0.5,Number(input.storageUtilization||0.8)));
+ const requiredGb=ceilTo(estimatedUsedGb/utilization,100);
+ const baselineGb=cdpSequentialCapacityGb(rule);
+ const targetGb=Math.max(requiredGb,baselineGb);
+ const seqNodeCount=cdpSequentialNodeCount(rule)||1;
+ const baseDiskUnits=cdpSequentialDiskUnits(rule)||seqNodeCount;
+ const baseDisksPerNode=Math.max(1,Math.ceil(baseDiskUnits/seqNodeCount));
+ const preferredMaxGb=Math.max(100,Number(input.maxSingleDisk||4096));
+ const configuredSeqDisks=Math.max(1,Number(input.seqDisksPerNode||10));
+ const allowCustomSeqDiskCount=String(rule.id||'').startsWith('CDP_STANDARD');
+ const maxDisksPerNode=allowCustomSeqDiskCount?Math.max(baseDisksPerNode,configuredSeqDisks):baseDisksPerNode;
+ let disksPerNode=baseDisksPerNode;
+ let perDiskGb=ceilTo(targetGb/(seqNodeCount*disksPerNode),100);
+ // Add disks on the selected Data Node template until the preferred per-disk cap is met or the per-node disk-count cap is reached.
+ while(perDiskGb>preferredMaxGb && disksPerNode<maxDisksPerNode){
+   disksPerNode++;
+   perDiskGb=ceilTo(targetGb/(seqNodeCount*disksPerNode),100);
+ }
+ const capacityAtLimits=seqNodeCount*maxDisksPerNode*preferredMaxGb;
+ const storagePressure=targetGb>capacityAtLimits || perDiskGb>preferredMaxGb;
+ const diskUnits=seqNodeCount*disksPerNode;
+ const finalGb=perDiskGb*diskUnits;
+ const adjusted=(finalGb>baselineGb)||(disksPerNode!==baseDisksPerNode);
+ const strategy=storagePressure?'need_more_data_nodes':(disksPerNode>baseDisksPerNode?'increase_disk_count':'increase_capacity');
+ const diskSizes=input.cdpDiskSizes||{};
+ return{days,eventsYi,gbPer100M,replica:overhead,overhead,estimatedUsedGb,utilization,requiredGb,baselineGb,targetGb,finalGb,perDiskGb,diskUnits,seqNodeCount,disksPerNode,baseDiskUnits,baseDisksPerNode,preferredMaxGb,configuredSeqDisks,maxDisksPerNode,neededDisksPerNode:Math.ceil(targetGb/(seqNodeCount*preferredMaxGb)),capacityAtLimits,adjusted,strategy,storagePressure,dataNodeScaleReview:storagePressure,diskSizes};
+}
+function cloneRuleWithDataNodeCount(rule,newCount,input){
+ const clone=deepClone(rule);
+ const oldNameCn=clone.name_cn||'CDP 标准集群';
+ const oldNameEn=clone.name_en||'CDP Standard Cluster';
+ clone.id='CDP_STANDARD_DYNAMIC_3_'+newCount;
+ clone.name_cn='CDP 标准集群（3+'+newCount+' 扩展）';
+ clone.name_en='CDP Standard Cluster (3+'+newCount+' Expanded)';
+ (clone.nodes||[]).forEach(n=>{
+   const hasSeq=(n.disks||[]).some(d=>d[0]==='顺序数据盘');
+   if(hasSeq){
+     n.count=newCount;
+     // Keep the CPU/memory profile from the selected Word/Excel template, but allow disk count to be recalculated.
+     (n.disks||[]).forEach(d=>{if(d[0]==='顺序数据盘'){d[2]=Math.max(Number(d[2]||6),Number(input.seqDisksPerNode||10));}});
+   }
+ });
+ clone._baseNameCn=oldNameCn; clone._baseNameEn=oldNameEn;
+ return clone;
+}
+function nextCdpRulesForStorage(baseRule,input){
+ const baseNodes=cdpSequentialNodeCount(baseRule)||0;
+ return DATA.cdpRules
+   .filter(r=>String(r.id||'').startsWith('CDP_STANDARD'))
+   .filter(r=>cdpSequentialNodeCount(r)>baseNodes)
+   .filter(r=>input.dau<=r.maxDau&&input.events<=r.maxEvents)
+   .sort((a,b)=>(cdpSequentialNodeCount(a)-cdpSequentialNodeCount(b)) || ((a.maxEvents||0)-(b.maxEvents||0)) || ((a.maxDau||0)-(b.maxDau||0)));
+}
+function selectCdpWithStorage(input){
+ const rules=DATA.cdpRules;
+ let baseIdx=-1;
+ for(let idx=0;idx<rules.length;idx++){
+   const r=rules[idx];
+   if(input.dau<=r.maxDau&&input.events<=r.maxEvents){baseIdx=idx;break;}
+ }
+ if(baseIdx<0)return{rule:null,special:true,storage:null,baseRule:null,dynamic:false};
+ let baseRule=rules[baseIdx];
+ let selectedRule=baseRule;
+ let selectedStorage=estimateCdpStorage(input,selectedRule);
+ let storageScaled=false;
+ if(selectedStorage?.storagePressure){
+   const candidates=nextCdpRulesForStorage(baseRule,input);
+   for(const r of candidates){
+     const st=estimateCdpStorage(input,r);
+     selectedRule=r; selectedStorage=st; storageScaled=true;
+     if(!st?.storagePressure)break;
+   }
+ }
+ const appliedRule=applyCdpStorage(selectedRule,selectedStorage);
+ return{rule:appliedRule,storage:selectedStorage,baseRule,special:false,dynamic:storageScaled};
+}
+function applyCdpStorage(rule,storage){
+ const clone=deepClone(rule);
+ const sizes=storage?.diskSizes||{};
+ (clone.nodes||[]).forEach(n=>(n.disks||[]).forEach(d=>{
+   if(d[0]==='顺序数据盘'){
+     if(storage){d[2]=storage.disksPerNode;d[3]=Math.max(Number(d[3]||0),Number(storage.perDiskGb||0));}
+   }else if(d[0]==='系统盘'&&sizes.system){
+     d[3]=Math.max(Number(d[3]||0),Number(sizes.system));
+   }else if(d[0]==='元数据盘'&&sizes.metadata){
+     d[3]=Math.max(Number(d[3]||0),Number(sizes.metadata));
+   }else if(d[0]==='随机数据盘'&&sizes.random){
+     d[3]=Math.max(Number(d[3]||0),Number(sizes.random));
+   }else if(d[0]==='数据接入暂存盘'&&sizes.ingest){
+     d[3]=Math.max(Number(d[3]||0),Number(sizes.ingest));
+   }
+ }));
+ return clone;
+}
+function storageRows(res){const s=res?.cdp?.storage;if(!s)return[];const k=LANG==='zh'?'项目':'Item',v=LANG==='zh'?'内容':'Value';return[
+{[k]:t('storagePeriod'),[v]:(res.input.retentionValue+' '+(res.input.retentionUnit==='years'?t('years'):res.input.retentionUnit==='months'?t('months'):t('days'))+' / '+s.days+' days')},
+{[k]:LANG==='zh'?'存储周期内事件量':'Estimated Events in Retention Period',[v]:fmt(res.input.events*s.days)},
+{[k]:t('estimatedStorageUsed'),[v]:fmtGb(s.estimatedUsedGb)},
+{[k]:t('eventGbPer100M'),[v]:s.gbPer100M+' GB'},
+{[k]:t('storageReplica'),[v]:s.overhead},
+{[k]:t('storageUtilization'),[v]:Math.round(s.utilization*100)+'%'},
+{[k]:t('usableCapacityRequired'),[v]:fmtGb(s.requiredGb)},
+{[k]:t('templateSeqStorage'),[v]:fmtGb(s.baselineGb)},
+{[k]:t('recommendedSeqStorage'),[v]:fmtGb(s.finalGb)+' ('+(LANG==='zh'?'每个数据节点':'per data node')+': '+s.disksPerNode+' × '+fmtGb(s.perDiskGb)+')'},
+{[k]:t('maxSingleDisk'),[v]:fmtGb(s.preferredMaxGb)},
+{[k]:t('seqDisksPerNode'),[v]:s.disksPerNode+' / '+s.maxDisksPerNode},
+{[k]:t('storageDiskPlan'),[v]:s.storagePressure?(LANG==='zh'?'已根据存储需求自动调整数据节点/顺序盘容量；如超过模板边界仍需专项复核':'Data nodes / sequential disk capacity have been adjusted based on storage demand; special review is still required if template boundaries are exceeded'):(s.adjusted?(LANG==='zh'?'已按估算容量和单盘建议上限调整节点规模/顺序盘容量':'Adjusted node scale / sequential disk capacity based on estimated capacity and preferred per-disk size'): (LANG==='zh'?'模板基线容量已覆盖估算需求':'Template baseline capacity covers the estimated requirement'))},
+{[k]:LANG==='zh'?'估算说明':'Estimation Note',[v]:t('storageFormulaNote')}
+];}
+function updateStoragePreview(storage){
+  return withLang(SYS_LANG,()=>{
+    const box=document.getElementById('storagePreview');
+    if(!box)return;
+    if(!storage){box.textContent=t('storagePreviewEmpty');return;}
+    box.textContent=(LANG==='zh'
+      ? `估算实际使用容量：${fmtGb(storage.estimatedUsedGb)}
+按 ${Math.round(storage.utilization*100)}% 使用率需配置：${fmtGb(storage.requiredGb)}
+模板基线顺序盘总容量：${fmtGb(storage.baselineGb)}
+最终建议顺序盘：${fmtGb(storage.finalGb)}（${storage.seqNodeCount} 个数据节点 × 每节点 ${storage.disksPerNode} 块 × ${fmtGb(storage.perDiskGb)}）
+单节点顺序盘数量上限：${storage.maxDisksPerNode} 块；顺序盘单盘建议上限：${fmtGb(storage.preferredMaxGb)}${storage.storagePressure?'（当前可用模板和单节点盘数上限内仍超过该建议上限，需进一步复核）':''}`
+      : `Estimated used storage: ${fmtGb(storage.estimatedUsedGb)}
+Provisioned capacity required at ${Math.round(storage.utilization*100)}% utilization: ${fmtGb(storage.requiredGb)}
+Template baseline sequential capacity: ${fmtGb(storage.baselineGb)}
+Final sequential disk plan: ${fmtGb(storage.finalGb)} (${storage.seqNodeCount} data nodes × ${storage.disksPerNode} disks/node × ${fmtGb(storage.perDiskGb)})
+Max sequential disks per node: ${storage.maxDisksPerNode}; preferred max size per sequential disk: ${fmtGb(storage.preferredMaxGb)}${storage.storagePressure?' (still exceeds the preferred limit within current templates and per-node disk-count setting; further review is required)':''}`);
+  });
+}
+function cloudInstance(node,cloud){
+  const primary=cloud.instanceMap[keyFor(node.vcpu,node.mem)]||('x86 instance >= '+node.vcpu+'C / '+node.mem+'G');
+  const memRatio=node.mem/node.vcpu;
+  let alt='';
+  if(cloud.id==='AWS'){
+    alt=memRatio>=8?(LANG==='zh'?'备选：目标区域可用的同等 r7a/r6i/r7i x86 内存型实例':'Alternative: r7a/r6i/r7i equivalent in target region'):(LANG==='zh'?'备选：目标区域可用的同等 m7a/m6i/c7i/c7a x86 实例':'Alternative: m7a/m6i or c7i/c7a equivalent if CPU-optimized is preferred');
+  }else if(cloud.id==='Azure'){
+    alt=memRatio>=8?(LANG==='zh'?'备选：目标区域可用的同等 Easv5/Esv6 内存型实例':'Alternative: Easv5/Esv6 equivalent if available'):(LANG==='zh'?'备选：目标区域可用的同等 Dasv5/Dsv6 或 Fsv2 实例':'Alternative: Dasv5/Dsv6 or Fsv2 equivalent if available');
+  }else if(cloud.id==='GCP'){
+    alt=memRatio>=8?(LANG==='zh'?'备选：目标区域可用的同等 N2D highmem / C3D highmem 实例':'Alternative: N2D highmem / C3D highmem equivalent if available'):(LANG==='zh'?'备选：目标区域可用的同等 N2D / C3 / C3D 实例':'Alternative: N2D / C3 / C3D equivalent if available');
+  }else if(cloud.id==='Alibaba'){
+    alt=LANG==='zh'?'备选：目标区域可用的同等或更高规格 x86 g/r 实例':'Alternative: equivalent or higher x86 g/r instance available in the target region';
+  }else{
+    alt=LANG==='zh'?'备选：目标区域可用的同等或更高 vCPU/内存 x86 ECS':'Alternative: equivalent or higher vCPU/memory x86 ECS in the target region';
+  }
+  return (LANG==='zh'?'首选：':'Primary: ')+primary+'\n'+alt;
+}
+function displayRole(product,node){let role=LANG==='zh'?node.role_cn:node.role_en;if(product==='CDP'){if(LANG==='zh'){if(role.includes('混合'))role='CDP 混合节点';else if(role.includes('元数据'))role='CDP 元数据节点';else if(role.includes('数据'))role='CDP 数据节点';}else{if(role.includes('Mixed'))role='CDP Mixed Node';else if(role.includes('Metadata'))role='CDP Metadata Node';else if(role.includes('Data'))role='CDP Data Node';}}else if(product==='MA'){if(LANG==='zh'){if(role.includes('混合'))role='MA 混合节点';else if(role.includes('元数据'))role='MA 元数据节点';else if(role.includes('在线'))role='MA 在线节点';else if(role.includes('数据'))role='MA 数据节点';}else{if(role.includes('Mixed'))role='MA Mixed Node';else if(role.includes('Metadata'))role='MA Metadata Node';else if(role.includes('Online'))role='MA Online Node';else if(role.includes('Data'))role='MA Data Node';}}return role;}function buildNodeRows(product,rule,cloud){if(!rule)return[];const rows=[];for(const node of rule.nodes){const base={Product:product,Role:displayRole(product,node),Nodes:node.count,CPU:node.vcpu+' vCPU',Memory:node.mem+' GB',Instance:cloudInstance(node,cloud)};(node.disks||[]).forEach((d,i)=>{const row={...base,DiskPurpose:diskName(d),DiskCount:d[2],DiskSize:gb(d[3]),DiskType:diskCloudType(d,cloud)};if(i>0){row.Product=row.Role=row.Nodes=row.CPU=row.Memory=row.Instance='';}rows.push(row);});}return rows;}
+function limitWarning(product,input){
+ const isCdp=product==='CDP';
+ const maxDau=isCdp?22000000:20000000;
+ const maxEvents=isCdp?1600000000:1000000000;
+ const maxAudience=isCdp?null:500000000;
+ const reasons=[];
+ if(input.dau>maxDau)reasons.push(LANG==='zh'?('平均日活 DAU 超过模板上限 '+fmt(maxDau)):('DAU exceeds the template limit '+fmt(maxDau)));
+ if(input.events>maxEvents){
+   if(input.manualEvents>0)reasons.push(LANG==='zh'?('日事件量（手动输入）超过模板上限 '+fmt(maxEvents)):('Daily event volume (manual input) exceeds the template limit '+fmt(maxEvents)));
+   else reasons.push(LANG==='zh'?('预估日事件量超过模板上限 '+fmt(maxEvents)+'，可调整单用户日事件数或输入实际日事件量后重新评估'):('Estimated daily event volume exceeds the template limit '+fmt(maxEvents)+'. Adjust events per active user or enter the actual daily event volume to recalculate'));
+ }
+ if(!isCdp&&input.dailyAudience&&input.dailyAudience>maxAudience)reasons.push(LANG==='zh'?('MA 每天受众上限超过模板上限 '+fmt(maxAudience)):('Daily audience limit for MA exceeds the template limit '+fmt(maxAudience)));
+ if(isCdp&&reasons.length)reasons.push(t('dataNodeScaleNote'));return product+': '+(reasons.length?reasons.join('；'):(LANG==='zh'?'超出自动评估范围，需要专项评估':'Out of automatic sizing range. Special evaluation is required.'));
+}
+function calculate(){const input=getInputs();if(!input.dau){document.getElementById('result').innerHTML='<div class="error">'+t('noInput')+'</div>';document.getElementById('report').innerHTML='';updateStoragePreview(null);return;}let cdp=selectCdpWithStorage(input);if(cdp.rule){updateStoragePreview(cdp.storage);}else{updateStoragePreview(null);}const ma=input.includeMA?selectRule(DATA.maRules,input.dau,input.events,input.dailyAudience):null;const warnings=[];if(cdp.special)warnings.push('ERROR:'+limitWarning('CDP',input));if(!cdp.special&&cdp.storage?.storagePressure)warnings.push('ERROR:'+(LANG==='zh'?'CDP 顺序盘容量在当前文档内置的 3+6 模板、单盘规划上限和单节点顺序盘数量上限下仍无法满足。请提高单盘规划上限、提高单节点顺序盘数量上限，或进行专项评估。':'CDP sequential storage cannot be satisfied within the built-in 3+6 template, preferred per-disk size cap and per-node sequential disk limit. Increase the preferred disk size cap, increase sequential disks per node, or perform special review.'));if(ma?.special)warnings.push('ERROR:'+limitWarning('MA',input));if(input.includeMA&&(input.advanced.length>0||Object.values(input.advParams).some(v=>v>0)))warnings.push(t('warningAdvanced'));lastResult={input,cdp,ma,warnings};const diskIssues=validateCloudDiskPlan(lastResult);diskIssues.forEach(x=>warnings.push((x.level==='error'?'ERROR:':'')+x.msg));lastResult.warnings=warnings;renderAll();}
+function renderAll(){if(!lastResult)return;document.getElementById('result').innerHTML=buildReportHtml(lastResult);const r=document.getElementById('report');if(r)r.innerHTML='';}
+function buildResultSummary(res){const i=res.input;const eventLabel=i.manualEvents>0?t('manualDailyEvents'):t('estimatedDailyEvents');let html='<div class="kpis"><div class="kpi"><div>DAU</div><div class="v">'+fmt(i.dau)+'</div></div><div class="kpi"><div>'+eventLabel+'</div><div class="v">'+fmt(i.events)+'</div></div><div class="kpi"><div>CDP</div><div class="v">'+(res.cdp.rule?(LANG==='zh'?res.cdp.rule.name_cn:res.cdp.rule.name_en):t('special'))+'</div></div><div class="kpi"><div>MA</div><div class="v">'+(!i.includeMA?'-':(res.ma.rule?(LANG==='zh'?res.ma.rule.name_cn:res.ma.rule.name_en):t('special')))+'</div></div></div>';html+=warningHtml(res.warnings);html+='<div class="note">'+t('regionNote')+'</div>';return html;}
+function htmlTable(headers,rows,cls=''){let s='<table class="'+cls+'"><thead><tr>'+headers.map(h=>'<th>'+h+'</th>').join('')+'</tr></thead><tbody>';rows.forEach(r=>{s+='<tr>'+headers.map(h=>'<td>'+(((r[h]??'')+'').replace(/\n/g,'<br>'))+'</td>').join('')+'</tr>';});return s+'</tbody></table>'; }
+function summaryRows(res){const i=res.input,rows=[];const add=(k,v)=>rows.push({[LANG==='zh'?'项目':'Item']:k,[LANG==='zh'?'内容':'Value']:v});add(LANG==='zh'?'客户名称':'Customer Name',i.customerName||'-');add(LANG==='zh'?'云厂商':'Cloud Vendor',i.cloud.name);add(LANG==='zh'?'区域':'Region',i.region.id+' ('+i.region.label+')');if(!i.dauInput&&i.mau){add('MAU',fmt(i.mau));add(LANG==='zh'?'行业场景（仅用于估算 DAU）':'Industry (for DAU estimation only)',industryName(i.industry));add(LANG==='zh'?'DAU/MAU 比例（估算假设）':'DAU/MAU Ratio (estimation assumption)',Math.round(i.ratio*100)+'%');}add('DAU',fmt(i.dau));add(LANG==='zh'?'单用户日事件数':'Events per Active User per Day',i.eventsPerUser);add(i.manualEvents>0?t('manualDailyEvents'):t('estimatedDailyEvents'),fmt(i.events));if(i.dailyAudience)add(LANG==='zh'?'MA 每天受众上限':'Daily Audience Limit for MA',fmt(i.dailyAudience));add(t('includedProducts'),['CDP',i.includeMA?'MA':null].filter(Boolean).join(' + '));add(t('supportingComponents'),i.includeETL?t('etlNodes'):'-');return rows;}
+function configRows(res){const i=res.input;let rows=[];if(res.cdp.rule)rows=rows.concat(buildNodeRows('CDP',res.cdp.rule,i.cloud));if(i.includeMA&&res.ma?.rule)rows=rows.concat(buildNodeRows('MA',res.ma.rule,i.cloud));if(i.includeETL)rows=rows.concat(buildNodeRows(t('etlNodes'),DATA.etlRule,i.cloud));return rows;}
+function diskPerfRows(){return DATA.diskPerf.map(r=>({[LANG==='zh'?'磁盘用途':'Disk Purpose']:LANG==='zh'?r[1]:r[0],[LANG==='zh'?'最低性能要求':'Minimum Requirement']:r[2]+'; '+r[3]}));}
+function priceRows(){if(!lastResult?.input.includePriceExport)return[];const i=lastResult.input,rows=[];const itemKey=LANG==='zh'?'项目':'Item', valueKey=LANG==='zh'?'内容':'Value';rows.push({[itemKey]:t('priceSource'),[valueKey]:cloudPriceSource(i.cloud)});rows.push({[itemKey]:'Status',[valueKey]:lastPrice.status});rows.push({[itemKey]:'Calculator',[valueKey]:i.cloud.calculator});if(lastPrice.lines?.length)lastPrice.lines.forEach(x=>rows.push({[itemKey]:x.name||'Price',[valueKey]:x.value||x}));else rows.push({[itemKey]:'Note',[valueKey]:(LANG==='zh'?'未获取实时报价。价格仅作可选参考。':'Real-time price has not been fetched. Price is optional reference only.')});if(lastPrice.notes?.length)lastPrice.notes.forEach((n,idx)=>rows.push({[itemKey]:(LANG==='zh'?'价格备注 ':'Pricing note ')+(idx+1),[valueKey]:n}));rows.push({[itemKey]:LANG==='zh'?'价格说明':'Pricing disclaimer',[valueKey]:t('priceSourceNote')});return rows;}
+function cfgHeaders(i){const h=[t('component'),LANG==='zh'?'节点类型':'Role',LANG==='zh'?'节点数量':'Nodes','CPU',LANG==='zh'?'内存':'Memory'];if(i.includeInstanceType)h.push(t('cloudInstanceOptions'));h.push(LANG==='zh'?'磁盘用途':'Disk Purpose',LANG==='zh'?'磁盘数量':'Disk Count',LANG==='zh'?'单盘容量':'Disk Size',LANG==='zh'?'云盘类型':'Cloud Disk Type');return h;}
+function cfgRowsForReport(res){const h=cfgHeaders(res.input);return configRows(res).map(r=>{const obj={};obj[h[0]]=r.Product;obj[h[1]]=r.Role;obj[h[2]]=r.Nodes;obj[h[3]]=r.CPU;obj[h[4]]=r.Memory;let idx=5;if(res.input.includeInstanceType)obj[h[idx++]]=r.Instance;obj[h[idx++]]=r.DiskPurpose;obj[h[idx++]]=r.DiskCount;obj[h[idx++]]=r.DiskSize;obj[h[idx++]]=r.DiskType;return obj;});}
+function buildReportHtml(res){const sum=summaryRows(res),cfg=cfgRowsForReport(res);let html='<div class="report-title">'+baseReportTitle()+'</div>';const pf=preparedForText(res.input);if(pf)html+='<div class="small" style="font-weight:700;margin:-4px 0 12px;color:#045C43">'+pf+'</div>';html+=warningHtml(res.warnings);html+='<div class="report-section-title">'+t('summary')+'</div>'+htmlTable(Object.keys(sum[0]),sum,'summary-table');html+='<div class="report-section-title">'+(LANG==='zh'?'配置明细':'Configuration Details')+'</div>'+htmlTable(cfgHeaders(res.input),cfg,'config-table');if(res.input.includeETL)html+='<div class="note">'+t('etlNote')+'</div>';html+='<div class="report-section-title">'+t('disk')+'</div>'+htmlTable(Object.keys(diskPerfRows()[0]),diskPerfRows(),'perf-table');const pr=priceRows();if(pr.length)html+='<div class="report-section-title">'+t('price')+'</div>'+htmlTable(Object.keys(pr[0]),pr,'price-table');html+='<div class="small">'+t('tableNote')+'</div>';return html;}
+async function tryFetchPrice(){
+ const i=getInputs();
+ lastPrice={status:'reference_only',lines:[],notes:[i.cloud.pricing]};
+ const calcMsg=(LANG==='zh'?'最终价格请以云厂商官方计算器/控制台/合同报价为准。':'Final pricing should be confirmed with the official cloud calculator, console or contract quotation.');
+ if(i.cloud.id==='Azure'){
+   lastPrice.status='live_api_attempt';
+   try{
+     const rows=configRows({input:i,cdp:selectCdpWithStorage(i),ma:i.includeMA?selectRule(DATA.maRules,i.dau,i.events,i.dailyAudience):null});
+     const skus=[...new Set(rows.map(r=>r.Instance).filter(Boolean))];
+     for(const sku of skus.slice(0,8)){
+       const filter="serviceName eq 'Virtual Machines' and armRegionName eq '"+i.region.id+"' and priceType eq 'Consumption' and armSkuName eq '"+sku+"'";
+       const url='https://prices.azure.com/api/retail/prices?api-version=2023-01-01-preview&$filter='+encodeURIComponent(filter);
+       try{
+         const resp=await fetch(url);
+         if(resp.ok){
+           const data=await resp.json();
+           const items=(data.Items||[]).filter(x=>String(x.productName||'').toLowerCase().indexOf('windows')<0 && String(x.meterName||'').toLowerCase().indexOf('spot')<0);
+           const item=items[0]||(data.Items||[])[0];
+           if(item){lastPrice.lines.push({name:sku,value:item.retailPrice+' '+item.currencyCode+' / '+item.unitOfMeasure+' ('+(item.armRegionName||i.region.id)+')'});}
+         }
+       }catch(e){lastPrice.lines.push({name:sku,value:LANG==='zh'?'浏览器中获取失败，请使用 Azure 官方计算器确认。':'Failed in browser; confirm with Azure official calculator.'});}
+     }
+     lastPrice.status=lastPrice.lines.length?'live_api_result':'live_api_no_match';
+     lastPrice.notes.push(LANG==='zh'?'Azure 价格来自 Retail Prices API 的按小时零售价，不包含折扣、预留实例、Savings Plan、税费、带宽和服务费。':'Azure prices are hourly retail prices from the Retail Prices API and exclude discounts, reservations, savings plans, tax, bandwidth and service fees.');
+   }catch(e){lastPrice.status='live_api_failed';lastPrice.lines.push({name:'Live API',value:LANG==='zh'?'获取失败，请使用官方计算器确认。':'Failed. Use the official calculator.'});}
+ } else if(i.cloud.id==='AWS'){
+   lastPrice.status='official_calculator_required';
+   lastPrice.notes.push(LANG==='zh'?'AWS 有 Price List API，但纯本地浏览器直接稳定查询多规格价格不可靠，建议使用 AWS Pricing Calculator 或通过 CLI/后端服务查询后导入。':'AWS provides a Price List API, but stable multi-SKU queries from a local browser are not reliable. Use AWS Pricing Calculator or query via CLI/backend service.');
+ } else if(i.cloud.id==='GCP'){
+   lastPrice.status='official_calculator_required';
+   lastPrice.notes.push(LANG==='zh'?'Google Cloud 价格建议通过官方计算器或 Cloud Billing Catalog/Pricing API 确认；API 方式通常需要凭证或额外配置。':'Google Cloud pricing should be confirmed via the official calculator or Cloud Billing Catalog/Pricing APIs, which usually require credentials or extra setup.');
+ } else if(i.cloud.id==='Alibaba'){
+   lastPrice.status='signed_api_or_calculator_required';
+   lastPrice.notes.push(LANG==='zh'?'阿里云 ECS DescribePrice API 需要签名和凭证，纯本地页面不应内置密钥，建议使用官方计算器或由后端服务查询。':'Alibaba Cloud ECS DescribePrice requires signed API credentials. A local page should not embed keys; use the official calculator or a backend service.');
+ } else {
+   lastPrice.status='official_calculator_required';
+   lastPrice.notes.push(LANG==='zh'?'该云厂商价格建议以目标海外区域控制台、官方计算器或合同报价为准。':'Pricing should be confirmed in the target international region console, official calculator or contract quotation.');
+ }
+ alert((LANG==='zh'?'价格状态已更新。':'Price status updated.')+'\n'+cloudPriceSource(i.cloud)+'\n'+calcMsg+'\n'+i.cloud.calculator);
+ if(i.cloud.calculator)window.open(i.cloud.calculator,'_blank');
+ calculate();
+}
+function ensureReport(){if(!lastResult){alert(t('noReport'));return false;}return true;}
+function confirmExport(kind){const i=lastResult.input;const products=['CDP',i.includeMA?'MA':null].filter(Boolean).join(' + ');const support=i.includeETL?t('etlNodes'):'-';const lines=[t('confirmDownload'),t('cloud')+': '+i.cloud.name,t('region')+': '+i.region.id+' ('+i.region.label+')',t('includedProducts')+': '+products,t('supportingComponents')+': '+support,(LANG==='zh'?'文件类型':'File type')+': '+kind];return confirm(lines.join('\n'));}
+function downloadExcel(){if(!ensureReport()||!confirmExport('Excel'))return;const res=lastResult,wb=XLSX.utils.book_new(),ws={},aoa=[],merges=[],styles=[];function addTitle(txt){const r=aoa.length;aoa.push([txt]);merges.push({s:{r,c:0},e:{r,c:10}});styles.push({r,c:0,type:'title'});}function addSection(txt){const r=aoa.length;aoa.push([txt]);merges.push({s:{r,c:0},e:{r,c:10}});styles.push({r,c:0,type:'section'});}function addTable(rows){if(!rows.length)return;const headers=Object.keys(rows[0]);const hr=aoa.length;aoa.push(headers);headers.forEach((_,c)=>styles.push({r:hr,c,type:'header'}));rows.forEach(row=>aoa.push(headers.map(h=>row[h])));aoa.push([]);}addTitle(baseReportTitle());if(res.input.customerName)addTitle(preparedForText(res.input));addSection(t('summary'));addTable(summaryRows(res));addSection(LANG==='zh'?'配置明细':'Configuration Details');addTable(cfgRowsForReport(res));addSection(t('disk'));addTable(diskPerfRows());const pr=priceRows();if(pr.length){addSection(t('price'));addTable(pr);}addSection(LANG==='zh'?'说明':'Notes');addTable(noteRows(res));XLSX.utils.sheet_add_aoa(ws,aoa,{origin:'A1'});ws['!merges']=merges;ws['!cols']=[{wch:18},{wch:26},{wch:24},{wch:12},{wch:12},{wch:14},{wch:26},{wch:22},{wch:12},{wch:12},{wch:32}];const range=XLSX.utils.decode_range(ws['!ref']);for(let R=range.s.r;R<=range.e.r;++R){for(let C=range.s.c;C<=range.e.c;++C){const addr=XLSX.utils.encode_cell({r:R,c:C});if(!ws[addr])continue;ws[addr].s={alignment:{vertical:'top',wrapText:true},border:{top:{style:'thin',color:{rgb:'D7DEEA'}},bottom:{style:'thin',color:{rgb:'D7DEEA'}},left:{style:'thin',color:{rgb:'D7DEEA'}},right:{style:'thin',color:{rgb:'D7DEEA'}}}};}}styles.forEach(st=>{const addr=XLSX.utils.encode_cell({r:st.r,c:st.c});if(!ws[addr])return;if(st.type==='title')ws[addr].s={font:{bold:true,color:{rgb:'FFFFFF'},sz:16},fill:{fgColor:{rgb:'00A870'}},alignment:{vertical:'center',horizontal:'center'},border:{top:{style:'thin',color:{rgb:'00A870'}},bottom:{style:'thin',color:{rgb:'00A870'}},left:{style:'thin',color:{rgb:'00A870'}},right:{style:'thin',color:{rgb:'00A870'}}}};if(st.type==='section')ws[addr].s={font:{bold:true,color:{rgb:'045C43'}},fill:{fgColor:{rgb:'DDF5EB'}},border:{top:{style:'thin',color:{rgb:'A9DCC8'}},bottom:{style:'thin',color:{rgb:'A9DCC8'}},left:{style:'thin',color:{rgb:'A9DCC8'}},right:{style:'thin',color:{rgb:'A9DCC8'}}}};if(st.type==='header')ws[addr].s={font:{bold:true,color:{rgb:'172033'}},fill:{fgColor:{rgb:'E8F7F0'}},alignment:{vertical:'center',wrapText:true},border:{top:{style:'thin',color:{rgb:'A9DCC8'}},bottom:{style:'thin',color:{rgb:'A9DCC8'}},left:{style:'thin',color:{rgb:'A9DCC8'}},right:{style:'thin',color:{rgb:'A9DCC8'}}}};});XLSX.utils.book_append_sheet(wb,ws,LANG==='zh'?'配置建议':'Configuration');XLSX.writeFile(wb,(res.input.customerName||'SensorsData')+'_Cloud_Sizing_v4.0.xlsx');}
+function reportStandaloneHtml(){const css='<style>@page{size:A4 landscape;margin:0.28in}*{-webkit-print-color-adjust:exact!important;print-color-adjust:exact!important}body{font-family:Arial,\"Noto Sans\",sans-serif;color:#172033;margin:0}.report-title{font-size:20px;font-weight:800;margin:0 0 12px;color:#045C43}table{border-collapse:collapse;width:100%;margin:8px 0 16px;table-layout:fixed}.config-table th,.config-table td{font-size:8.5px;word-break:break-word}.summary-table th,.summary-table td,.perf-table th,.perf-table td,.price-table th,.price-table td{font-size:10px;word-break:break-word}th,td{border:1px solid #A9DCC8;padding:5px 6px;vertical-align:top}th{background:#E8F7F0!important;text-align:left;color:#045C43!important}.report-section-title{background:#DDF5EB!important;color:#045C43!important;padding:6px 8px;margin-top:14px;font-weight:800}.warning{border-left:4px solid #b45309;background:#fffbeb;padding:8px 10px;margin:8px 0}.small{font-size:9px;color:#65738a}</style>';return '<!doctype html><html><head><meta charset="utf-8">'+css+'</head><body>'+buildReportHtml(lastResult)+'</body></html>';}
+function xmlEscape(v){return String(v??'').replace(/[&<>"']/g,function(ch){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&apos;'}[ch];});}
+function wRunText(text,opt={}){const size=opt.size||20,color=opt.color||'172033',bold=opt.bold?'<w:b/>':'';const parts=String(text??'').split(/\n/);let body='';parts.forEach((part,i)=>{if(i>0)body+='<w:br/>';body+='<w:t xml:space="preserve">'+xmlEscape(part)+'</w:t>';});return '<w:r><w:rPr><w:rFonts w:ascii="Arial" w:hAnsi="Arial" w:eastAsia="Microsoft YaHei"/><w:sz w:val="'+size+'"/><w:color w:val="'+color+'"/>'+bold+'</w:rPr>'+body+'</w:r>';}
+function wPara(text,opt={}){let pPr='';if(opt.align)pPr+='<w:jc w:val="'+opt.align+'"/>';if(opt.spacing)pPr+='<w:spacing w:after="'+opt.spacing+'"/>';if(opt.shade)pPr+='<w:shd w:fill="'+opt.shade+'"/>';if(opt.keepNext)pPr+='<w:keepNext/>';return '<w:p><w:pPr>'+pPr+'</w:pPr>'+wRunText(text,opt)+'</w:p>';}
+function wCell(content,opt={}){const shade=opt.shade?'<w:shd w:fill="'+opt.shade+'"/>':'';const width=opt.width?'<w:tcW w:w="'+opt.width+'" w:type="pct"/>':'';const vAlign='<w:vAlign w:val="top"/>';const mar='<w:tcMar><w:top w:w="80" w:type="dxa"/><w:left w:w="80" w:type="dxa"/><w:bottom w:w="80" w:type="dxa"/><w:right w:w="80" w:type="dxa"/></w:tcMar>';return '<w:tc><w:tcPr>'+width+shade+vAlign+mar+'</w:tcPr>'+content+'</w:tc>';}
+function wTable(headers,rows,opt={}){if(!rows||!rows.length)return '';const fontSize=opt.fontSize|| (headers.length>8?15:18);const cellW=Math.max(350,Math.floor(5000/headers.length));let xml='<w:tbl><w:tblPr><w:tblW w:w="5000" w:type="pct"/><w:tblLayout w:type="autofit"/><w:tblBorders><w:top w:val="single" w:sz="4" w:color="A9DCC8"/><w:left w:val="single" w:sz="4" w:color="A9DCC8"/><w:bottom w:val="single" w:sz="4" w:color="A9DCC8"/><w:right w:val="single" w:sz="4" w:color="A9DCC8"/><w:insideH w:val="single" w:sz="4" w:color="A9DCC8"/><w:insideV w:val="single" w:sz="4" w:color="A9DCC8"/></w:tblBorders><w:tblCellMar><w:top w:w="70" w:type="dxa"/><w:left w:w="70" w:type="dxa"/><w:bottom w:w="70" w:type="dxa"/><w:right w:w="70" w:type="dxa"/></w:tblCellMar></w:tblPr>';
+xml+='<w:tr><w:trPr><w:tblHeader/></w:trPr>'+headers.map(h=>wCell(wPara(h,{bold:true,color:'045C43',size:fontSize,spacing:0}),{shade:'E8F7F0',width:cellW})).join('')+'</w:tr>';
+rows.forEach(r=>{xml+='<w:tr>'+headers.map(h=>wCell(wPara(r[h]??'',{size:fontSize,spacing:0}),{width:cellW})).join('')+'</w:tr>';});return xml+'</w:tbl>'+wPara('',{size:4,spacing:80});}
+function buildDocxXml(){const res=lastResult;const sum=summaryRows(res),cfg=cfgRowsForReport(res),perf=diskPerfRows(),pr=priceRows();let body='';body+=wPara(baseReportTitle(),{bold:true,color:'045C43',size:30,spacing:120});if(res.input.customerName)body+=wPara(preparedForText(res.input),{bold:true,color:'045C43',size:20,spacing:120});if(res.warnings.length){res.warnings.forEach(w=>{const isErr=String(w).startsWith('ERROR:');body+=wPara(cleanWarningText(w),{color:isErr?'b91c1c':'b45309',size:18,shade:isErr?'FEF2F2':'FFFBEB',spacing:80});});}
+body+=wPara(t('summary'),{bold:true,color:'045C43',size:22,shade:'DDF5EB',spacing:80,keepNext:true});body+=wTable(Object.keys(sum[0]),sum,{fontSize:19});
+
+body+=wPara(LANG==='zh'?'配置明细':'Configuration Details',{bold:true,color:'045C43',size:22,shade:'DDF5EB',spacing:80,keepNext:true});body+=wTable(cfgHeaders(res.input),cfg,{fontSize:14});
+body+=wPara(t('disk'),{bold:true,color:'045C43',size:22,shade:'DDF5EB',spacing:80,keepNext:true});body+=wTable(Object.keys(perf[0]),perf,{fontSize:18});
+if(pr.length){body+=wPara(t('price'),{bold:true,color:'045C43',size:22,shade:'DDF5EB',spacing:80,keepNext:true});body+=wTable(Object.keys(pr[0]),pr,{fontSize:18});}
+body+=wPara(LANG==='zh'?'说明':'Notes',{bold:true,color:'045C43',size:22,shade:'DDF5EB',spacing:80,keepNext:true});body+=wTable(Object.keys(noteRows(res)[0]),noteRows(res),{fontSize:17});body+=wPara(t('tableNote'),{color:'65738a',size:16,spacing:80});
+body+='<w:sectPr><w:pgSz w:w="16838" w:h="11906" w:orient="landscape"/><w:pgMar w:top="720" w:right="720" w:bottom="720" w:left="720" w:header="360" w:footer="360" w:gutter="0"/></w:sectPr>';
+return '<?xml version="1.0" encoding="UTF-8" standalone="yes"?><w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main"><w:body>'+body+'</w:body></w:document>';}
+async function downloadWord(){if(!ensureReport()||!confirmExport('Word .docx'))return;if(typeof JSZip==='undefined'){alert(LANG==='zh'?'无法加载 DOCX 生成库，请检查网络或使用 Excel/PDF 导出。':'DOCX generation library is not loaded. Please check the network or export Excel/PDF instead.');return;}const zip=new JSZip();zip.file('[Content_Types].xml','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Types xmlns="http://schemas.openxmlformats.org/package/2006/content-types"><Default Extension="rels" ContentType="application/vnd.openxmlformats-package.relationships+xml"/><Default Extension="xml" ContentType="application/xml"/><Override PartName="/word/document.xml" ContentType="application/vnd.openxmlformats-officedocument.wordprocessingml.document.main+xml"/></Types>');zip.folder('_rels').file('.rels','<?xml version="1.0" encoding="UTF-8" standalone="yes"?><Relationships xmlns="http://schemas.openxmlformats.org/package/2006/relationships"><Relationship Id="rId1" Type="http://schemas.openxmlformats.org/officeDocument/2006/relationships/officeDocument" Target="word/document.xml"/></Relationships>');zip.folder('word').file('document.xml',buildDocxXml());const blob=await zip.generateAsync({type:'blob',mimeType:'application/vnd.openxmlformats-officedocument.wordprocessingml.document'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download=(lastResult.input.customerName||'SensorsData')+'_Cloud_Sizing_v4.0.docx';a.click();URL.revokeObjectURL(a.href);}
+function downloadPDF(){if(!ensureReport()||!confirmExport(LANG==='zh'?'PDF（打开打印页面）':'PDF / Print Dialog'))return;const w=window.open('','_blank');w.document.write(reportStandaloneHtml());w.document.close();w.focus();setTimeout(()=>w.print(),300);}
+function compactEvaluationRecord(){if(!lastResult)return null;const i=lastResult.input;const customer=(document.getElementById('customerName')?.value||i.customerName||'').trim();return{time:new Date().toISOString(),customer:customer,cloud:i.cloud.name,region:i.region.id,dau:Math.round(i.dau),dailyEvents:Math.round(i.events),products:['CDP',i.includeMA?'MA':null].filter(Boolean).join('+'),etl:i.includeETL?'Y':'N',cdp:lastResult.cdp.rule?(LANG==='zh'?lastResult.cdp.rule.name_cn:lastResult.cdp.rule.name_en):'Special Assessment',ma:(!i.includeMA?'-':(lastResult.ma?.rule?(LANG==='zh'?lastResult.ma.rule.name_cn:lastResult.ma.rule.name_en):'Special Assessment'))};}
+function getLocalRecords(){try{return JSON.parse(localStorage.getItem('sd_cloud_sizing_records')||'[]');}catch(e){return[];}}
+function setLocalRecords(rows){localStorage.setItem('sd_cloud_sizing_records',JSON.stringify(rows));}
+function saveEvaluation(){calculate();if(!ensureReport())return;const rows=getLocalRecords();rows.unshift(compactEvaluationRecord());setLocalRecords(rows.slice(0,200));const panel=document.getElementById('recordsPanel');if(panel)panel.open=true;alert(LANG==='zh'?'已保存到当前浏览器本地记录。':'Saved to local records in this browser.');viewLogs();}
+function viewLogs(){const rows=getLocalRecords();const box=document.getElementById('logBox');if(!box)return;box.style.display='block';if(!rows.length){box.textContent=LANG==='zh'?'暂无本地记录。':'No local records.';return;}box.textContent=rows.slice(0,20).map((r,idx)=>`${idx+1}. ${r.time} | ${r.customer||'-'} | ${r.cloud} | ${r.region} | DAU ${r.dau} | Events ${r.dailyEvents} | ${r.products} | ETL ${r.etl}`).join('\n');}
+function exportLogs(){const rows=getLocalRecords();if(!rows.length){alert(LANG==='zh'?'暂无本地记录。':'No local records.');return;}const headers=Object.keys(rows[0]);const csv=[headers.join(',')].concat(rows.map(r=>headers.map(h=>'"'+String(r[h]??'').replace(/"/g,'""')+'"').join(','))).join('\n');const blob=new Blob([csv],{type:'text/csv;charset=utf-8'});const a=document.createElement('a');a.href=URL.createObjectURL(blob);a.download='SensorsData_Cloud_Sizing_Local_Records.csv';a.click();URL.revokeObjectURL(a.href);}
+function clearLogs(){if(confirm(LANG==='zh'?'确认清空当前浏览器本地记录？':'Clear all local records in this browser?')){localStorage.removeItem('sd_cloud_sizing_records');viewLogs();}}
+
+
+/* ===== v3.0 provider-aware disk planning overrides ===== */
+function providerProfile(cloudId){
+  const profiles={
+    AWS:{
+      id:'AWS', seqDefault:10, seqAutoLimit:10, preferredSeqDiskGb:8192, singleDiskMaxGb:65536,
+      hardDataDisks:27, recommendedDataDisks:16,
+      sequentialDisk:{zh:'gp3 通用型 SSD（可预配置吞吐/IOPS）',en:'gp3 General Purpose SSD (provision throughput/IOPS as needed)'},
+      metadataDisk:{zh:'gp3 通用型 SSD（需预配置 ≥5000 IOPS / ≥150MiB/s）或 io2',en:'gp3 SSD with provisioned >=5000 IOPS / >=150MiB/s, or io2'},
+      note:{zh:'AWS gp3 单盘 1GiB–64TiB，基础 3000 IOPS / 125MiB/s，可按需配置到更高 IOPS/吞吐；EBS 挂载数量取决于实例类型，工具按保守 27 块数据盘校验。RAID/多盘超过 8 块收益可能递减。',en:'AWS gp3 supports 1GiB–64TiB, baseline 3000 IOPS / 125MiB/s and provisioned higher IOPS/throughput. EBS volume attachment depends on instance type; this tool uses a conservative 27-data-disk check. RAID/multi-volume arrays above 8 disks can have diminishing returns.'}
+    },
+    Azure:{
+      id:'Azure', seqDefault:10, seqAutoLimit:10, preferredSeqDiskGb:8192, singleDiskMaxGb:65536,
+      hardDataDisks:null, recommendedDataDisks:null,
+      sequentialDisk:{zh:'Premium SSD v2（可配置 IOPS/吞吐）',en:'Premium SSD v2 (configurable IOPS/throughput)'},
+      metadataDisk:{zh:'Premium SSD v2 / Premium SSD（按需配置 ≥5000 IOPS）',en:'Premium SSD v2 / Premium SSD (provision >=5000 IOPS as needed)'},
+      note:{zh:'Azure Premium SSD v2 单盘最高 65,536GiB，IOPS/吞吐可配置；但 VM 远程磁盘数量和总 IOPS/吞吐取决于具体 VM size，本工具按节点 vCPU/内存估算可挂载数据盘数。',en:'Azure Premium SSD v2 supports up to 65,536GiB and configurable IOPS/throughput. VM remote disk count and aggregate IOPS/throughput depend on VM size; this tool estimates the data disk limit from node vCPU/memory.'}
+    },
+    GCP:{
+      id:'GCP', seqDefault:10, seqAutoLimit:16, preferredSeqDiskGb:8192, singleDiskMaxGb:65536,
+      hardDataDisks:127, recommendedDataDisks:16,
+      sequentialDisk:{zh:'Balanced Persistent Disk / SSD Persistent Disk',en:'Balanced Persistent Disk / SSD Persistent Disk'},
+      metadataDisk:{zh:'SSD Persistent Disk',en:'SSD Persistent Disk'},
+      note:{zh:'Google Persistent Disk 单盘可到 64TiB，VM 可挂载多块 PD；性能受磁盘总容量、vCPU 和实例级上限共同影响。本工具默认不自动采用超过 16 块/节点的方案。',en:'Google Persistent Disk can be up to 64TiB per disk. Performance depends on total disk size, vCPU count and instance limits. This tool does not automatically use more than 16 disks per node.'}
+    },
+    Alibaba:{
+      id:'Alibaba', seqDefault:10, seqAutoLimit:10, preferredSeqDiskGb:4096, singleDiskMaxGb:65536,
+      hardDataDisks:16, recommendedDataDisks:12,
+      sequentialDisk:{zh:'ESSD PL0 / PL1（按容量公式校验吞吐）',en:'ESSD PL0 / PL1 (throughput checked by capacity formula)'},
+      metadataDisk:{zh:'ESSD PL1 或更高',en:'ESSD PL1 or higher'},
+      note:{zh:'阿里云 ESSD 容量范围和 IOPS/吞吐与 PL 等级、容量公式相关。工具按 ESSD PL0 校验顺序盘，按 PL1 校验元数据/随机盘；实例挂载数量按保守 16 块数据盘校验。',en:'Alibaba Cloud ESSD IOPS/throughput depend on PL level and capacity formulas. This tool checks sequential disks as ESSD PL0 and metadata/random disks as PL1, with a conservative 16-data-disk attachment limit.'}
+    },
+    Huawei:{
+      id:'Huawei', seqDefault:10, seqAutoLimit:10, preferredSeqDiskGb:4096, singleDiskMaxGb:32768,
+      hardDataDisks:23, recommendedDataDisks:12,
+      sequentialDisk:{zh:'高 IO / SSD-backed 云硬盘（需复核实例 QoS）',en:'High I/O / SSD-backed EVS (verify instance QoS)'},
+      metadataDisk:{zh:'超高 IO 云硬盘',en:'Ultra-high I/O EVS'},
+      note:{zh:'华为云 EVS 数据盘通常最大 32,768GiB，性能同时受盘型、容量和实例 Storage QoS 影响。高负载场景应优先选择 SSD-backed / 超高 IO 类盘并复核目标区域规格。',en:'Huawei EVS data disks are commonly up to 32,768GiB. Performance depends on disk type, capacity and instance Storage QoS. Prefer SSD-backed / Ultra-high I/O disks for heavy workloads and verify target-region availability.'}
+    }
+  };
+  return profiles[cloudId]||profiles.AWS;
+}
+function cloudPolicy(cloudId){const p=providerProfile(cloudId);return {singleDiskMaxGb:p.singleDiskMaxGb,maxDataDisks:p.hardDataDisks,maxTotalVolumes:null,notes:p.note};}
+function azureDataDiskLimit(node){
+  const v=Number(node?.vcpu||0), mem=Number(node?.mem||0);
+  if(v>=104)return 64;
+  if(v>=16)return 32;
+  if(v>=8)return 16;
+  if(v>=4)return 8;
+  return 4;
+}
+function diskCountValidationLimit(cloudId,node){
+  const p=providerProfile(cloudId);
+  if(cloudId==='Azure')return {data:azureDataDiskLimit(node),recommended:Math.min(azureDataDiskLimit(node),32),total:null,source:'Azure VM size'};
+  return {data:p.hardDataDisks||null,recommended:p.recommendedDataDisks||p.seqAutoLimit,total:null,source:cloudId};
+}
+function requiredPerfForDiskPurpose(purpose){
+  if(['元数据盘','随机数据盘'].includes(purpose))return {iops:5000,throughput:150};
+  return {iops:120,throughput:120};
+}
+function perfEstimate(cloudId,purpose,sizeGb){
+  const size=Number(sizeGb||0); const isMetaRandom=['元数据盘','随机数据盘'].includes(purpose);
+  if(cloudId==='AWS'){
+    if(isMetaRandom)return {iops:5000,throughput:150,mode:'gp3 provisioned'};
+    return {iops:3000,throughput:125,mode:'gp3 baseline'};
+  }
+  if(cloudId==='Azure'){
+    if(purpose==='系统盘')return {iops:size>=256?1100:(size>=128?500:240),throughput:size>=256?125:(size>=128?100:50),mode:'Premium SSD estimate'};
+    return {iops:size>=10?80000:3000,throughput:size>=16?2000:125,mode:'Premium SSD v2 provisioned'};
+  }
+  if(cloudId==='GCP'){
+    if(isMetaRandom)return {iops:Math.min(100000,6000+30*size),throughput:Math.min(1200,240+0.48*size),mode:'pd-ssd estimate'};
+    return {iops:Math.min(80000,3000+6*size),throughput:Math.min(1200,140+0.28*size),mode:'pd-balanced estimate'};
+  }
+  if(cloudId==='Alibaba'){
+    if(isMetaRandom)return {iops:Math.min(50000,1800+50*size),throughput:Math.min(350,120+0.5*size),mode:'ESSD PL1 formula'};
+    return {iops:Math.min(10000,1800+12*size),throughput:Math.min(180,100+0.25*size),mode:'ESSD PL0 formula'};
+  }
+  if(cloudId==='Huawei'){
+    if(isMetaRandom)return {iops:Math.min(50000,1800+50*size),throughput:Math.min(350,120+0.5*size),mode:'Ultra-high I/O formula'};
+    return {iops:Math.min(5000,1800+8*size),throughput:Math.min(150,100+0.15*size),mode:'High I/O formula'};
+  }
+  return {iops:999999,throughput:999999,mode:'not checked'};
+}
+function seqNodeInfo(rule){
+  let info={nodes:0,baseDisksPerNode:0,otherDataDisksPerNode:0,seqNode:null};
+  if(!rule)return info;
+  for(const n of (rule.nodes||[])){
+    const seq=(n.disks||[]).find(d=>d[0]==='顺序数据盘');
+    if(seq){
+      info.nodes=Number(n.count||0); info.baseDisksPerNode=Number(seq[2]||0); info.seqNode=n;
+      info.otherDataDisksPerNode=(n.disks||[]).filter(d=>d[0]!=='系统盘'&&d[0]!=='顺序数据盘').reduce((a,d)=>a+Number(d[2]||0),0);
+      break;
+    }
+  }
+  return info;
+}
+function storageConstraintsForRule(input,rule){
+  const cloudId=input?.cloud?.id || currentCloud()?.id; const p=providerProfile(cloudId); const si=seqNodeInfo(rule);
+  const lim=si.seqNode?diskCountValidationLimit(cloudId,si.seqNode):{data:p.hardDataDisks||16,recommended:p.recommendedDataDisks||p.seqAutoLimit};
+  const hardSeq=Math.max(0,(lim.data||16)-si.otherDataDisksPerNode);
+  const providerAutoSeq=Math.max(si.baseDisksPerNode||1,Math.min(p.seqAutoLimit||10,hardSeq||p.seqAutoLimit||10));
+  const userSeq=Math.max(1,Number(input.seqDisksPerNode||p.seqDefault||10));
+  const effectiveSeqMax=Math.max(si.baseDisksPerNode||1,Math.min(userSeq,providerAutoSeq,hardSeq||userSeq));
+  const userMaxDisk=Math.max(1,Number(input.maxSingleDisk||p.preferredSeqDiskGb||4096));
+  const effectiveDiskCap=Math.min(userMaxDisk,p.singleDiskMaxGb);
+  const issues=[];
+  if(userSeq>(hardSeq||userSeq))issues.push({level:'error',msg:LANG==='zh'?`单节点顺序盘数量上限 ${userSeq} 已超过 ${input.cloud.name} 当前节点可用顺序盘硬上限 ${hardSeq}（已扣除随机盘/暂存盘等数据盘）。系统不会按 ${userSeq} 块盘生成客户配置。`:`Max sequential disks per node ${userSeq} exceeds the available hard limit ${hardSeq} on ${input.cloud.name} after other data disks are counted. The system will not generate a customer configuration with ${userSeq} disks.`});
+  else if(userSeq>providerAutoSeq)issues.push({level:'warn',msg:LANG==='zh'?`单节点顺序盘数量上限 ${userSeq} 超过 ${input.cloud.name} 的自动规划上限 ${providerAutoSeq}。系统按 ${effectiveSeqMax} 块/节点进行推荐；如确需更多磁盘，需要云厂商实例规格复核。`:`Max sequential disks per node ${userSeq} exceeds the auto-planning limit ${providerAutoSeq} for ${input.cloud.name}. The system uses ${effectiveSeqMax} disks/node; verify instance limits if more disks are required.`});
+  if(userMaxDisk>p.singleDiskMaxGb)issues.push({level:'error',msg:LANG==='zh'?`顺序盘单盘规划上限 ${userMaxDisk}GB 超过 ${input.cloud.name} 单盘容量上限 ${p.singleDiskMaxGb}GB，系统按 ${p.singleDiskMaxGb}GB 作为上限计算。`:`Preferred sequential disk size cap ${userMaxDisk}GB exceeds ${input.cloud.name} per-disk limit ${p.singleDiskMaxGb}GB. The system calculates with ${p.singleDiskMaxGb}GB.`});
+  return {...si,profile:p,hardSeq,providerAutoSeq,userSeq,effectiveSeqMax,userMaxDisk,effectiveDiskCap,issues};
+}
+function estimateCdpStorage(input,rule){
+  if(!rule||!input?.events)return null;
+  const days=retentionDays(input.retentionValue,input.retentionUnit);
+  const eventsYi=(input.events*days)/1e8;
+  const gbPer100M=Math.max(1,Number(input.eventGbPer100M||35));
+  const overhead=Math.max(1,Number(input.storageReplica||1.1));
+  const estimatedUsedGb=ceilTo(eventsYi*gbPer100M*overhead,100);
+  const utilization=Math.min(0.95,Math.max(0.5,Number(input.storageUtilization||0.8)));
+  const requiredGb=ceilTo(estimatedUsedGb/utilization,100);
+  const baselineGb=cdpSequentialCapacityGb(rule);
+  const targetGb=Math.max(requiredGb,baselineGb);
+  const c=storageConstraintsForRule(input,rule);
+  const seqNodeCount=c.nodes||1;
+  const baseDisksPerNode=Math.max(1,c.baseDisksPerNode||1);
+  const maxDisksPerNode=Math.max(baseDisksPerNode,c.effectiveSeqMax||baseDisksPerNode);
+  const preferredMaxGb=Math.max(1,c.effectiveDiskCap||Number(input.maxSingleDisk||4096));
+  let disksPerNode=baseDisksPerNode;
+  let perDiskGb=ceilTo(targetGb/(seqNodeCount*disksPerNode),100);
+  while(perDiskGb>preferredMaxGb && disksPerNode<maxDisksPerNode){
+    disksPerNode++;
+    perDiskGb=ceilTo(targetGb/(seqNodeCount*disksPerNode),100);
+  }
+  const capacityAtLimits=seqNodeCount*maxDisksPerNode*preferredMaxGb;
+  const storagePressure=targetGb>capacityAtLimits || perDiskGb>preferredMaxGb;
+  const diskUnits=seqNodeCount*disksPerNode;
+  const finalGb=perDiskGb*diskUnits;
+  const adjusted=(finalGb>baselineGb)||(disksPerNode!==baseDisksPerNode);
+  const strategy=storagePressure?'need_more_data_nodes':(disksPerNode>baseDisksPerNode?'increase_disk_count':'increase_capacity');
+  const diskSizes=input.cdpDiskSizes||{};
+  const neededDisksPerNode=Math.ceil(targetGb/(seqNodeCount*preferredMaxGb));
+  return {days,eventsYi,gbPer100M,replica:overhead,overhead,estimatedUsedGb,utilization,requiredGb,baselineGb,targetGb,finalGb,perDiskGb,diskUnits,seqNodeCount,disksPerNode,baseDiskUnits:seqNodeCount*baseDisksPerNode,baseDisksPerNode,preferredMaxGb,configuredSeqDisks:c.userSeq,maxDisksPerNode,providerAutoSeq:c.providerAutoSeq,hardSeqLimit:c.hardSeq,neededDisksPerNode,capacityAtLimits,adjusted,strategy,storagePressure,dataNodeScaleReview:storagePressure,diskSizes,providerProfile:c.profile,planningIssues:c.issues||[]};
+}
+function selectCdpWithStorage(input){
+  const rules=DATA.cdpRules;
+  let baseIdx=-1;
+  for(let idx=0;idx<rules.length;idx++){const r=rules[idx];if(input.dau<=r.maxDau&&input.events<=r.maxEvents){baseIdx=idx;break;}}
+  if(baseIdx<0)return{rule:null,special:true,storage:null,baseRule:null,dynamic:false};
+  let baseRule=rules[baseIdx], selectedRule=baseRule, selectedStorage=estimateCdpStorage(input,selectedRule), storageScaled=false;
+  if(selectedStorage?.storagePressure){
+    const candidates=nextCdpRulesForStorage(baseRule,input);
+    for(const r of candidates){const st=estimateCdpStorage(input,r);selectedRule=r;selectedStorage=st;storageScaled=true;if(!st?.storagePressure)break;}
+  }
+  const appliedRule=applyCdpStorage(selectedRule,selectedStorage);
+  return{rule:appliedRule,storage:selectedStorage,baseRule,special:false,dynamic:storageScaled};
+}
+function validateCloudDiskPlan(res){
+  const input=res?.input||{}; const cloud=input.cloud||currentCloud(); const cloudId=cloud?.id; const p=providerProfile(cloudId); const issues=[];
+  const add=(level,msg)=>issues.push({level,msg});
+  (res?.cdp?.storage?.planningIssues||[]).forEach(x=>add(x.level==='error'?'error':'warn',x.msg));
+  const checkRule=(component,rule)=>{
+    if(!rule||!rule.nodes)return;
+    rule.nodes.forEach(n=>{
+      let total=0,data=0;
+      (n.disks||[]).forEach(d=>{const cnt=Number(d[2]||0);total+=cnt;if(d[0]!=='系统盘')data+=cnt;});
+      const lim=diskCountValidationLimit(cloudId,n);
+      if(lim.data && data>lim.data)add('error',LANG==='zh'?`${component} ${nodeRoleLabel(n)} 每台数据盘数量为 ${data}，超过 ${cloud?.name||cloudId} 当前内置上限 ${lim.data}。请增加节点、降低单节点顺序盘数量，或选择支持更多磁盘的实例规格。`:`${component} ${nodeRoleLabel(n)} has ${data} data disks per node, exceeding the built-in ${cloud?.name||cloudId} limit ${lim.data}. Increase nodes, reduce disks per node, or choose an instance type that supports more disks.`);
+      if(lim.recommended && data>lim.recommended)add('warn',LANG==='zh'?`${component} ${nodeRoleLabel(n)} 每台数据盘数量为 ${data}，超过 ${cloud?.name||cloudId} 的工程建议值 ${lim.recommended}。虽然可能未超过硬限制，但建议复核实例规格、运维复杂度和磁盘性能收益。`:`${component} ${nodeRoleLabel(n)} has ${data} data disks per node, above the ${cloud?.name||cloudId} engineering recommendation ${lim.recommended}. It may be within hard limits, but instance limits, operational complexity and performance return should be reviewed.`);
+      (n.disks||[]).forEach(d=>{
+        const purpose=d[0],cnt=Number(d[2]||0),size=Number(d[3]||0); if(!cnt||!size)return;
+        if(size>p.singleDiskMaxGb)add('error',LANG==='zh'?`${component} ${nodeRoleLabel(n)} 的${diskPurposeLabel(purpose)}单盘 ${size}GB 超过 ${cloud?.name||cloudId} 单盘容量上限 ${p.singleDiskMaxGb}GB。`:`${component} ${nodeRoleLabel(n)} ${diskPurposeLabel(purpose)} size ${size}GB exceeds ${cloud?.name||cloudId} per-disk limit ${p.singleDiskMaxGb}GB.`);
+        const req=requiredPerfForDiskPurpose(purpose); const perf=perfEstimate(cloudId,purpose,size);
+        if(perf.iops<req.iops || perf.throughput<req.throughput){
+          add('error',LANG==='zh'?`${component} ${nodeRoleLabel(n)} 的${diskPurposeLabel(purpose)} ${size}GB 在 ${cloud?.name||cloudId} 的估算性能约为 ${Math.round(perf.iops)} IOPS / ${Math.round(perf.throughput)} MB/s，低于神策要求 ${req.iops} IOPS / ${req.throughput} MB/s。请增大单盘容量、提高云盘类型/预配置性能，或调整磁盘数量与节点数。`:`${component} ${nodeRoleLabel(n)} ${diskPurposeLabel(purpose)} ${size}GB estimated ${cloud?.name||cloudId} performance is ${Math.round(perf.iops)} IOPS / ${Math.round(perf.throughput)} MB/s, below Sensors Data requirement ${req.iops} IOPS / ${req.throughput} MB/s. Increase disk size, use/provision a higher disk tier, or adjust disk/node count.`);
+        }
+      });
+    });
+  };
+  checkRule('CDP',res?.cdp?.rule); if(input.includeMA)checkRule('MA',res?.ma?.rule); if(input.includeETL)checkRule('ETL',DATA.etlRule);
+  return issues;
+}
+function providerDiskNotesHtml(){
+  const p=providerProfile(currentCloud()?.id); const rows=[
+    {Item:LANG==='zh'?'当前云厂商磁盘策略':'Current cloud disk policy',Value:p.note[LANG]},
+    {Item:LANG==='zh'?'顺序盘默认规划':'Default sequential disk planning',Value:(LANG==='zh'?`默认 ${p.seqDefault} 块/节点；自动规划上限 ${p.seqAutoLimit} 块/节点；单盘偏好 ${p.preferredSeqDiskGb}GB。`:`Default ${p.seqDefault} disks/node; auto-planning cap ${p.seqAutoLimit} disks/node; preferred per-disk size ${p.preferredSeqDiskGb}GB.`)},
+    {Item:LANG==='zh'?'校验原则':'Validation principle',Value:LANG==='zh'?'用户输入只作为约束/偏好，不会直接覆盖结果。系统会按神策文档先选基础集群，再按云厂商容量、挂载数、IOPS、吞吐校验并自动调整；红色错误未消除前不建议导出客户版配置。':'User input is treated as constraint/preference, not a direct override. The system first selects the base cluster from Sensors Data rules, then validates and adjusts using cloud capacity, attachment, IOPS and throughput limits. Customer-facing export is not recommended until red errors are resolved.'}
+  ];
+  return '<h3>'+(LANG==='zh'?'云厂商磁盘约束与自动调整原则':'Cloud Disk Constraints & Auto-adjustment Principles')+'</h3>'+htmlTable(['Item','Value'],rows.map(r=>({Item:r.Item,Value:r.Value})));
+}
+const _oldInternalLogicHtml = internalLogicHtml;
+function internalLogicHtml(){
+  let html=_oldInternalLogicHtml();
+  html += providerDiskNotesHtml();
+  return html;
+}
+function applyCloudDiskDefaults(force=false){
+  const p=providerProfile(currentCloud()?.id);
+  const maxDisk=document.getElementById('maxSingleDisk');
+  const seqCnt=document.getElementById('seqDisksPerNode');
+  if(maxDisk && (force || !maxDisk.dataset.userChanged)){maxDisk.value=p.preferredSeqDiskGb;}
+  if(seqCnt && (force || !seqCnt.dataset.userChanged)){seqCnt.value=p.seqDefault;}
+}
+function bindAutoRecalculate(){
+  const ids=['customerName','cloud','region','industry','mau','dau','ratio','eventsPerUser','dailyEvents','dailyAudience','includeMA','includeETL','includePriceExport','includeInstanceType','retentionValue','retentionUnit','storageUtilization','eventGbPer100M','storageReplica','maxSingleDisk','seqDisksPerNode','cdpSystemDiskGb','cdpMetadataDiskGb','cdpRandomDiskGb','cdpIngestDiskGb','placementListQps','placementCarouselQps','cartesianTotal','peakActivationPerHour','activeJourneys','channelQps'];
+  ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;el.addEventListener('input',()=>{if(['maxSingleDisk','seqDisksPerNode'].includes(id))el.dataset.userChanged='1';calculate();});el.addEventListener('change',()=>{if(['maxSingleDisk','seqDisksPerNode'].includes(id))el.dataset.userChanged='1';calculate();});});
+  document.querySelectorAll('.adv').forEach(el=>el.addEventListener('change',calculate));
+}
+function init(){
+  const cloudSel=document.getElementById('cloud'); DATA.clouds.forEach(c=>{let o=document.createElement('option');o.value=c.id;o.textContent=c.name;cloudSel.appendChild(o);});
+  const indSel=document.getElementById('industry'); refreshIndustryOptions(); indSel.value='bank';
+  cloudSel.onchange=()=>{populateRegions();applyCloudDiskDefaults(true);calculate();};
+  indSel.onchange=()=>{const p=DATA.industryProfiles.find(x=>x.id===indSel.value);document.getElementById('ratio').value=Math.round((p?.ratio||0.15)*100);calculate();};
+  document.getElementById('lang').onchange=()=>{LANG=document.getElementById('lang').value;calculate();};
+  document.getElementById('sysZh')?.addEventListener('click',()=>{SYS_LANG='zh';applyLang();updateStoragePreview(lastResult?.cdp?.storage||null);if(lastResult)renderAll();});
+  document.getElementById('sysEn')?.addEventListener('click',()=>{SYS_LANG='en';applyLang();updateStoragePreview(lastResult?.cdp?.storage||null);if(lastResult)renderAll();});
+  populateRegions(); applyCloudDiskDefaults(true); applyLang(); bindAutoRecalculate(); calculate();
+}
+/* ===== end v3.0 overrides ===== */
+
+window.addEventListener('load',init);
+
+/* ===== strict disk constraint validation patch ===== */
+const V31_MIN_SEQ_PLANNING_GB = 1000;
+const V31_MAX_SEQ_ENGINEERING_AUTO = 16;
+const V31_providerProfile_base = providerProfile;
+providerProfile = function(cloudId){
+  const p = {...V31_providerProfile_base(cloudId)};
+  p.minSeqPlanningGb = V31_MIN_SEQ_PLANNING_GB;
+  p.maxSeqEngineeringAuto = Math.min(p.seqAutoLimit || 10, V31_MAX_SEQ_ENGINEERING_AUTO);
+  return p;
+};
+function V31_msg(zh,en){return LANG==='zh'?zh:en;}
+function V31_markDiskInputs(input, issues){
+  ['maxSingleDisk','seqDisksPerNode'].forEach(id=>{const el=document.getElementById(id); if(el) el.classList.remove('invalid-field','warn-field');});
+  (issues||[]).forEach(x=>{
+    if(x.field){const el=document.getElementById(x.field); if(el) el.classList.add(x.level==='error'?'invalid-field':'warn-field');}
+  });
+}
+storageConstraintsForRule = function(input,rule){
+  const cloudId=input?.cloud?.id || currentCloud()?.id;
+  const p=providerProfile(cloudId);
+  const si=seqNodeInfo(rule);
+  const lim=si.seqNode?diskCountValidationLimit(cloudId,si.seqNode):{data:p.hardDataDisks||16,recommended:p.recommendedDataDisks||p.seqAutoLimit||10};
+  const hardSeq=Math.max(0,(lim.data||16)-si.otherDataDisksPerNode);
+  const providerAutoSeq=Math.max(si.baseDisksPerNode||1,Math.min(p.maxSeqEngineeringAuto||p.seqAutoLimit||10,hardSeq||p.seqAutoLimit||10));
+  const rawUserSeq=Number(input.seqDisksPerNode||p.seqDefault||10);
+  const userSeq=Math.max(1,rawUserSeq);
+  const effectiveSeqMax=Math.max(si.baseDisksPerNode||1,Math.min(userSeq,providerAutoSeq,hardSeq||userSeq));
+  const rawUserMaxDisk=Number(input.maxSingleDisk||p.preferredSeqDiskGb||4096);
+  const userMaxDisk=Math.max(1,rawUserMaxDisk);
+  const minPlan=p.minSeqPlanningGb || V31_MIN_SEQ_PLANNING_GB;
+  const planningDiskCap=Math.max(userMaxDisk,minPlan);
+  const effectiveDiskCap=Math.min(planningDiskCap,p.singleDiskMaxGb);
+  const issues=[];
+  if(userSeq>(hardSeq||userSeq)){
+    issues.push({level:'error',field:'seqDisksPerNode',msg:V31_msg(
+      `单节点顺序盘数量上限 ${userSeq} 已超过 ${input.cloud.name} 当前节点可用顺序盘硬上限 ${hardSeq}（已扣除随机盘/暂存盘等数据盘）。系统不会按 ${userSeq} 块盘生成客户配置。`,
+      `Max sequential disks per node ${userSeq} exceeds the available hard limit ${hardSeq} on ${input.cloud.name} after other data disks are counted. The system will not generate a customer configuration with ${userSeq} disks.`)});
+  } else if(userSeq>providerAutoSeq){
+    issues.push({level:'error',field:'seqDisksPerNode',msg:V31_msg(
+      `单节点顺序盘数量上限 ${userSeq} 超过 ${input.cloud.name} 的自动规划上限 ${providerAutoSeq}。该输入不作为正常客户配置输出；系统按 ${effectiveSeqMax} 块/节点进行合法规划。`,
+      `Max sequential disks per node ${userSeq} exceeds the auto-planning limit ${providerAutoSeq} for ${input.cloud.name}. This input is not used as a normal customer-facing configuration; the system plans with ${effectiveSeqMax} disks/node.`)});
+  }
+  if(userMaxDisk < minPlan){
+    issues.push({level:'error',field:'maxSingleDisk',msg:V31_msg(
+      `顺序盘单盘规划上限 ${userMaxDisk}GB 低于神策模板顺序盘基线 ${minPlan}GB。该值会导致过多小盘或性能/运维风险；系统按 ${minPlan}GB 作为最低规划值计算。`,
+      `Preferred sequential disk size cap ${userMaxDisk}GB is below the Sensors Data template baseline ${minPlan}GB. It may lead to excessive small disks or performance/operation risk; the system calculates with ${minPlan}GB as the minimum planning value.`)});
+  }
+  if(userMaxDisk>p.singleDiskMaxGb){
+    issues.push({level:'error',field:'maxSingleDisk',msg:V31_msg(
+      `顺序盘单盘规划上限 ${userMaxDisk}GB 超过 ${input.cloud.name} 单盘容量上限 ${p.singleDiskMaxGb}GB，系统按 ${p.singleDiskMaxGb}GB 作为上限计算。`,
+      `Preferred sequential disk size cap ${userMaxDisk}GB exceeds ${input.cloud.name} per-disk limit ${p.singleDiskMaxGb}GB. The system calculates with ${p.singleDiskMaxGb}GB.`)});
+  }
+  return {...si,profile:p,hardSeq,providerAutoSeq,userSeq,effectiveSeqMax,userMaxDisk,effectiveDiskCap,issues,minSeqPlanningGb:minPlan};
+};
+estimateCdpStorage = function(input,rule){
+  if(!rule||!input?.events)return null;
+  const days=retentionDays(input.retentionValue,input.retentionUnit);
+  const eventsYi=(input.events*days)/1e8;
+  const gbPer100M=Math.max(1,Number(input.eventGbPer100M||35));
+  const overhead=Math.max(1,Number(input.storageReplica||1.1));
+  const estimatedUsedGb=ceilTo(eventsYi*gbPer100M*overhead,100);
+  const utilization=Math.min(0.95,Math.max(0.5,Number(input.storageUtilization||0.8)));
+  const requiredGb=ceilTo(estimatedUsedGb/utilization,100);
+  const baselineGb=cdpSequentialCapacityGb(rule);
+  const targetGb=Math.max(requiredGb,baselineGb);
+  const c=storageConstraintsForRule(input,rule);
+  const seqNodeCount=c.nodes||1;
+  const baseDisksPerNode=Math.max(1,c.baseDisksPerNode||1);
+  const maxDisksPerNode=Math.max(baseDisksPerNode,c.effectiveSeqMax||baseDisksPerNode);
+  const preferredMaxGb=Math.max(1,c.effectiveDiskCap||Number(input.maxSingleDisk||4096));
+  let disksPerNode=baseDisksPerNode;
+  let perDiskGb=ceilTo(targetGb/(seqNodeCount*disksPerNode),100);
+  while(perDiskGb>preferredMaxGb && disksPerNode<maxDisksPerNode){
+    disksPerNode++;
+    perDiskGb=ceilTo(targetGb/(seqNodeCount*disksPerNode),100);
+  }
+  const capacityAtLimits=seqNodeCount*maxDisksPerNode*preferredMaxGb;
+  const storagePressure=targetGb>capacityAtLimits || perDiskGb>preferredMaxGb;
+  const diskUnits=seqNodeCount*disksPerNode;
+  const finalGb=perDiskGb*diskUnits;
+  const adjusted=(finalGb>baselineGb)||(disksPerNode!==baseDisksPerNode);
+  const strategy=storagePressure?'need_more_data_nodes':(disksPerNode>baseDisksPerNode?'increase_disk_count':'increase_capacity');
+  const neededDisksPerNode=Math.ceil(targetGb/(seqNodeCount*preferredMaxGb));
+  return {days,eventsYi,gbPer100M,replica:overhead,overhead,estimatedUsedGb,utilization,requiredGb,baselineGb,targetGb,finalGb,perDiskGb,diskUnits,seqNodeCount,disksPerNode,baseDiskUnits:seqNodeCount*baseDisksPerNode,baseDisksPerNode,preferredMaxGb,configuredSeqDisks:c.userSeq,maxDisksPerNode,providerAutoSeq:c.providerAutoSeq,hardSeqLimit:c.hardSeq,neededDisksPerNode,capacityAtLimits,adjusted,strategy,storagePressure,dataNodeScaleReview:storagePressure,diskSizes:input.cdpDiskSizes||{},providerProfile:c.profile,planningIssues:c.issues||[],minSeqPlanningGb:c.minSeqPlanningGb};
+};
+updateStoragePreview = function(storage){
+  return withLang(SYS_LANG,()=>{
+    const box=document.getElementById('storagePreview'); if(!box)return;
+    box.classList.remove('preview-error','preview-warn');
+    if(!storage){box.textContent=t('storagePreviewEmpty');V31_markDiskInputs(null,[]);return;}
+    const errors=(storage.planningIssues||[]).filter(x=>x.level==='error');
+    const warns=(storage.planningIssues||[]).filter(x=>x.level!=='error');
+    V31_markDiskInputs(null,storage.planningIssues||[]);
+    if(errors.length)box.classList.add('preview-error'); else if(warns.length)box.classList.add('preview-warn');
+    const issueText=(errors.length||warns.length)?(LANG==='zh'
+      ? `参数校验：\n${errors.map(x=>'❌ '+x.msg).concat(warns.map(x=>'⚠️ '+x.msg)).join('\n')}\n\n`
+      : `Parameter validation:\n${errors.map(x=>'❌ '+x.msg).concat(warns.map(x=>'⚠️ '+x.msg)).join('\n')}\n\n`):'';
+    box.textContent=issueText+(LANG==='zh'
+      ? `估算实际使用容量：${fmtGb(storage.estimatedUsedGb)}\n按 ${Math.round(storage.utilization*100)}% 使用率需配置：${fmtGb(storage.requiredGb)}\n模板基线顺序盘总容量：${fmtGb(storage.baselineGb)}\n最终建议顺序盘：${fmtGb(storage.finalGb)}（${storage.seqNodeCount} 个数据节点 × 每节点 ${storage.disksPerNode} 块 × ${fmtGb(storage.perDiskGb)}）\n合法自动规划上限：每节点 ${storage.maxDisksPerNode} 块；单盘最低/上限：${fmtGb(storage.minSeqPlanningGb)} / ${fmtGb(storage.preferredMaxGb)}${storage.storagePressure?'\n❌ 当前可用模板和合法单节点盘数/单盘容量内仍无法满足，需要升级 Data Node 或专项复核。':''}`
+      : `Estimated used storage: ${fmtGb(storage.estimatedUsedGb)}\nProvisioned capacity required at ${Math.round(storage.utilization*100)}% utilization: ${fmtGb(storage.requiredGb)}\nTemplate baseline sequential capacity: ${fmtGb(storage.baselineGb)}\nFinal sequential disk plan: ${fmtGb(storage.finalGb)} (${storage.seqNodeCount} data nodes × ${storage.disksPerNode} disks/node × ${fmtGb(storage.perDiskGb)})\nLegal auto-planning limit: ${storage.maxDisksPerNode} disks/node; per-disk min/cap: ${fmtGb(storage.minSeqPlanningGb)} / ${fmtGb(storage.preferredMaxGb)}${storage.storagePressure?'\n❌ Current templates and legal per-node/per-disk limits cannot satisfy the requirement; upgrade Data Nodes or run special review.':''}`);
+  });
+};
+const V31_confirmExport_base = confirmExport;
+confirmExport = function(kind){
+  if(lastResult && (lastResult.warnings||[]).some(w=>String(w).startsWith('ERROR:'))){
+    alert(LANG==='zh'?'当前配置存在红色错误，请先修正磁盘/云厂商约束后再导出客户版配置建议。':'Current configuration has red errors. Please fix disk/cloud constraints before exporting a customer-facing recommendation.');
+    return false;
+  }
+  return V31_confirmExport_base(kind);
+};
+const V31_internalLogicHtml_base = internalLogicHtml;
+internalLogicHtml = function(){
+  let html=V31_internalLogicHtml_base();
+  html += '<h3>'+(LANG==='zh'?'强校验与导出控制规则':'Strict Validation & Export Control Rules')+'</h3>';
+  html += htmlTable(['Item','Value'],[
+    {Item:LANG==='zh'?'事实':'Fact',Value:LANG==='zh'?'左侧“单盘规划上限”和“单节点顺序盘数量”是约束/偏好，不是直接覆盖最终配置。':'The left-side per-disk cap and max sequential disk count are constraints/preferences, not direct overrides.'},
+    {Item:LANG==='zh'?'原则':'Principle',Value:LANG==='zh'?'系统先按神策文档确定 CDP 基础集群，再按存储需求、云厂商单盘容量、挂载数量、IOPS/吞吐要求生成合法磁盘方案。':'The system first selects the base CDP cluster using Sensors Data rules, then produces a legal disk plan based on storage demand, cloud per-disk capacity, attachment count, IOPS and throughput requirements.'},
+    {Item:LANG==='zh'?'结论':'Conclusion',Value:LANG==='zh'?'例如 100 块顺序盘/节点或 50GB 单盘上限会触发红色错误；系统不会把这类输入写成正常客户配置。':'Inputs such as 100 sequential disks per node or a 50GB per-disk cap trigger red errors; the system will not export them as a normal customer configuration.'}
+  ]);
+  return html;
+};
+function V31_addStyle(){
+  const css='input.invalid-field{border-color:#b91c1c!important;background:#fff5f5!important;box-shadow:0 0 0 2px rgba(185,28,28,.12)}input.warn-field{border-color:#b45309!important;background:#fffbeb!important}.storage-preview.preview-error{border-left-color:#b91c1c!important;background:#fff5f5!important;color:#7f1d1d!important}.storage-preview.preview-warn{border-left-color:#b45309!important;background:#fffbeb!important;color:#78350f!important}';
+  const s=document.createElement('style');s.textContent=css;document.head.appendChild(s);
+}
+window.addEventListener('load',()=>{V31_addStyle(); if(lastResult?.cdp?.storage) updateStoragePreview(lastResult.cdp.storage);});
+/* ===== end strict validation patch ===== */
+
+
+
+/* ===== disk-size dropdown and true constraint-based sequential disk planning ===== */
+const V32_SEQ_DISK_SIZE_OPTIONS=[500,1024,1536,2048,2560,3072,3584,4096];
+function V32_seqDiskSizeLabel(gb){if(gb===1024)return '1T'; if(gb>1024)return (gb/1024).toFixed(1).replace(/\.0$/,'')+'T'; return gb+'G';}
+function V32_providerProfileBase(cloudId){try{return V31_providerProfile_base(cloudId);}catch(e){return providerProfile(cloudId);}}
+providerProfile=function(cloudId){
+  const p={...V32_providerProfileBase(cloudId)};
+  delete p.minSeqPlanningGb;
+  p.seqSizeOptions=V32_SEQ_DISK_SIZE_OPTIONS.filter(gb=>gb<=p.singleDiskMaxGb && V32_isValidSeqDiskSizeForCloud(gb,cloudId));
+  if(!p.seqSizeOptions.length)p.seqSizeOptions=[1024,2048,4096].filter(gb=>gb<=p.singleDiskMaxGb);
+  return p;
+};
+function V32_isValidSeqDiskSizeForCloud(gb,cloudId){
+  const p=V32_providerProfileBase(cloudId);
+  if(!gb||gb<1||gb>p.singleDiskMaxGb)return false;
+  const req=requiredPerfForDiskPurpose('顺序数据盘');
+  const perf=perfEstimate(cloudId,'顺序数据盘',gb);
+  return perf.iops>=req.iops && perf.throughput>=req.throughput;
+}
+function V32_validSeqDiskOptions(){return providerProfile(currentCloud()?.id).seqSizeOptions||[];}
+function updateSeqDiskCustomVisibility(){
+  const sel=document.getElementById('maxSingleDiskSelect');const inp=document.getElementById('maxSingleDiskCustom');
+  if(!sel||!inp)return;inp.style.display=sel.value==='custom'?'block':'none';
+}
+function updateSeqDiskSizeOptions(keep=true){
+  const sel=document.getElementById('maxSingleDiskSelect'); if(!sel)return;
+  const old=keep?sel.value:'';
+  const opts=V32_validSeqDiskOptions(); sel.innerHTML='';
+  opts.forEach(gb=>{const o=document.createElement('option');o.value=String(gb);o.textContent=V32_seqDiskSizeLabel(gb);sel.appendChild(o);});
+  const custom=document.createElement('option');custom.value='custom';custom.textContent=SYS_LANG==='zh'?'自定义':'Custom';sel.appendChild(custom);
+  if(keep && old && [...sel.options].some(o=>o.value===old))sel.value=old;
+  else if(opts.includes(4096))sel.value='4096';
+  else if(opts.length)sel.value=String(opts[opts.length-1]);
+  else sel.value='custom';
+  updateSeqDiskCustomVisibility();
+}
+function V32_getSelectedSeqDiskSizeGb(){
+  const sel=document.getElementById('maxSingleDiskSelect');
+  const val=sel?.value||'4096';
+  if(val==='custom')return Math.max(1,Number(document.getElementById('maxSingleDiskCustom')?.value||4096));
+  return Math.max(1,Number(val||4096));
+}
+function getSeqNodeForRule(rule){return (rule?.nodes||[]).find(n=>(n.disks||[]).some(d=>d[0]==='顺序数据盘'))||null;}
+function otherDataDisksPerSeqNode(rule){const n=getSeqNodeForRule(rule);if(!n)return 0;return (n.disks||[]).reduce((a,d)=>a+((d[0]!=='系统盘'&&d[0]!=='顺序数据盘')?Number(d[2]||0):0),0);}
+getInputs=function(){
+ const mau=Number(document.getElementById('mau').value||0),dauInput=Number(document.getElementById('dau').value||0),ratio=Number(document.getElementById('ratio').value||15)/100,eventsPerUser=Number(document.getElementById('eventsPerUser').value||100),manualEvents=Number(document.getElementById('dailyEvents').value||0),dailyAudience=Number(document.getElementById('dailyAudience').value||0);
+ const dau=dauInput>0?dauInput:(mau>0?mau*ratio:0),events=manualEvents>0?manualEvents:dau*eventsPerUser;
+ return{customerName:document.getElementById('customerName').value||'',cloud:currentCloud(),region:currentRegionObj(),industry:document.getElementById('industry').value,ratio,mau,dauInput,dau,eventsPerUser,events,manualEvents,dailyAudience:dailyAudience>0?dailyAudience:null,retentionValue:Number(document.getElementById('retentionValue')?.value||1),retentionUnit:document.getElementById('retentionUnit')?.value||'years',storageUtilization:Number(document.getElementById('storageUtilization')?.value||80)/100,maxSingleDisk:V32_getSelectedSeqDiskSizeGb(),seqDiskSizeMode:document.getElementById('maxSingleDiskSelect')?.value||'4096',seqDisksPerNode:Number(document.getElementById('seqDisksPerNode')?.value||10),eventGbPer100M:Number(document.getElementById('eventGbPer100M')?.value||35),storageReplica:Number(document.getElementById('storageReplica')?.value||1.1),cdpDiskSizes:{system:Number(document.getElementById('cdpSystemDiskGb')?.value||50),metadata:Number(document.getElementById('cdpMetadataDiskGb')?.value||400),random:Number(document.getElementById('cdpRandomDiskGb')?.value||500),ingest:Number(document.getElementById('cdpIngestDiskGb')?.value||250)},includeMA:document.getElementById('includeMA').checked,includeETL:document.getElementById('includeETL').checked,includePriceExport:document.getElementById('includePriceExport').checked,includeInstanceType:document.getElementById('includeInstanceType').checked,advanced:Array.from(document.querySelectorAll('.adv:checked')).map(x=>x.value),advParams:{placementListQps:Number(document.getElementById('placementListQps')?.value||0),placementCarouselQps:Number(document.getElementById('placementCarouselQps')?.value||0),cartesianTotal:Number(document.getElementById('cartesianTotal')?.value||0),peakActivationPerHour:Number(document.getElementById('peakActivationPerHour')?.value||0),activeJourneys:Number(document.getElementById('activeJourneys')?.value||0),channelQps:Number(document.getElementById('channelQps')?.value||0)}};
+};
+storageConstraintsForRule=function(input,rule){
+ const cloudId=input?.cloud?.id||currentCloud()?.id; const p=providerProfile(cloudId); const si=seqNodeInfo(rule);
+ const lim=si.seqNode?diskCountValidationLimit(cloudId,si.seqNode):{data:p.hardDataDisks||16,recommended:p.recommendedDataDisks||p.seqAutoLimit||10};
+ const hardSeq=Math.max(1,(lim.data||16)-si.otherDataDisksPerNode);
+ const rawUserSeq=Math.max(1,Number(input.seqDisksPerNode||p.seqDefault||10));
+ const providerAutoSeq=Math.max(1,Math.min(p.seqAutoLimit||10,hardSeq));
+ const effectiveSeqMax=Math.max(1,Math.min(rawUserSeq,hardSeq));
+ const userDiskGb=Math.max(1,Number(input.maxSingleDisk||p.preferredSeqDiskGb||4096));
+ const effectiveDiskCap=Math.min(userDiskGb,p.singleDiskMaxGb);
+ const issues=[];
+ if(rawUserSeq>hardSeq){issues.push({level:'error',field:'seqDisksPerNode',msg:LANG==='zh'?`单节点顺序盘数量上限 ${rawUserSeq} 超过 ${input.cloud.name} 当前节点可用顺序盘硬上限 ${hardSeq}（已扣除随机盘/暂存盘等其他数据盘）。系统将按 ${hardSeq} 块/节点进行合法规划。`:`Max sequential disks per node ${rawUserSeq} exceeds the available hard limit ${hardSeq} on ${input.cloud.name} after other data disks are counted. The system plans with ${hardSeq} disks/node.`});}
+ else if(rawUserSeq>providerAutoSeq){issues.push({level:'warn',field:'seqDisksPerNode',msg:LANG==='zh'?`单节点顺序盘数量上限 ${rawUserSeq} 超过 ${input.cloud.name} 的自动规划建议值 ${providerAutoSeq}。如最终采用该数量，需要复核实例挂载数、运维复杂度和性能收益。`:`Max sequential disks per node ${rawUserSeq} exceeds the auto-planning recommendation ${providerAutoSeq} for ${input.cloud.name}. Verify attachment limits, operational complexity and performance benefit if used.`});}
+ if(userDiskGb>p.singleDiskMaxGb){issues.push({level:'error',field:input.seqDiskSizeMode==='custom'?'maxSingleDiskCustom':'maxSingleDiskSelect',msg:LANG==='zh'?`顺序盘单盘规划大小 ${userDiskGb}GB 超过 ${input.cloud.name} 单盘容量上限 ${p.singleDiskMaxGb}GB。系统将按 ${p.singleDiskMaxGb}GB 计算。`:`Sequential disk size ${userDiskGb}GB exceeds the ${input.cloud.name} per-disk limit ${p.singleDiskMaxGb}GB. The system calculates with ${p.singleDiskMaxGb}GB.`});}
+ const req=requiredPerfForDiskPurpose('顺序数据盘'); const perf=perfEstimate(cloudId,'顺序数据盘',effectiveDiskCap);
+ if(perf.iops<req.iops||perf.throughput<req.throughput){issues.push({level:'error',field:input.seqDiskSizeMode==='custom'?'maxSingleDiskCustom':'maxSingleDiskSelect',msg:LANG==='zh'?`顺序盘单盘 ${effectiveDiskCap}GB 在 ${input.cloud.name} 的估算性能约 ${Math.round(perf.iops)} IOPS / ${Math.round(perf.throughput)} MB/s，低于神策顺序盘要求 ${req.iops} IOPS / ${req.throughput} MB/s。请选择更大容量、更高盘型或自定义后复核。`:`Sequential disk ${effectiveDiskCap}GB on ${input.cloud.name} is estimated at ${Math.round(perf.iops)} IOPS / ${Math.round(perf.throughput)} MB/s, below Sensors Data sequential-disk requirement ${req.iops} IOPS / ${req.throughput} MB/s. Choose a larger size, higher disk tier, or verify custom provisioning.`});}
+ return {...si,profile:p,hardSeq,providerAutoSeq,userSeq:rawUserSeq,effectiveSeqMax,userMaxDisk:userDiskGb,effectiveDiskCap,issues};
+};
+estimateCdpStorage=function(input,rule){
+ if(!rule||!input?.events)return null;
+ const days=retentionDays(input.retentionValue,input.retentionUnit);
+ const eventsYi=(input.events*days)/1e8;
+ const gbPer100M=Math.max(1,Number(input.eventGbPer100M||35));
+ const overhead=Math.max(1,Number(input.storageReplica||1.1));
+ const estimatedUsedGb=ceilTo(eventsYi*gbPer100M*overhead,100);
+ const utilization=Math.min(0.95,Math.max(0.5,Number(input.storageUtilization||0.8)));
+ const requiredGb=ceilTo(estimatedUsedGb/utilization,100);
+ const baselineGb=cdpSequentialCapacityGb(rule);
+ const targetGb=Math.max(requiredGb,baselineGb);
+ const c=storageConstraintsForRule(input,rule);
+ const seqNodeCount=c.nodes||1;
+ const baseDisksPerNode=Math.max(1,c.baseDisksPerNode||1);
+ const maxDisksPerNode=Math.max(1,c.effectiveSeqMax||baseDisksPerNode);
+ const perDiskGb=Math.max(1,c.effectiveDiskCap||Number(input.maxSingleDisk||4096));
+ const neededDiskUnits=Math.ceil(targetGb/perDiskGb);
+ let disksPerNode=Math.ceil(neededDiskUnits/seqNodeCount);
+ if(disksPerNode<1)disksPerNode=1;
+ if(disksPerNode>maxDisksPerNode)disksPerNode=maxDisksPerNode;
+ const diskUnits=seqNodeCount*disksPerNode;
+ const finalGb=perDiskGb*diskUnits;
+ const storagePressure=targetGb>finalGb;
+ const adjusted=(finalGb!==baselineGb)||(disksPerNode!==baseDisksPerNode);
+ const strategy=storagePressure?'need_more_data_nodes':(disksPerNode>baseDisksPerNode?'increase_disk_count':'use_selected_disk_size');
+ return {days,eventsYi,gbPer100M,replica:overhead,overhead,estimatedUsedGb,utilization,requiredGb,baselineGb,targetGb,finalGb,perDiskGb,diskUnits,seqNodeCount,disksPerNode,baseDiskUnits:seqNodeCount*baseDisksPerNode,baseDisksPerNode,preferredMaxGb:perDiskGb,configuredSeqDisks:c.userSeq,maxDisksPerNode,providerAutoSeq:c.providerAutoSeq,hardSeqLimit:c.hardSeq,neededDisksPerNode:Math.ceil(targetGb/(seqNodeCount*perDiskGb)),capacityAtLimits:seqNodeCount*maxDisksPerNode*perDiskGb,adjusted,strategy,storagePressure,dataNodeScaleReview:storagePressure,diskSizes:input.cdpDiskSizes||{},providerProfile:c.profile,planningIssues:c.issues||[],cloudSeqDiskLimit:c.hardSeq,otherDataDisksPerNode:c.otherDataDisksPerNode};
+};
+V31_markDiskInputs=function(input,issues){['maxSingleDiskSelect','maxSingleDiskCustom','seqDisksPerNode'].forEach(id=>{const el=document.getElementById(id);if(el)el.classList.remove('invalid-field','warn-field');});(issues||[]).forEach(x=>{if(x.field){const el=document.getElementById(x.field);if(el)el.classList.add(x.level==='error'?'invalid-field':'warn-field');}});};
+updateStoragePreview=function(storage){
+ return withLang(SYS_LANG,()=>{
+  const box=document.getElementById('storagePreview'); if(!box)return;
+  box.classList.remove('preview-error','preview-warn');
+  if(!storage){box.textContent=t('storagePreviewEmpty');V31_markDiskInputs(null,[]);return;}
+  const errors=(storage.planningIssues||[]).filter(x=>x.level==='error'); const warns=(storage.planningIssues||[]).filter(x=>x.level!=='error');
+  V31_markDiskInputs(null,storage.planningIssues||[]); if(errors.length)box.classList.add('preview-error'); else if(warns.length)box.classList.add('preview-warn');
+  const issueText=(errors.length||warns.length)?(LANG==='zh'?`参数校验：\n${errors.map(x=>'❌ '+x.msg).concat(warns.map(x=>'⚠️ '+x.msg)).join('\n')}\n\n`:`Parameter validation:\n${errors.map(x=>'❌ '+x.msg).concat(warns.map(x=>'⚠️ '+x.msg)).join('\n')}\n\n`):'';
+  box.textContent=issueText+(LANG==='zh'
+   ? `估算实际使用容量：${fmtGb(storage.estimatedUsedGb)}\n按 ${Math.round(storage.utilization*100)}% 使用率需配置：${fmtGb(storage.requiredGb)}\n模板基线顺序盘总容量：${fmtGb(storage.baselineGb)}\n最终建议顺序盘：${fmtGb(storage.finalGb)}（${storage.seqNodeCount} 个数据节点 × 每节点 ${storage.disksPerNode} 块 × ${fmtGb(storage.perDiskGb)}）\n单节点顺序盘可用上限：${storage.maxDisksPerNode} 块；顺序盘单盘规划大小：${fmtGb(storage.perDiskGb)}${storage.storagePressure?'\n❌ 当前文档模板和云厂商约束下仍无法满足容量，需要升级 Data Node 或专项复核。':''}`
+   : `Estimated used storage: ${fmtGb(storage.estimatedUsedGb)}\nProvisioned capacity required at ${Math.round(storage.utilization*100)}% utilization: ${fmtGb(storage.requiredGb)}\nTemplate baseline sequential capacity: ${fmtGb(storage.baselineGb)}\nFinal sequential disk plan: ${fmtGb(storage.finalGb)} (${storage.seqNodeCount} data nodes × ${storage.disksPerNode} disks/node × ${fmtGb(storage.perDiskGb)})\nAvailable sequential-disk limit: ${storage.maxDisksPerNode} disks/node; planned size per disk: ${fmtGb(storage.perDiskGb)}${storage.storagePressure?'\n❌ Current templates and cloud constraints cannot satisfy the capacity requirement; upgrade Data Nodes or run special review.':''}`);
+ });
+};
+inputPreferenceIssues=function(input,cdp){return [];};
+applyCloudDiskDefaults=function(force=false){
+ const p=providerProfile(currentCloud()?.id);
+ const sel=document.getElementById('maxSingleDiskSelect'); const seqCnt=document.getElementById('seqDisksPerNode');
+ updateSeqDiskSizeOptions(true);
+ if(sel && (force || !sel.dataset.userChanged)){const preferred=String(p.preferredSeqDiskGb||4096); if([...sel.options].some(o=>o.value===preferred))sel.value=preferred; else if([...sel.options].some(o=>o.value==='4096'))sel.value='4096'; updateSeqDiskCustomVisibility();}
+ if(seqCnt && (force || !seqCnt.dataset.userChanged)){seqCnt.value=p.seqDefault||10;}
+};
+bindAutoRecalculate=function(){
+ const ids=['customerName','cloud','region','industry','mau','dau','ratio','eventsPerUser','dailyEvents','dailyAudience','includeMA','includeETL','includePriceExport','includeInstanceType','retentionValue','retentionUnit','storageUtilization','eventGbPer100M','storageReplica','maxSingleDiskSelect','maxSingleDiskCustom','seqDisksPerNode','cdpSystemDiskGb','cdpMetadataDiskGb','cdpRandomDiskGb','cdpIngestDiskGb','placementListQps','placementCarouselQps','cartesianTotal','peakActivationPerHour','activeJourneys','channelQps'];
+ ids.forEach(id=>{const el=document.getElementById(id);if(!el)return;el.addEventListener('input',()=>{if(['maxSingleDiskSelect','maxSingleDiskCustom','seqDisksPerNode'].includes(id))el.dataset.userChanged='1';updateSeqDiskCustomVisibility();calculate();});el.addEventListener('change',()=>{if(['maxSingleDiskSelect','maxSingleDiskCustom','seqDisksPerNode'].includes(id))el.dataset.userChanged='1';updateSeqDiskCustomVisibility();calculate();});});
+ document.querySelectorAll('.adv').forEach(el=>el.addEventListener('change',calculate));
+};
+const V32_applyLang_base=applyLang;
+applyLang=function(){V32_applyLang_base();updateSeqDiskSizeOptions(true);};
+const V32_internalLogicHtml_base=internalLogicHtml;
+internalLogicHtml=function(){
+ let html=V32_internalLogicHtml_base();
+ html += '<h3>'+(LANG==='zh'?'顺序盘规划规则':'Sequential Disk Planning Rules')+'</h3>';
+ html += htmlTable(['Item','Value'],[
+  {Item:LANG==='zh'?'事实':'Fact',Value:LANG==='zh'?'神策模板中的 1T 是模板基线单盘容量，不是不可低于的硬性最小单盘值。500G、1T、1.5T 等容量是否可用，取决于云厂商盘型容量、IOPS、吞吐和实例挂载限制。':'The 1T disk in the Sensors Data template is a baseline template value, not a hard minimum per-disk size. Whether 500G, 1T, 1.5T, etc. can be used depends on cloud disk capacity, IOPS, throughput and instance attachment limits.'},
+  {Item:LANG==='zh'?'原则':'Principle',Value:LANG==='zh'?'左侧顺序盘单盘大小是规划值。系统先按文档确定 CDP 基础集群，再用存储周期计算目标容量，并在云厂商约束内计算需要的磁盘数量；不足时升级 3+4 / 3+5 / 3+6。':'The selected sequential disk size is a planning value. The system first selects the CDP base cluster by document rules, then calculates target storage by retention period, derives required disk count within cloud constraints, and upgrades to 3+4 / 3+5 / 3+6 when needed.'},
+  {Item:LANG==='zh'?'结论':'Conclusion',Value:LANG==='zh'?'下拉框只展示当前云厂商下通过顺序盘最低性能校验的标准容量；自定义容量允许输入，但会触发容量、IOPS、吞吐和挂载数量校验。':'The dropdown shows only standard sizes that pass the sequential-disk minimum performance check for the current cloud. Custom sizes are allowed but are validated against capacity, IOPS, throughput and attachment-count constraints.'}
+ ]);
+ return html;
+};
+const V32_init_style=function(){
+ const css='select.invalid-field{border-color:#b91c1c!important;background:#fff5f5!important;box-shadow:0 0 0 2px rgba(185,28,28,.12)}select.warn-field{border-color:#b45309!important;background:#fffbeb!important}';
+ const st=document.createElement('style'); st.textContent=css; document.head.appendChild(st);
+};
+window.addEventListener('load',()=>{V32_init_style();updateSeqDiskSizeOptions(false);applyCloudDiskDefaults(false);calculate();});
+/* ===== end disk-size dropdown patch ===== */
+
+
+
+/* ===== v3.9 stable internal logic + cloud vendor disk rule matrix ===== */
+const CLOUD_DISK_RULES_V38 = [
+  {id:'AWS', vendor:'AWS', productZh:'EBS gp3（通用型 SSD）；元数据/随机高 IOPS 场景可选 gp3 预配置性能或 io2', productEn:'EBS gp3 General Purpose SSD; for metadata/random high-IOPS use gp3 with provisioned performance or io2', capacity:'gp3: 1 GiB–64 TiB', iops:'gp3 baseline 3,000 IOPS; provisionable up to 80,000 IOPS; high IOPS constrained by 500 IOPS/GiB ratio', throughput:'gp3 baseline 125 MiB/s; provisionable up to 2,000 MiB/s; throughput can be provisioned when IOPS is sufficient', attachZh:'EBS 挂载数量取决于 EC2 实例类型和规格；工具按保守限制校验，并要求目标区域控制台复核。', attachEn:'EBS attachment count depends on EC2 instance type and size; the tool uses conservative validation and requires target-region console verification.', conclusionZh:'顺序盘优先 gp3；若 gp3 基础 125 MiB/s 不满足吞吐，则提示预配置吞吐；元数据/随机盘需要满足 ≥5000 IOPS。', conclusionEn:'Use gp3 for sequential disks; if gp3 baseline 125 MiB/s is insufficient, flag provisioned throughput; metadata/random disks must meet >=5000 IOPS.'},
+  {id:'Azure', vendor:'Azure', productZh:'Premium SSD v2 优先；极高性能场景可选 Ultra Disk；系统盘可用 Premium SSD', productEn:'Premium SSD v2 preferred; Ultra Disk optional for extreme workloads; Premium SSD for OS disk', capacity:'Premium SSD v2 / Ultra Disk: 1 GiB–64 TiB; Premium SSD: up to 32,767 GiB', iops:'Premium SSD v2 up to 80,000 IOPS; Ultra Disk up to 400,000 IOPS', throughput:'Premium SSD v2 up to 2,000 MB/s; Ultra Disk up to 10,000 MB/s; VM size limits still apply', attachZh:'Dsv5/Esv5 等 VM size 有 Max Remote Storage Disks 限制；工具按节点 vCPU/内存映射实例规格后校验。', attachEn:'Dsv5/Esv5 VM sizes have Max Remote Storage Disks limits; the tool validates after mapping node vCPU/memory to VM size.', conclusionZh:'顺序盘推荐 Premium SSD v2；如果使用经典 Premium SSD，需要按 P 档容量/IOPS/吞吐复核；磁盘数必须受 VM size 限制。', conclusionEn:'Premium SSD v2 is recommended for sequential disks; if classic Premium SSD is used, validate P-tier capacity/IOPS/throughput; disk count must respect VM size limits.'},
+  {id:'GCP', vendor:'Google Cloud', productZh:'Balanced Persistent Disk / SSD Persistent Disk；高性能场景可评估 Hyperdisk', productEn:'Balanced Persistent Disk / SSD Persistent Disk; Hyperdisk can be reviewed for high-performance workloads', capacity:'Persistent Disk: up to 64 TiB per disk in the embedded rule; final limits vary by disk and VM configuration', iops:'pd-balanced: baseline 3,000 IOPS + per-GiB growth; pd-ssd: baseline 6,000 IOPS + per-GiB growth; per-instance caps apply', throughput:'pd-balanced: baseline 140 MiB/s + per-GiB growth; pd-ssd: baseline 240 MiB/s + per-GiB growth; per-instance caps apply', attachZh:'可挂载多块 Persistent Disk，但性能和数量仍需按 VM 类型、vCPU 与实例级上限复核。', attachEn:'Multiple Persistent Disks can be attached, but disk count and performance must be validated against VM type, vCPU count and per-instance caps.', conclusionZh:'容量足够不代表性能足够；工具按容量估算 IOPS/吞吐，并在小容量盘性能不足时提示增大容量、换 SSD PD/Hyperdisk 或增加节点。', conclusionEn:'Sufficient capacity does not guarantee performance; the tool estimates IOPS/throughput by size and suggests larger disks, SSD PD/Hyperdisk or more nodes when small disks are insufficient.'},
+  {id:'Alibaba', vendor:'Alibaba Cloud International', productZh:'ESSD PL0 用于顺序盘基线；元数据/随机盘优先 ESSD PL1 或更高；可评估 ESSD AutoPL', productEn:'ESSD PL0 for baseline sequential disks; ESSD PL1 or higher for metadata/random disks; ESSD AutoPL can be reviewed', capacity:'ESSD series: up to 65,536 GiB per disk; exact availability varies by region/zone/PL level', iops:'PL0: min(10,000, 1,800 + 12 × GiB); PL1: min(50,000, 1,800 + 50 × GiB)', throughput:'PL0: min(180 MB/s, 100 + 0.25 × GiB); PL1: min(350 MB/s, 120 + 0.5 × GiB)', attachZh:'实例可挂载磁盘数量受实例规格限制；工具按保守数据盘数量校验，最终以目标海外 Region 控制台为准。', attachEn:'Disk attachment count depends on instance flavor; the tool uses conservative data-disk limits and final availability must be checked in the target international region.', conclusionZh:'顺序盘默认 ESSD PL0/PL1 校验吞吐；元数据/随机盘必须至少按 PL1 或更高满足 ≥5000 IOPS。', conclusionEn:'Sequential disks are checked as ESSD PL0/PL1 for throughput; metadata/random disks must use at least PL1 or higher to meet >=5000 IOPS.'},
+  {id:'Huawei', vendor:'Huawei Cloud International', productZh:'顺序盘优先 SSD-backed / 高 IO 或通用型 SSD V2；元数据/随机盘优先超高 IO / 极致型 SSD', productEn:'Sequential disks: SSD-backed / High I/O or General Purpose SSD V2; metadata/random: Ultra-high I/O / Extreme SSD preferred', capacity:'EVS data disk: typically 32,768 GiB; service ticket may increase max data disk capacity to 65,536 GiB', iops:'Ultra-high I/O: min(50,000, 1,800 + 50 × GiB); High I/O: min(5,000, 1,800 + 8 × GiB)', throughput:'Ultra-high I/O: min(350 MiB/s, 120 + 0.5 × GiB); High I/O: min(150 MiB/s, 100 + 0.15 × GiB)', attachZh:'磁盘性能还受 ECS 实例 Storage QoS 限制；即使单盘性能满足，也需要确认实例级 IOPS/吞吐。', attachEn:'Disk performance is also limited by ECS instance Storage QoS; even if a disk meets requirements, instance-level IOPS/throughput must be confirmed.', conclusionZh:'华为云海外不硬写单一规格；工具按 EVS 公式做基础校验，并要求目标区域控制台复核盘型、实例 QoS 和可用规格。', conclusionEn:'For Huawei Cloud International, the tool does not force one fixed flavor; it checks EVS formulas and requires target-region console verification for disk type, instance QoS and availability.'}
+];
+function V38_kvRows(rows){ return rows; }
+function V38_cloudDiskRuleRows(){
+  const zh=LANG==='zh';
+  return CLOUD_DISK_RULES_V38.map(r=>({
+    [zh?'云厂商':'Cloud Vendor']: r.vendor,
+    [zh?'推荐产品/型号':'Recommended Product / Type']: zh?r.productZh:r.productEn,
+    [zh?'容量范围/限制':'Capacity Range / Limit']: r.capacity,
+    [zh?'IOPS 规则':'IOPS Rule']: r.iops,
+    [zh?'吞吐量规则':'Throughput Rule']: r.throughput,
+    [zh?'挂载/实例限制':'Attachment / Instance Limit']: zh?r.attachZh:r.attachEn,
+    [zh?'配置结论':'Sizing Conclusion']: zh?r.conclusionZh:r.conclusionEn
+  }));
+}
+function V38_nodeSummary(rule){
+  if(!rule||!rule.nodes)return '-';
+  return rule.nodes.map(n=>`${n.count} × ${(LANG==='zh'?n.role_cn:n.role_en)||'Node'} (${n.vcpu}C / ${n.mem}G)`).join('\n');
+}
+function V38_cdpBoundaryRows(){
+  const zh=LANG==='zh';
+  const headers=zh?['配置类型','DAU 边界','日事件量边界','节点组成']:['Configuration Type','DAU Boundary','Daily Event Boundary','Node Composition'];
+  const rows=DATA.cdpRules.map(r=>({[headers[0]]:zh?r.name_cn:r.name_en,[headers[1]]:'≤ '+fmt(r.maxDau),[headers[2]]:'≤ '+fmt(r.maxEvents),[headers[3]]:V38_nodeSummary(r)}));
+  return htmlTable(headers,rows,'perf-table');
+}
+function V38_maBoundaryRows(){
+  const zh=LANG==='zh';
+  const headers=zh?['配置类型','DAU 边界','日事件量边界','每天受众上限','节点组成']:['Configuration Type','DAU Boundary','Daily Event Boundary','Daily Audience Limit','Node Composition'];
+  const rows=DATA.maRules.map(r=>({[headers[0]]:zh?r.name_cn:r.name_en,[headers[1]]:'≤ '+fmt(r.maxDau),[headers[2]]:'≤ '+fmt(r.maxEvents),[headers[3]]:'≤ '+fmt(r.maxAudience),[headers[4]]:V38_nodeSummary(r)}));
+  return htmlTable(headers,rows,'perf-table');
+}
+function internalLogicHtml(){
+  const zh=LANG==='zh';
+  const factRows = zh ? [
+    {项目:'定位',内容:'本区域为神策内部配置人员使用，不写入客户版 Excel / Word / PDF。'},
+    {项目:'基础原则',内容:'先按神策文档中的 DAU / 日事件量 / MA 每天受众上限确定 CDP、MA 基础集群；再按存储周期、事件大小、磁盘使用率和云厂商约束调整 CDP 顺序盘容量、盘数和 Data Node。'},
+    {项目:'DAU/MAU',内容:'DAU 优先；只有没有 DAU 时，才用 MAU × 行业比例估算 DAU。银行默认 15%，支付/钱包 30%，高频钱包/超级 App 40%，自定义可调整。'},
+    {项目:'CDP 磁盘',内容:'模板中的 1T 是基线容量，不是硬性最小值。500G/1T/2T/4T 是否可用，必须同时满足容量、IOPS、吞吐、挂载数量和云厂商盘型约束。'},
+    {项目:'MA 逻辑',内容:'MA 按 DAU、日事件量和每天受众上限综合评估；3+3、3+N+3 场景需拆分展示元数据节点、数据节点/混合节点、在线节点。'},
+    {项目:'ETL',内容:'ETL 是辅助组件，默认 3 台 8C/32G；实际需按数据源数量、同步频率、历史导入量、清洗复杂度和任务并发调整。'},
+    {项目:'导出限制',内容:'存在红色错误时，不建议导出客户版配置；需要先修正云厂商磁盘/实例约束或进入专项评估。'}
+  ] : [
+    {Item:'Positioning',Value:'This section is for Sensors Data internal sizing users and is not included in customer-facing Excel / Word / PDF exports.'},
+    {Item:'Core Principle',Value:'First select the base CDP/MA cluster using Sensors Data DAU / daily-event / MA daily-audience rules; then adjust CDP sequential disk capacity, disk count and Data Nodes using retention period, event size, disk utilization and cloud-provider constraints.'},
+    {Item:'DAU/MAU',Value:'Actual DAU has priority. MAU × industry ratio is used only when DAU is not provided. Bank defaults to 15%, payment/wallet to 30%, high-frequency wallet/super app to 40%, and custom is adjustable.'},
+    {Item:'CDP Disk',Value:'The 1T disk in templates is a baseline capacity, not a hard minimum. Whether 500G/1T/2T/4T is valid depends on capacity, IOPS, throughput, attachment count and cloud disk type constraints.'},
+    {Item:'MA Logic',Value:'MA is sized by DAU, daily event volume and daily audience limit. For 3+3 and 3+N+3, metadata, data/mixed and online nodes must be shown separately.'},
+    {Item:'ETL',Value:'ETL is a supporting component. The default 3 × 8C/32G baseline must be adjusted by data source count, sync frequency, historical import volume, transformation complexity and job concurrency.'},
+    {Item:'Export Control',Value:'When red errors exist, customer-facing exports are not recommended until cloud disk/instance constraints are fixed or a special assessment is performed.'}
+  ];
+  let html = '<div class="note"><b>'+(zh?'事实 / 原则 / 结论':'Facts / Principles / Conclusions')+'</b></div>' + htmlTable(Object.keys(factRows[0]), factRows, 'perf-table');
+  html += '<div class="report-section-title">CDP '+(zh?'评估档次':'Sizing Boundaries')+'</div>'+V38_cdpBoundaryRows();
+  html += '<div class="report-section-title">MA '+(zh?'评估档次':'Sizing Boundaries')+'</div>'+V38_maBoundaryRows();
+  html += '<div class="report-section-title">'+(zh?'事件大小与 CDP 顺序盘计算规则':'Event Size & CDP Sequential Disk Calculation')+'</div>';
+  html += '<div class="note">'+(zh?'默认采用 Word 中顺序数据盘评估逻辑：日导入事件量（亿）× 35GB × 存储天数 ÷ 0.8 × 1.1。左侧的“单亿事件基础存储估算”“顺序数据综合修正系数”“磁盘使用率上限”均可调整。':'Default formula follows the Word sequential-disk sizing logic: daily imported events (100M) × 35GB × retention days ÷ 0.8 × 1.1. The left-side GB per 100M events, sequential-data factor and disk utilization threshold are adjustable.')+'</div>';
+  html += '<div class="report-section-title">'+(zh?'云厂商磁盘产品、IOPS 与吞吐量规则':'Cloud Disk Product, IOPS and Throughput Rules')+'</div>';
+  html += htmlTable(Object.keys(V38_cloudDiskRuleRows()[0]), V38_cloudDiskRuleRows(), 'perf-table');
+  html += '<div class="report-section-title">'+(zh?'系统功能说明':'System Features')+'</div>';
+  const featureRows = zh ? [
+    {功能:'配置生成',说明:'生成网页配置建议，支持中英文输出。'},
+    {功能:'导出',说明:'支持 Excel、Word（.docx）和 PDF/打印版本；客户版导出不包含内部配置逻辑说明。'},
+    {功能:'本地记录',说明:'可手动保存、查看、导出、清空评估记录；记录仅保存在当前浏览器。'},
+    {功能:'价格',说明:'价格仅供参考。Azure 可尝试公开 API；AWS/GCP/阿里云/华为云建议以官方计算器、控制台或合同报价为准。'}
+  ] : [
+    {Feature:'Recommendation',Description:'Generate on-page configuration recommendations with Chinese/English output.'},
+    {Feature:'Export',Description:'Export Excel, Word (.docx) and PDF/print versions; customer-facing exports do not include internal sizing logic.'},
+    {Feature:'Local Records',Description:'Manually save, view, export and clear evaluation records; records are stored only in the current browser.'},
+    {Feature:'Pricing',Description:'Prices are reference only. Azure can attempt a public API; AWS/GCP/Alibaba/Huawei should be confirmed by official calculators, consoles or contract quotations.'}
+  ];
+  html += htmlTable(Object.keys(featureRows[0]), featureRows, 'perf-table');
+  return html;
+}
+window.addEventListener('load',()=>{
+  document.title='Sensors Data CDP / MA / ETL Cloud Sizing Estimator v4.0';
+  document.querySelectorAll('footer div').forEach((d,idx)=>{ if(idx===0) d.textContent='Version v4.0 · Generated 2026-06-15'; });
+});
+/* ===== end v3.9 stable internal logic + cloud vendor disk rule matrix ===== */
+
+
+
+/* ===== v3.9 sequential disk selected-size display fix ===== */
+function gb(v){
+  const n=Number(v);
+  if(isNaN(n))return '-';
+  if(n>=1024){
+    const t=n/1024;
+    return (Math.abs(t-Math.round(t))<1e-9?String(Math.round(t)):t.toFixed(1).replace(/\.0$/,''))+'T';
+  }
+  return Math.round(n)+'G';
+}
+function fmtGb(v){
+  const n=Number(v);
+  if(isNaN(n))return '-';
+  if(n>=1024){
+    const t=n/1024;
+    return (Math.abs(t-Math.round(t))<1e-9?String(Math.round(t)):t.toFixed(1).replace(/\.0$/,''))+' TB';
+  }
+  return Math.round(n)+' GB';
+}
+applyCdpStorage = function(rule,storage){
+ const clone=deepClone(rule);
+ const sizes=storage?.diskSizes||{};
+ (clone.nodes||[]).forEach(n=>(n.disks||[]).forEach(d=>{
+   if(d[0]==='顺序数据盘'){
+     if(storage){
+       d[2]=storage.disksPerNode;
+       // Important: use the selected/planned sequential disk size as the output value.
+       // Do not force the template baseline single-disk size when the user selects a smaller valid size.
+       d[3]=Number(storage.perDiskGb||d[3]||0);
+     }
+   }else if(d[0]==='系统盘'&&sizes.system){
+     d[3]=Math.max(Number(d[3]||0),Number(sizes.system));
+   }else if(d[0]==='元数据盘'&&sizes.metadata){
+     d[3]=Math.max(Number(d[3]||0),Number(sizes.metadata));
+   }else if(d[0]==='随机数据盘'&&sizes.random){
+     d[3]=Math.max(Number(d[3]||0),Number(sizes.random));
+   }else if(d[0]==='数据接入暂存盘'&&sizes.ingest){
+     d[3]=Math.max(Number(d[3]||0),Number(sizes.ingest));
+   }
+ }));
+ return clone;
+};
+window.addEventListener('load',()=>{
+  document.title='Sensors Data CDP / MA / ETL Cloud Sizing Estimator v4.0';
+  document.querySelectorAll('footer div').forEach((d,idx)=>{ if(idx===0) d.textContent='Version v4.0 · Generated 2026-06-15'; });
+  try{calculate();}catch(e){console.error(e);}
+});
+/* ===== end v3.9 sequential disk selected-size display fix ===== */
+
+
+/* ===== v4.0 polished internal headings + dynamic export notes ===== */
+function noteRows(res){
+  const rows=[];
+  const k=LANG==='zh'?'说明项':'Note';
+  const v=LANG==='zh'?'内容':'Description';
+  rows.push({[k]:LANG==='zh'?'区域与云规格':'Region and cloud instance availability',[v]:t('regionNote')});
+  if(res?.input?.includeETL){
+    rows.push({[k]:LANG==='zh'?'ETL 配置调整':'ETL sizing adjustment',[v]:t('etlNote')});
+  }
+  if(res?.input?.includePriceExport){
+    rows.push({[k]:LANG==='zh'?'价格说明':'Pricing note',[v]:t('priceSourceNote')});
+  }
+  if((res?.warnings||[]).some(w=>String(w).startsWith('ERROR:'))){
+    rows.push({[k]:LANG==='zh'?'导出控制':'Export control',[v]:LANG==='zh'?'当前配置存在红色错误时，不建议作为客户版配置导出；请先修正云厂商磁盘、实例或容量约束。':'When red errors exist, do not use the result as a customer-facing export until cloud disk, instance or capacity constraints are resolved.'});
+  }
+  return rows;
+}
+
+// Keep internal logic labels neutral and productized; do not expose implementation version names.
+const V40_internalLogicHtml_base = internalLogicHtml;
+internalLogicHtml = function(){
+  let html = V40_internalLogicHtml_base();
+  html = html
+    .replace(/v3\.\d+\s*/g,'')
+    .replace(/v3\.\d+\s*/g,'')
+    .replace(/强校验规则/g,'强校验与导出控制规则')
+    .replace(/Strict Validation Rules/g,'Strict Validation & Export Control Rules')
+    .replace(/顺序盘规划规则/g,'顺序盘规划规则')
+    .replace(/Sequential Disk Planning Rules/g,'Sequential Disk Planning Rules');
+  return html;
+};
+
+// Refresh visible internal logic immediately after language switching or result recalculation.
+const V40_renderAll_base = renderAll;
+renderAll = function(){
+  V40_renderAll_base();
+  const card=document.getElementById('internalLogicCard');
+  const content=document.getElementById('internalLogicContent');
+  const title=document.getElementById('internalLogicTitle');
+  if(card && content && card.style.display!=='none'){
+    if(title)title.textContent=ui('logicTitle');
+    content.innerHTML=withLang(SYS_LANG,()=>internalLogicHtml());
+  }
+};
+
+window.addEventListener('load',()=>{
+  document.title='Sensors Data CDP / MA / ETL Cloud Sizing Estimator v4.0';
+  document.querySelectorAll('footer div').forEach((d,idx)=>{ if(idx===0) d.textContent='Version v4.0 · Generated 2026-06-15'; });
+  try{ if(lastResult) renderAll(); }catch(e){ console.error(e); }
+});
+/* ===== end v4.0 patch ===== */
+
+
+
+/* ===== v4.1 required fields, default/modified visual state, and language consistency polish ===== */
+(function(){
+  function V41_addStyle(){
+    if(document.getElementById('v41Style')) return;
+    const css = `
+      .v41-required-hint{margin:-2px 0 12px;padding:8px 10px;border-radius:10px;font-size:12px;border:1px solid #d7deea;background:#f8fafc;color:#65738a;line-height:1.45}
+      .v41-required-hint.v41-missing{border-color:#f3b4b4;background:#fff5f5;color:#991b1b;font-weight:700}
+      .v41-required-hint.v41-ok{border-color:#a9dcc8;background:#f3fbf7;color:#045c43}
+      .v41-required-badge{display:inline-block;margin-left:6px;padding:2px 6px;border-radius:999px;background:#fff1f2;color:#b91c1c;border:1px solid #fecdd3;font-size:11px;font-weight:700;vertical-align:middle}
+      input.v41-default, select.v41-default{background:#f8fafc;color:#64748b;border-color:#d7deea}
+      input.v41-modified, select.v41-modified{background:#f0fdf4!important;color:#172033;border-color:#00A870!important;box-shadow:0 0 0 2px rgba(0,168,112,.10)}
+      input.v41-required-missing{background:#fff5f5!important;border-color:#b91c1c!important;box-shadow:0 0 0 2px rgba(185,28,28,.12)}
+      label.v41-checkbox-default{color:#64748b}
+      label.v41-checkbox-modified{color:#045C43;font-weight:700;background:#f0fdf4;border:1px solid #a9dcc8;border-radius:8px;padding:3px 6px;margin:-3px 0}
+      .v41-field-legend{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:8px 0 12px;font-size:12px;color:#65738a}
+      .v41-dot{display:inline-block;width:10px;height:10px;border-radius:999px;margin-right:4px;vertical-align:-1px;border:1px solid #d7deea;background:#f8fafc}.v41-dot.modified{background:#f0fdf4;border-color:#00A870}.v41-dot.required{background:#fff5f5;border-color:#b91c1c}
+    `;
+    const st=document.createElement('style'); st.id='v41Style'; st.textContent=css; document.head.appendChild(st);
+  }
+  function V41_text(zh,en){return SYS_LANG==='zh'?zh:en;}
+  function V41_getControlValue(el){
+    if(!el) return '';
+    if(el.type==='checkbox') return !!el.checked;
+    return String(el.value ?? '');
+  }
+  function V41_defaultValue(id){
+    const cloud=currentCloud && currentCloud();
+    const p=(typeof providerProfile==='function' && cloud)?providerProfile(cloud.id):null;
+    const profile=DATA.industryProfiles.find(x=>x.id===document.getElementById('industry')?.value);
+    const map={
+      lang:'zh', customerName:'', cloud:'AWS', industry:'bank', mau:'', dau:'', eventsPerUser:'100', dailyEvents:'', dailyAudience:'',
+      includeMA:true, includeETL:true, includePriceExport:false, includeInstanceType:true,
+      retentionValue:'1', retentionUnit:'years', storageUtilization:'80', eventGbPer100M:'35', storageReplica:'1.1',
+      seqDisksPerNode:String(p?.seqDefault || 10),
+      maxSingleDiskCustom:String(p?.preferredSeqDiskGb || 4096),
+      cdpSystemDiskGb:'50', cdpMetadataDiskGb:'400', cdpRandomDiskGb:'500', cdpIngestDiskGb:'250',
+      placementListQps:'', placementCarouselQps:'', cartesianTotal:'', peakActivationPerHour:'', activeJourneys:'', channelQps:''
+    };
+    if(id==='region') return String((cloud?.regions||[])[0]?.id || document.getElementById('region')?.options?.[0]?.value || '');
+    if(id==='ratio') return String(Math.round(((profile?.ratio ?? 0.15)*100)));
+    if(id==='maxSingleDiskSelect'){
+      const preferred=String(p?.preferredSeqDiskGb || 4096);
+      const sel=document.getElementById('maxSingleDiskSelect');
+      if(sel && [...sel.options].some(o=>o.value===preferred)) return preferred;
+      if(sel && [...sel.options].some(o=>o.value==='4096')) return '4096';
+      return String(sel?.options?.[0]?.value || preferred);
+    }
+    return Object.prototype.hasOwnProperty.call(map,id)?map[id]:'';
+  }
+  function V41_isModified(el){
+    if(!el || !el.id || el.disabled) return false;
+    const id=el.id;
+    if(id==='mau' || id==='dau') return String(el.value||'').trim()!=='';
+    if(el.type==='checkbox') return V41_getControlValue(el)!==V41_defaultValue(id);
+    return String(el.value ?? '') !== String(V41_defaultValue(id));
+  }
+  function V41_labelForInput(id){
+    const el=document.getElementById(id); if(!el) return null;
+    const parent=el.closest('div');
+    return parent ? parent.querySelector('label') : null;
+  }
+  function V41_ensureRequiredUI(){
+    const row=document.getElementById('mau')?.closest('.row');
+    if(row && !document.getElementById('v41MauDauHint')){
+      const hint=document.createElement('div'); hint.id='v41MauDauHint'; hint.className='v41-required-hint';
+      row.insertAdjacentElement('afterend',hint);
+    }
+    ['mau','dau'].forEach(id=>{
+      const lab=V41_labelForInput(id);
+      if(lab && !lab.querySelector('.v41-required-badge')){
+        const badge=document.createElement('span'); badge.className='v41-required-badge'; lab.appendChild(badge);
+      }
+    });
+    const legendHost=document.querySelector('.storage-card');
+    if(legendHost && !document.getElementById('v41FieldLegend')){
+      const legend=document.createElement('div'); legend.id='v41FieldLegend'; legend.className='v41-field-legend';
+      legendHost.parentNode.insertBefore(legend, legendHost);
+    }
+  }
+  function V41_updateRequiredHint(){
+    V41_ensureRequiredUI();
+    const mau=document.getElementById('mau'), dau=document.getElementById('dau');
+    const missing=!(String(mau?.value||'').trim()) && !(String(dau?.value||'').trim());
+    const hint=document.getElementById('v41MauDauHint');
+    if(hint){
+      hint.className='v41-required-hint '+(missing?'v41-missing':'v41-ok');
+      hint.textContent=missing
+        ? V41_text('必填提示：MAU / DAU 二选一必填；如果客户已提供 DAU，请优先填写 DAU。','Required: enter either MAU or DAU. If actual DAU is available, use DAU first.')
+        : V41_text('已满足必填条件：系统将优先使用 DAU；如未填写 DAU，则按 MAU × 行业比例估算。','Required input satisfied: DAU is used first; if DAU is empty, MAU × industry ratio is used for estimation.');
+    }
+    ['mau','dau'].forEach(id=>{
+      const el=document.getElementById(id); const lab=V41_labelForInput(id); const badge=lab?.querySelector('.v41-required-badge');
+      if(badge) badge.textContent=V41_text('二选一必填','Required');
+      if(el){el.classList.toggle('v41-required-missing',missing);}
+    });
+    const legend=document.getElementById('v41FieldLegend');
+    if(legend){
+      legend.innerHTML = `<span><i class="v41-dot"></i>${V41_text('默认值','Default value')}</span><span><i class="v41-dot modified"></i>${V41_text('已人工调整','Modified')}</span><span><i class="v41-dot required"></i>${V41_text('必填缺失','Missing required input')}</span>`;
+    }
+  }
+  function V41_updateFieldStates(){
+    V41_addStyle(); V41_ensureRequiredUI();
+    const controls=Array.from(document.querySelectorAll('input,select'));
+    controls.forEach(el=>{
+      if(!el || !el.id || el.type==='button' || el.type==='hidden') return;
+      el.classList.remove('v41-default','v41-modified');
+      if(el.id==='mau' || el.id==='dau') return;
+      if(el.classList.contains('invalid-field') || el.classList.contains('warn-field')) return;
+      if(el.type==='checkbox'){
+        const lab=el.closest('label');
+        if(lab){lab.classList.remove('v41-checkbox-default','v41-checkbox-modified');lab.classList.add(V41_isModified(el)?'v41-checkbox-modified':'v41-checkbox-default');}
+      }else{
+        el.classList.add(V41_isModified(el)?'v41-modified':'v41-default');
+      }
+    });
+    ['mau','dau'].forEach(id=>{const el=document.getElementById(id); if(el && String(el.value||'').trim()) el.classList.add('v41-modified');});
+    V41_updateRequiredHint();
+  }
+  // Normalize a few output-language strings that previously leaked English labels into Chinese-mode internal tables.
+  const V41_internalLogicHtml_base = internalLogicHtml;
+  internalLogicHtml = function(){
+    let html = V41_internalLogicHtml_base();
+    if(LANG==='zh'){
+      html = html.replace(/<th>Item<\/th><th>Value<\/th>/g,'<th>项目</th><th>内容</th>')
+                 .replace(/<th>Feature<\/th><th>Description<\/th>/g,'<th>功能</th><th>说明</th>');
+    }
+    return html;
+  };
+  const V41_applyLang_base = applyLang;
+  applyLang = function(){ V41_applyLang_base(); V41_updateFieldStates(); };
+  const V41_calculate_base = calculate;
+  calculate = function(){ const r=V41_calculate_base.apply(this,arguments); V41_updateFieldStates(); return r; };
+  const V41_renderAll_base = renderAll;
+  renderAll = function(){ V41_renderAll_base(); V41_updateFieldStates(); };
+  window.addEventListener('load',()=>{
+    document.title='Sensors Data CDP / MA / ETL Cloud Sizing Estimator v4.1';
+    document.querySelectorAll('footer div').forEach((d,idx)=>{ if(idx===0) d.textContent='Version v4.1 · Generated 2026-06-15'; });
+    V41_addStyle(); V41_ensureRequiredUI(); V41_updateFieldStates();
+    try{calculate();}catch(e){console.error(e);}  
+  });
+})();
+/* ===== end v4.1 patch ===== */
+
+
+
+/* ===== v4.2 release-candidate required-field polish and final QA hooks ===== */
+(function(){
+  function V42_text(zh,en){return (typeof SYS_LANG!=='undefined' && SYS_LANG==='zh')?zh:en;}
+  function V42_addStyle(){
+    if(document.getElementById('v42Style')) return;
+    const css = `
+      .v41-required-badge.v42-required-missing{background:#fff1f2!important;color:#b91c1c!important;border-color:#fecdd3!important;}
+      .v41-required-badge.v42-required-ok{background:#ecfdf5!important;color:#047857!important;border-color:#a7f3d0!important;}
+      input.v42-peer-satisfied{background:#f8fafc!important;color:#64748b!important;border-color:#d7deea!important;box-shadow:none!important;}
+    `;
+    const st=document.createElement('style'); st.id='v42Style'; st.textContent=css; document.head.appendChild(st);
+  }
+  function V42_labelForInput(id){
+    const el=document.getElementById(id); if(!el) return null;
+    const parent=el.closest('div'); return parent ? parent.querySelector('label') : null;
+  }
+  function V42_updateMauDauRequiredState(){
+    V42_addStyle();
+    const mau=document.getElementById('mau');
+    const dau=document.getElementById('dau');
+    if(!mau || !dau) return;
+    const hasMau=String(mau.value||'').trim()!=='';
+    const hasDau=String(dau.value||'').trim()!=='';
+    const missing=!hasMau && !hasDau;
+    const hint=document.getElementById('v41MauDauHint');
+    if(hint){
+      hint.className='v41-required-hint '+(missing?'v41-missing':'v41-ok');
+      hint.textContent=missing
+        ? V42_text('必填提示：MAU / DAU 二选一必填；如果客户已提供 DAU，请优先填写 DAU。','Either one required: enter MAU or DAU. If actual DAU is available, use DAU first.')
+        : V42_text('已满足必填条件：系统将优先使用 DAU；如未填写 DAU，则按 MAU × 行业比例估算。','Required input satisfied: DAU is used first; if DAU is empty, MAU × industry ratio is used for estimation.');
+    }
+    ['mau','dau'].forEach(id=>{
+      const el=document.getElementById(id);
+      const lab=V42_labelForInput(id);
+      const badge=lab?.querySelector('.v41-required-badge');
+      if(badge){
+        badge.classList.toggle('v42-required-missing', missing);
+        badge.classList.toggle('v42-required-ok', !missing);
+        badge.textContent=missing ? V42_text('二选一必填','Either one required') : V42_text('已满足','Satisfied');
+        badge.title=missing ? V42_text('MAU 和 DAU 填写任意一个即可。','Enter either MAU or DAU.') : V42_text('MAU / DAU 二选一必填已满足。','Either MAU or DAU has been provided.');
+      }
+      if(el){
+        el.classList.toggle('v41-required-missing', missing);
+        el.classList.remove('v42-peer-satisfied');
+        if(!missing && String(el.value||'').trim()===''){
+          el.classList.remove('v41-modified');
+          if(!el.classList.contains('invalid-field') && !el.classList.contains('warn-field')) el.classList.add('v42-peer-satisfied');
+        }
+      }
+    });
+  }
+  function V42_afterRender(){
+    V42_updateMauDauRequiredState();
+    document.title='Sensors Data CDP / MA / ETL Cloud Sizing Estimator v4.2';
+    document.querySelectorAll('footer div').forEach((d,idx)=>{ if(idx===0) d.textContent='Version v4.2 · Generated 2026-06-15'; });
+  }
+  const V42_applyLang_base=applyLang;
+  applyLang=function(){ const r=V42_applyLang_base.apply(this,arguments); V42_afterRender(); return r; };
+  const V42_calculate_base=calculate;
+  calculate=function(){ const r=V42_calculate_base.apply(this,arguments); V42_afterRender(); return r; };
+  const V42_renderAll_base=renderAll;
+  renderAll=function(){ const r=V42_renderAll_base.apply(this,arguments); V42_afterRender(); return r; };
+  window.addEventListener('load',()=>{ setTimeout(V42_afterRender,0); });
+})();
+/* ===== end v4.2 patch ===== */
+
+
+
+/* ===== v4.2 export notes cleanup: omit pricing references unless price export is enabled ===== */
+(function(){
+  noteRows = function(res){
+    const rows=[];
+    const k=LANG==='zh'?'说明项':'Note';
+    const v=LANG==='zh'?'内容':'Description';
+    const regionText = res?.input?.includePriceExport
+      ? t('regionNote')
+      : (LANG==='zh'
+          ? '区域不会改变神策容量评估逻辑，但会影响云主机规格可用性、云盘类型、网络延迟和数据驻留要求；最终以目标区域云厂商控制台为准。'
+          : 'Region does not change Sensors Data capacity sizing logic, but it may affect instance availability, disk type availability, latency and data residency. Final availability must be verified in the target cloud console.');
+    rows.push({[k]:LANG==='zh'?'区域与云规格':'Region and cloud instance availability',[v]:regionText});
+    if(res?.input?.includeETL){ rows.push({[k]:LANG==='zh'?'ETL 配置调整':'ETL sizing adjustment',[v]:t('etlNote')}); }
+    if(res?.input?.includePriceExport){ rows.push({[k]:LANG==='zh'?'价格说明':'Pricing note',[v]:t('priceSourceNote')}); }
+    if((res?.warnings||[]).some(w=>String(w).startsWith('ERROR:'))){
+      rows.push({[k]:LANG==='zh'?'导出控制':'Export control',[v]:LANG==='zh'?'当前配置存在红色错误时，不建议作为客户版配置导出；请先修正云厂商磁盘、实例或容量约束。':'When red errors exist, do not use the result as a customer-facing export until cloud disk, instance or capacity constraints are resolved.'});
+    }
+    return rows;
+  };
+})();
+/* ===== end v4.2 export notes cleanup ===== */
+
+</script></body></html>
