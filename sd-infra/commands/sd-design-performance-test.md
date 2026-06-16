@@ -78,31 +78,29 @@ status: draft
 
 ### Step 5：输出 Performance Test Plan
 
-输出到 `references/performance-test-plan.md`：
+输出到 `references/performance-test-plan.md`，并生成同名的 Word/Excel：
 
-```markdown
-# Performance Test Plan — <client>
+```bash
+./venv/bin/python <skill-repo>/sd-infra/scripts/design_performance_test.py \
+  --dau 1000000 \
+  --daily-events 5000000 \
+  --retention-days 365 \
+  --cloud AWS \
+  --region ap-southeast-1 \
+  --output-word ./references/performance-test-plan.docx \
+  --output-excel ./references/performance-test-plan.xlsx
+```
 
-## 1. Introduction / Purpose
-## 2. Objective
-## 3. Scope of Testing
-| No. | Module | Scenario | Data Preparation | Test Steps | Expected Metrics |
-## 4. Expected Outcomes
-## 5. Testing Environment
-- Server Hardware
-- Load Generator Hardware
-- Component Versions
-- Environment Addresses
-- SFTP / Encryption Info
-- Firewall Whitelist
-## 6. Test Assumptions and Risks
-## 7. Test Execution
-- Entry Criteria
-- Exit Criteria
-- Suspension / Resumption Criteria
-## 8. Roles and Responsibilities
-## 9. Schedule
-## 10. Appendix
+生成后应先用 validator 校验：
+
+```bash
+./venv/bin/python <skill-repo>/sd-infra/scripts/validate_performance_test_plan.py \
+  --format word \
+  --input ./references/performance-test-plan.docx
+
+./venv/bin/python <skill-repo>/sd-infra/scripts/validate_performance_test_plan.py \
+  --format excel \
+  --input ./references/performance-test-plan.xlsx
 ```
 
 ## 完成建议

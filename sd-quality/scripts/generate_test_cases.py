@@ -21,35 +21,19 @@ from __future__ import annotations
 
 import argparse
 import re
-import subprocess
 import sys
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
+try:
+    import openpyxl
+except ImportError:
+    print("Missing dependency: openpyxl")
+    print("Run: ./venv/bin/pip install -r <skill-repo>/requirements.txt")
+    sys.exit(1)
 
-def _ensure_dependencies():
-    missing = []
-    try:
-        import openpyxl
-    except ImportError:
-        missing.append("openpyxl")
-    if missing:
-        print(f"Missing dependencies: {', '.join(missing)}")
-        print("Installing...")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install"] + missing)
-            print("Dependencies installed successfully.")
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to install dependencies: {e}")
-            print(f"Please run manually: pip install {' '.join(missing)}")
-            sys.exit(1)
-
-
-_ensure_dependencies()
-
-import openpyxl
 from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+from openpyxl.styles import Font, PatternFill, Alignment
 
 sys.path.insert(0, str(Path(__file__).parent))
 from tracking_plan import TrackingPlan

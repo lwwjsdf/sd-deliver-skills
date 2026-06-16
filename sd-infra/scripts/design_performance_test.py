@@ -19,42 +19,27 @@ Dependencies:
 from __future__ import annotations
 
 import argparse
-import subprocess
 import sys
 from datetime import datetime
 from pathlib import Path
-from typing import Dict, List, Optional
+from typing import Dict, List
 
+try:
+    from docx import Document
+    from docx.shared import Pt, RGBColor
+    from docx.enum.text import WD_ALIGN_PARAGRAPH
+except ImportError:
+    print("Missing dependency: python-docx")
+    print("Run: ./venv/bin/pip install -r <skill-repo>/requirements.txt")
+    sys.exit(1)
 
-def _ensure_dependencies():
-    missing = []
-    try:
-        import docx
-    except ImportError:
-        missing.append("python-docx")
-    try:
-        import openpyxl
-    except ImportError:
-        missing.append("openpyxl")
-    if missing:
-        print(f"Missing dependencies: {', '.join(missing)}")
-        print("Installing...")
-        try:
-            subprocess.check_call([sys.executable, "-m", "pip", "install"] + missing)
-            print("Dependencies installed successfully.")
-        except subprocess.CalledProcessError as e:
-            print(f"Failed to install dependencies: {e}")
-            print(f"Please run manually: pip install {' '.join(missing)}")
-            sys.exit(1)
-
-
-_ensure_dependencies()
-
-from docx import Document
-from docx.shared import Inches, Pt, RGBColor
-from docx.enum.text import WD_ALIGN_PARAGRAPH
-from openpyxl import Workbook
-from openpyxl.styles import Font, PatternFill, Alignment
+try:
+    from openpyxl import Workbook
+    from openpyxl.styles import Font, PatternFill, Alignment
+except ImportError:
+    print("Missing dependency: openpyxl")
+    print("Run: ./venv/bin/pip install -r <skill-repo>/requirements.txt")
+    sys.exit(1)
 
 
 # ---------------------------------------------------------------------------

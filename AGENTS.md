@@ -137,9 +137,9 @@ Any file consumed by a script must have a declared, versioned schema and a valid
 |---------------|-------------------|-----------|
 | Tracking Plan Excel | `sd-tracking-pipeline/references/TRACKING_PLAN_SCHEMA.md` | `validate_tracking_plan.py` |
 | business_logic.yaml | `sd-tracking-pipeline/references/BUSINESS_LOGIC_SCHEMA.md` | `yaml_validator.py` |
-| SIT Test Case Excel | `sd-tracking-pipeline/references/SIT_TEST_CASE_TEMPLATE.md` | *(to be added)* |
-| UAT Test Case Excel | `sd-tracking-pipeline/references/UAT_TEST_CASE_TEMPLATE.md` | *(to be added)* |
-| Performance Test Plan | `sd-tracking-pipeline/references/PERFORMANCE_TEST_PLAN_TEMPLATE.md` | *(manual review)* |
+| SIT Test Case Excel | `sd-tracking-pipeline/references/SIT_TEST_CASE_TEMPLATE.md` | `sd-quality/scripts/validate_test_cases.py --type sit` |
+| UAT Test Case Excel | `sd-tracking-pipeline/references/UAT_TEST_CASE_TEMPLATE.md` | `sd-quality/scripts/validate_test_cases.py --type uat` |
+| Performance Test Plan | `sd-tracking-pipeline/references/PERFORMANCE_TEST_PLAN_TEMPLATE.md` | `sd-infra/scripts/validate_performance_test_plan.py` |
 
 ### Agent rules for parsing documents
 

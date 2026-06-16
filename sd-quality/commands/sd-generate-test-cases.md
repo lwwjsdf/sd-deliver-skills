@@ -34,16 +34,28 @@ status: draft
 
 ```bash
 # SIT Test Case
-python3 generate_test_cases.py \
+./venv/bin/python <skill-repo>/sd-quality/scripts/generate_test_cases.py \
   --type sit \
   --tracking-plan ./references/tracking-plan.xlsx \
   --output ./references/sit-test-case.xlsx
 
 # UAT Test Case
-python3 generate_test_cases.py \
+./venv/bin/python <skill-repo>/sd-quality/scripts/generate_test_cases.py \
   --type uat \
   --tracking-plan ./references/tracking-plan.xlsx \
   --output ./references/uat-test-case.xlsx
+```
+
+生成后应先用 validator 校验结构：
+
+```bash
+./venv/bin/python <skill-repo>/sd-quality/scripts/validate_test_cases.py \
+  --type sit \
+  --input ./references/sit-test-case.xlsx
+
+./venv/bin/python <skill-repo>/sd-quality/scripts/validate_test_cases.py \
+  --type uat \
+  --input ./references/uat-test-case.xlsx
 ```
 
 ## 工作流
