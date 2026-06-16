@@ -27,7 +27,7 @@ allowed-tools:
 ## 导入脚本
 
 ```bash
-python3 scripts/import_meta_data.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/import_meta_data.py \
   --tracking-plan "./references/<tracking-plan>.xlsx"
 ```
 
@@ -38,7 +38,7 @@ python3 scripts/import_meta_data.py \
 数据导入前，确认 JSONL 中所有事件和属性已在 CDP 中创建：
 
 ```bash
-python3 scripts/check_metadata.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/check_metadata.py \
   --jsonl "./mock_data/<project>.jsonl"
 ```
 

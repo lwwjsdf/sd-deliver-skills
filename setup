@@ -217,6 +217,13 @@ install_cli() {
     [ -f "$REPO_DIR/bin/sdeliver" ] && chmod +x "$REPO_DIR/bin/sdeliver" && _link "$REPO_DIR/bin/sdeliver" "$BIN_DIR/sdeliver"
   fi
 
+  # Install venv-aware python wrapper
+  WRAPPER_SRC="$REPO_DIR/bin/sdeliver-python"
+  if [ -f "$WRAPPER_SRC" ]; then
+    chmod +x "$WRAPPER_SRC"
+    _link "$WRAPPER_SRC" "$BIN_DIR/sdeliver-python"
+  fi
+
   case ":$PATH:" in
     *":$BIN_DIR:"*) ;;
     *)

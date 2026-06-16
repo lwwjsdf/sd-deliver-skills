@@ -71,6 +71,19 @@ cmd_init() {
     "$project_dir/rules" \
     "$project_dir/mock_data"
 
+  # Create Python virtual environment for sd-deliver-skills scripts
+  local venv_dir="$project_dir/venv"
+  if [ ! -d "$venv_dir" ]; then
+    log "→ Creating Python virtual environment: $venv_dir"
+    python3 -m venv "$venv_dir"
+    log "→ Installing sd-deliver-skills dependencies..."
+    "$venv_dir/bin/pip" install --upgrade pip
+    "$venv_dir/bin/pip" install -r "$REPO_DIR/requirements.txt"
+    log "✅ Virtual environment ready"
+  else
+    log "⚠️  Virtual environment already exists: $venv_dir"
+  fi
+
   # Generate .env from template, pre-fill CLIENT_NAME
   if [ ! -f "$ENV_EXAMPLE" ]; then
     err "找不到 .env.example 模板: $ENV_EXAMPLE"
@@ -91,41 +104,45 @@ mock_data/*.txt
 mock_data/*.csv
 GITIGNORE
 
-  log "✅ 项目初始化完成:"
-  log ""
-  log "   $project_dir/"
-  log "   ├── .env                  ← 环境配置（按需填写）"
-  log "   │                           涉及数据导入、OpenAPI 查询等操作时需要"
-  log "   ├── references/           ← 客户原始文档（SOW、技术方案等）"
-  log "   │                           项目启动后由客户提供，放入此处"
-  log "   │                           AI 自动读取并生成项目档案"
-  log "   ├── PROJECT.md            ← 项目档案（由 AI 自动生成）"
-  log "   ├── CLARIFICATION.md      ← 信息澄清跟踪（由 AI 自动维护）"
-  log "   ├── rules/                ← 埋点规则配置"
-  log "   │                           1. 客户提供埋点采集方案 Excel"
-  log "   │                           2. AI 解析生成 business_logic.yaml"
-  log "   │                           3. 定义事件、属性、用户分群等规则"
-  log "   └── mock_data/            ← 模拟数据生成位置"
-  log "                               基于 rules/business_logic.yaml 生成测试数据"
-  log ""
-  log "📋 典型交付场景:"
-  log "   场景 1: 需求调研 → 收集业务信息，放入 references/"
-  log "   场景 2: 项目分析 → AI 生成 PROJECT.md + CLARIFICATION.md"
-  log "   场景 3: 埋点设计 → 输出埋点方案 Excel，解析为 rules/business_logic.yaml"
-  log "   场景 4: 数据准备 → 基于规则生成模拟数据到 mock_data/"
-  log "   场景 5: 系统部署 → 服务器评估、架构设计（sd-infra）"
-  log "   场景 6: 质量验证 → SIT/UAT 测试、数据校验（sd-quality）"
-  log "   场景 7: 文档交付 → 生成 Word/PDF 交付文档（sd-docs）"
-  log ""
-  log "   根据项目阶段选择对应场景，AI 自动加载相关 skill 协助完成"
-  log ""
-  log "下一步："
-  log "   1. cd $project_dir"
-  log "   2. 编辑 .env，填写 SA_HOST、SA_PROJECT、API_KEY"
-  log "   3. 将客户提供的 SOW、技术方案等文档放入 references/"
-  log "   4. 在 AI Agent（Claude Code / Cursor / Hermes / OpenCode）中调用 /sdeliver"
-  log "      → 自动读取 references/ 文档，生成项目档案"
-  log "      → 感知当前交付阶段，推荐下一步操作"
+log "✅ 项目初始化完成:"
+log ""
+log "   $project_dir/"
+log "   ├── venv/                 ← Python 虚拟环境（sd-deliver-skills 依赖）"
+log "   ├── .env                  ← 环境配置（按需填写）"
+log "   │                           涉及数据导入、OpenAPI 查询等操作时需要"
+log "   ├── references/           ← 客户原始文档（SOW、技术方案等）"
+log "   │                           项目启动后由客户提供，放入此处"
+log "   │                           AI 自动读取并生成项目档案"
+log "   ├── PROJECT.md            ← 项目档案（由 AI 自动生成）"
+log "   ├── CLARIFICATION.md      ← 信息澄清跟踪（由 AI 自动维护）"
+log "   ├── rules/                ← 埋点规则配置"
+log "   │                           1. 客户提供埋点采集方案 Excel"
+log "   │                           2. AI 解析生成 business_logic.yaml"
+log "   │                           3. 定义事件、属性、用户分群等规则"
+log "   └── mock_data/            ← 模拟数据生成位置"
+log "                               基于 rules/business_logic.yaml 生成测试数据"
+log ""
+log "📋 典型交付场景:"
+log "   场景 1: 需求调研 → 收集业务信息，放入 references/"
+log "   场景 2: 项目分析 → AI 生成 PROJECT.md + CLARIFICATION.md"
+log "   场景 3: 埋点设计 → 输出埋点方案 Excel，解析为 rules/business_logic.yaml"
+log "   场景 4: 数据准备 → 基于规则生成模拟数据到 mock_data/"
+log "   场景 5: 系统部署 → 服务器评估、架构设计（sd-infra）"
+log "   场景 6: 质量验证 → SIT/UAT 测试、数据校验（sd-quality）"
+log "   场景 7: 文档交付 → 生成 Word/PDF 交付文档（sd-docs）"
+log ""
+log "   根据项目阶段选择对应场景，AI 自动加载相关 skill 协助完成"
+log ""
+log "下一步："
+log "   1. cd $project_dir"
+log "   2. 编辑 .env，填写 SA_HOST、SA_PROJECT、API_KEY"
+log "   3. 将客户提供的 SOW、技术方案等文档放入 references/"
+log "   4. 在 AI Agent（Claude Code / Cursor / Hermes / OpenCode）中调用 /sdeliver"
+log "      → 自动读取 references/ 文档，生成项目档案"
+log "      → 感知当前交付阶段，推荐下一步操作"
+log ""
+log "脚本调用方式："
+log "   ./venv/bin/python <skill-repo>/sd-*/scripts/<script>.py [args]"
 }
 
 # ── check ─────────────────────────────────────────────────────────────────────
@@ -181,6 +198,15 @@ cmd_check() {
   log "── Tracking Plan ──"
   log "  ℹ️  埋点方案 Excel 建议放在 references/ 目录，不强制写入 .env"
   log "     运行脚本时通过 --tracking-plan 指定，或让脚本自动发现"
+
+  log ""
+  log "── Python Virtual Environment ──"
+  if [ -d "$venv_dir" ]; then
+    log "  ✅ venv/ 已创建"
+    log "     脚本调用: ./venv/bin/python <skill-repo>/sd-*/scripts/<script>.py"
+  else
+    log "  ❌ venv/ 未创建"
+  fi
 
   log ""
   if [ "$ok" -eq 1 ]; then

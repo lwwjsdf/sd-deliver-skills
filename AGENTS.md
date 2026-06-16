@@ -75,6 +75,80 @@ sd-deliver-skills/
 | `sd-docs` | Business document formatting (Word/PDF generation) |
 | `sd-knowledge` | Delivery FAQ: capacity estimation, Xinchuang, ID3, troubleshooting SOP |
 
+## Installation
+
+1. Clone the skill repo (or use npm/npx):
+   ```bash
+   git clone git@github.com:sensorsdata/sd-deliver-skills.git
+   cd sd-deliver-skills
+   ./setup --host all
+   ```
+
+2. Initialize a client project (this creates a project-local Python virtual environment):
+   ```bash
+   sdeliver init westk ~/projects/westk
+   cd ~/projects/westk
+   ```
+
+3. Always run scripts through the project virtual environment:
+   ```bash
+   ./venv/bin/python /path/to/sd-deliver-skills/sd-tracking-pipeline/scripts/generate_mock_data.py \
+     --rules ./rules/business_logic.yaml
+   ```
+
+   Or use the wrapper (finds `venv/` by walking up from cwd):
+   ```bash
+   sdeliver-python /path/to/sd-deliver-skills/sd-tracking-pipeline/scripts/generate_mock_data.py \
+     --rules ./rules/business_logic.yaml
+   ```
+
+**Never** install skill dependencies into the global/system Python interpreter.
+
+## Python Environment Rules
+
+- Each client project owns its own `venv/` created by `sdeliver init`.
+- `requirements.txt` at the skill-repo root is the single source of truth for all plugin dependencies.
+- Scripts must **not** auto-install packages via `subprocess.check_call([sys.executable, "-m", "pip", "install"])`.
+- If a dependency is missing, fail fast and tell the user to run:
+  ```bash
+  ./venv/bin/pip install -r /path/to/sd-deliver-skills/requirements.txt
+  ```
+- Running tests on the skill repo itself may use the repo's own venv or the global Python if the test runner is already set up; scripts executed for a delivery project must use the project venv.
+
+## Script Execution Convention
+
+All command documentation and skill examples must use one of these forms:
+
+```bash
+# Preferred: project-local venv
+./venv/bin/python <skill-repo>/sd-<plugin>/scripts/<script>.py [args]
+
+# Alternative: wrapper that locates the venv
+sdeliver-python <skill-repo>/sd-<plugin>/scripts/<script>.py [args]
+```
+
+Do **not** use bare `./venv/bin/python <skill-repo>/sd-<plugin>/scripts/xxx.py` in command docs.
+
+## Document Format Contract & Gate
+
+Any file consumed by a script must have a declared, versioned schema and a validator.
+
+| Document type | Schema / Template | Validator |
+|---------------|-------------------|-----------|
+| Tracking Plan Excel | `sd-tracking-pipeline/references/TRACKING_PLAN_SCHEMA.md` | `validate_tracking_plan.py` |
+| business_logic.yaml | `sd-tracking-pipeline/references/BUSINESS_LOGIC_SCHEMA.md` | `yaml_validator.py` |
+| SIT Test Case Excel | `sd-tracking-pipeline/references/SIT_TEST_CASE_TEMPLATE.md` | *(to be added)* |
+| UAT Test Case Excel | `sd-tracking-pipeline/references/UAT_TEST_CASE_TEMPLATE.md` | *(to be added)* |
+| Performance Test Plan | `sd-tracking-pipeline/references/PERFORMANCE_TEST_PLAN_TEMPLATE.md` | *(manual review)* |
+
+### Agent rules for parsing documents
+
+1. **Do not write ad-hoc parsers.** If an input file does not match the declared schema, stop and report the validation error.
+2. **Run the validator first.** Every command that reads a structured document must start with the relevant `validate_*.py` step.
+3. **No silent format adaptation.** Do not adjust column indices, sheet names, or header mappings on the fly to match a new file.
+4. **New format versions are skill changes.** If a client provides a file in a new format, record it via `/sd-feedback` and extend the official parser/validator in the skill repo.
+5. **Templates are the contract.** Before asking a client for a document, point them to the corresponding template in `sd-*/references/`.
+
 ## Key Design Rules
 
 - **Skills = nouns/concepts.** Frameworks and knowledge that AI auto-loads when the topic matches (`tracking-plan-design`, `server-sizing`, `data-pipeline`).

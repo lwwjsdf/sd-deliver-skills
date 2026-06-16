@@ -1,0 +1,37 @@
+#!/usr/bin/env bash
+# sdeliver-python — locate project venv and run a script with the isolated Python.
+#
+# Usage:
+#   sdeliver-python <script-path> [args...]
+#
+# Example:
+#   sdeliver-python ~/sd-deliver-skills/sd-tracking-pipeline/scripts/generate_mock_data.py \
+#     --rules ./rules/business_logic.yaml
+
+set -e
+
+err() { echo "❌ $1" >&2; exit 1; }
+log() { echo "$1"; }
+
+SCRIPT_PATH="$1"
+shift || true
+
+[ -z "$SCRIPT_PATH" ] && err "Usage: sdeliver-python <script-path> [args...]"
+[ -f "$SCRIPT_PATH" ] || err "Script not found: $SCRIPT_PATH"
+
+# Find project root by walking up and looking for .env + venv
+dir="$(pwd)"
+venv_python=""
+while [ "$dir" != "/" ]; do
+  if [ -f "$dir/.env" ] && [ -x "$dir/venv/bin/python" ]; then
+    venv_python="$dir/venv/bin/python"
+    break
+  fi
+  dir="$(dirname "$dir")"
+done
+
+if [ -z "$venv_python" ]; then
+  err "未找到项目虚拟环境。\n   请先运行: sdeliver init <client-name>\n   或在当前项目目录执行初始化。"
+fi
+
+exec "$venv_python" "$SCRIPT_PATH" "$@"

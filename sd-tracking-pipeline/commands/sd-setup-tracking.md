@@ -176,7 +176,7 @@ python3 <skill-repo>/sd-tracking-pipeline/scripts/mock_data_manager.py clean --r
 ### Phase 2：验证 YAML
 
 ```bash
-python3 scripts/yaml_validator.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/yaml_validator.py \
   ./rules/business_logic.yaml \
   --tracking-plan ""./references/<tracking-plan>.xlsx""
 ```
@@ -188,7 +188,7 @@ python3 scripts/yaml_validator.py \
 ### Phase 3：枚举值确认
 
 ```bash
-python3 scripts/list_enum_values.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/list_enum_values.py \
   --tracking-plan ""./references/<tracking-plan>.xlsx""
 ```
 
@@ -200,7 +200,7 @@ python3 scripts/list_enum_values.py \
 
 ```bash
 # 小规模（示例）
-python3 scripts/generate_mock_data.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/generate_mock_data.py \
   --rules ./rules/business_logic.yaml \
   --tracking-plan ""./references/<tracking-plan>.xlsx"" \
   --users 100 --days 30 --sessions-per-day 5
@@ -221,7 +221,7 @@ python3 scripts/generate_mock_data.py \
 2. **基础校验** — 运行导入前校验脚本：
 
 ```bash
-python3 scripts/validate_pre_import.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/validate_pre_import.py \
   --jsonl "./mock_data/<project>.jsonl" \
   --tracking-plan ""./references/<tracking-plan>.xlsx"" \
   --iterations "./references/MOCK_DATA_ITERATIONS.md"
@@ -250,7 +250,7 @@ python3 scripts/validate_pre_import.py \
 **需要 `API_KEY`。**
 
 ```bash
-python3 scripts/import_meta_data.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/import_meta_data.py \
   --tracking-plan ""./references/<tracking-plan>.xlsx""
 ```
 
@@ -262,11 +262,11 @@ python3 scripts/import_meta_data.py \
 
 ```bash
 # 元数据预检查
-python3 scripts/check_metadata.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/check_metadata.py \
   --jsonl "./mock_data/<project>.jsonl"
 
 # 导入数据
-python3 scripts/import_mock_data.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/import_mock_data.py \
   --jsonl "./mock_data/<project>.jsonl"
 ```
 
@@ -279,7 +279,7 @@ python3 scripts/import_mock_data.py \
 通过 OpenAPI 查询 CDP 实际落库数据，与导入文件对比：
 
 ```bash
-python3 scripts/validate_import.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/validate_import.py \
   --jsonl "./mock_data/<project>.jsonl" \
   --wait 60
 ```

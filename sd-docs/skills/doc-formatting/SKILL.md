@@ -24,7 +24,7 @@ allowed-tools:
 ## 脚本
 
 ```bash
-python3 scripts/generate_business_doc.py \
+./venv/bin/python <skill-repo>/sd-docs/scripts/generate_business_doc.py \
   --input <input.md> \
   --output <output.docx> \
   --template <template.docx>

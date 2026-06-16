@@ -82,7 +82,7 @@ status: draft
 运行脚本生成配置表：
 
 ```bash
-python3 scripts/sizing_calc.py \
+./venv/bin/python <skill-repo>/sd-infra/scripts/sizing_calc.py \
   --mau <MAU> \
   --dau <DAU> \
   --daily-events <日事件量> \

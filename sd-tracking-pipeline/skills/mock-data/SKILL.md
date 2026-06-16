@@ -50,19 +50,19 @@ Phase 4（造数）前必须询问用户选择规模：
 
 ```bash
 # 小规模（UAT 验证）
-python3 scripts/generate_mock_data.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/generate_mock_data.py \
   --rules ./rules/business_logic.yaml \
   --tracking-plan "./references/Annex 6 - Tracking Plan - Mini Program_V0.1.xlsx" \
   --users 10 --days 7
 
 # 中规模（默认，功能测试）
-python3 scripts/generate_mock_data.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/generate_mock_data.py \
   --rules ./rules/business_logic.yaml \
   --tracking-plan "./references/Annex 6 - Tracking Plan - Mini Program_V0.1.xlsx" \
   --users 100 --days 30 --sessions-per-day 5
 
 # 大规模（压测）
-python3 scripts/generate_mock_data.py \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/generate_mock_data.py \
   --rules ./rules/business_logic.yaml \
   --tracking-plan "./references/Annex 6 - Tracking Plan - Mini Program_V0.1.xlsx" \
   --users 500 --days 30 --sessions-per-day 10
@@ -76,7 +76,7 @@ python3 scripts/generate_mock_data.py \
 
 输出到 `./mock_data/`：
 - `<project>.jsonl` — 每行一条记录（最终文件）
-- `<project>_batch.txt` — base64 编码，可直接 POST
+- `<project>_sample.json` — 100 条样本，方便人工快速检查
 - `<project>_identity_map.csv` — 用于校验 ID-Mapping 合并结果
 - `uat_validation_report.md` — 业务规则违规报告
 - `<project>_1k_part_*` — 数据分片（用于分批导入）
@@ -106,11 +106,10 @@ echo "已备份到 ${backup_dir}.tar.gz"
 ### 清理
 
 ```bash
-# 仅保留最终 jsonl，删除分片和临时文件
+# 仅保留最终 jsonl 和样本，删除分片和临时文件
 find mock_data/ -name "*_part_*" -delete
-find mock_data/ -name "*_batch.txt" -delete
 find mock_data/ -name "*_identity_map.csv" -delete
-# 保留 <project>.jsonl
+# 保留 <project>.jsonl 和 <project>_sample.json
 ```
 
 **注意**：清理前务必确认已不需要历史数据，或已备份。

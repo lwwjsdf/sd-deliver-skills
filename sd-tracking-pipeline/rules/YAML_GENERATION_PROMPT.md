@@ -10,7 +10,7 @@
 **这一步是必须的。** 在写任何 event_sequences 之前，先运行：
 
 ```bash
-python3 scripts/yaml_validator.py <yaml_path> \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/yaml_validator.py <yaml_path> \
   --tracking-plan "<tracking_plan_xlsx_path>"
 ```
 
@@ -78,7 +78,7 @@ print([p.name for p in schema.properties] if schema else 'not found')
 生成 YAML 后必须运行验证，通过后才能造数：
 
 ```bash
-python3 scripts/yaml_validator.py <yaml_path> \
+./venv/bin/python <skill-repo>/sd-tracking-pipeline/scripts/yaml_validator.py <yaml_path> \
   --tracking-plan "<tracking_plan_xlsx_path>"
 ```
 
