@@ -1,6 +1,6 @@
 {
   "name": "sd-core",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "交付核心框架：项目 onboarding、状态感知、skill 调度、自动反馈",
   "author": {
     "name": "SensorsData Delivery Team"

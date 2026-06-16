@@ -1,6 +1,6 @@
 {
   "name": "sd-docs",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "交付文档：业务文档格式化（Markdown → Word/PDF）",
   "author": {
     "name": "SensorsData Delivery Team"

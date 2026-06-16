@@ -1,6 +1,6 @@
 {
   "name": "sd-quality",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "质量保障：SIT 测试、UAT 测试、数据校验",
   "author": {
     "name": "SensorsData Delivery Team"
