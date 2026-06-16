@@ -306,6 +306,105 @@ def generate_excel_report(
     return output_path
 
 
+def generate_markdown_report(
+    output_path: str,
+    dau: int,
+    daily_events: int,
+    retention_days: int,
+    cloud: str,
+    region: str,
+    include_cdp: bool,
+    include_ma: bool,
+):
+    """Generate a Markdown version for internal drafts or chat output."""
+    products = ", ".join(["CDP" if include_cdp else "", "MA" if include_ma else ""]).strip(", ")
+    lines = [
+        "# Performance Test Plan",
+        "",
+        f"Generated: {datetime.now().strftime('%Y-%m-%d')}",
+        "",
+        "## 1. Introduction / Purpose",
+        "",
+        "Define the overall plan, execution strategy and acceptance criteria for performance testing of the CDP and MAE systems in the UAT environment.",
+        "",
+        "## 2. Objective",
+        "",
+        "Verify system performance under expected production-scale load and quantify the impact of PII data encryption on core components.",
+        "",
+        "## 3. Scope of Testing",
+        "",
+        "| No. | Module | Scenario | Data Preparation | Test Steps | Expected Metrics |",
+        "|-----|--------|----------|------------------|------------|------------------|",
+    ]
+    for row in _default_scenarios(dau, daily_events):
+        lines.append(
+            f"| {row['No.']} | {row['Module']} | {row['Scenario']} | {row['Data Preparation']} | {row['Test Steps']} | {row['Expected Metrics']} |"
+        )
+
+    lines.extend([
+        "",
+        "## 4. Expected Outcomes",
+        "",
+        "- Complete Performance Test Report",
+        "- Clear go-live readiness conclusion",
+        "- Quantified encryption overhead",
+        "",
+        "## 5. Testing Environment",
+        "",
+        f"| Item | Value |",
+        f"|------|-------|",
+        f"| Cloud | {cloud} |",
+        f"| Region | {region} |",
+        f"| DAU | {dau:,} |",
+        f"| Daily Events | {daily_events:,} |",
+        f"| Retention Days | {retention_days} |",
+        f"| Products | {products} |",
+        "",
+        "## 6. Test Assumptions and Risks",
+        "",
+        "| # | Assumption | Risk if Invalid |",
+        "|---|------------|-----------------|",
+        "| 1 | UAT env matches production | Results may not reflect production |",
+        "| 2 | Dataset matches production characteristics | Query/import results biased |",
+        "| 3 | UAT resources exclusively used | Metrics lower than actual capability |",
+        "",
+        "## 7. Test Execution",
+        "",
+        "### 7.1 Entry Criteria",
+        "- Platform installed and deployed",
+        "- Test data ready",
+        "- Load generators ready",
+        "- Plan reviewed and approved",
+        "",
+        "### 7.2 Exit Criteria",
+        "- All scenarios executed",
+        "- All metrics meet requirements or boundary determined",
+        "- Report submitted",
+        "",
+        "## 8. Roles and Responsibilities",
+        "",
+        "| Role | Responsibilities |",
+        "|------|-----------------|",
+        "| SD Application Team | Plan, scripts, execution, analysis, report |",
+        "| Customer System/Network Team | System/network support |",
+        "| Customer Support Team | Review plan and results |",
+        "",
+        "## 9. Schedule",
+        "",
+        "| Activity | Responsible | Start | End |",
+        "|----------|-------------|-------|-----|",
+        "| Submit Performance Test Plan | SD | | |",
+        "| Review Plan | Customer | | |",
+        "| Execute Testing | SD | | |",
+        "| Submit Report | SD | | |",
+        "",
+    ])
+
+    Path(output_path).parent.mkdir(parents=True, exist_ok=True)
+    Path(output_path).write_text("\n".join(lines), encoding="utf-8")
+    return output_path
+
+
 # ---------------------------------------------------------------------------
 # CLI
 # ---------------------------------------------------------------------------
@@ -322,7 +421,11 @@ def main():
     parser.add_argument("--include-ma", action="store_true", default=True, help="Include MA")
     parser.add_argument("--output-word", help="Output Word path")
     parser.add_argument("--output-excel", help="Output Excel path")
+    parser.add_argument("--output-markdown", help="Output Markdown path (optional)")
     args = parser.parse_args()
+
+    if not any([args.output_word, args.output_excel, args.output_markdown]):
+        parser.error("At least one of --output-word, --output-excel, --output-markdown is required")
 
     if args.output_word:
         path = generate_word_report(
@@ -349,6 +452,19 @@ def main():
             args.include_ma,
         )
         print(f"Excel report generated: {path}")
+
+    if args.output_markdown:
+        path = generate_markdown_report(
+            args.output_markdown,
+            args.dau,
+            args.daily_events,
+            args.retention_days,
+            args.cloud,
+            args.region,
+            args.include_cdp,
+            args.include_ma,
+        )
+        print(f"Markdown report generated: {path}")
 
 
 if __name__ == "__main__":

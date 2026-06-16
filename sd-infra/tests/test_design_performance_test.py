@@ -55,23 +55,36 @@ def test_generate_word_report(tmp_path):
     assert any("Scope of Testing" in t for t in texts)
 
 
-def test_generate_excel_report_products(tmp_path):
-    out = tmp_path / "perf.xlsx"
-    generate_excel_report(
+def test_generate_markdown_report(tmp_path):
+    from design_performance_test import generate_markdown_report
+
+    out = tmp_path / "perf.md"
+    path = generate_markdown_report(
         output_path=str(out),
-        dau=100_000,
-        daily_events=500_000,
-        retention_days=180,
-        cloud="Azure",
-        region="eastasia",
+        dau=1_000_000,
+        daily_events=5_000_000,
+        retention_days=365,
+        cloud="AWS",
+        region="ap-southeast-1",
         include_cdp=True,
-        include_ma=False,
+        include_ma=True,
     )
-    wb = openpyxl.load_workbook(out, data_only=True)
-    ws = wb["Environment"]
-    values = []
-    for row in ws.iter_rows(values_only=True):
-        values.extend(row)
-    assert "Azure" in values
-    assert "eastasia" in values
-    assert "CDP" in values
+    assert path == str(out)
+    assert out.exists()
+    content = out.read_text(encoding="utf-8")
+    assert "# Performance Test Plan" in content
+    assert "PT-001" in content
+    assert "AWS" in content
+
+
+def test_cli_requires_at_least_one_output(tmp_path, monkeypatch):
+    import design_performance_test
+
+    import sys
+    old_argv = sys.argv
+    try:
+        sys.argv = ["design_performance_test.py", "--dau", "1000000", "--daily-events", "5000000"]
+        with pytest.raises(SystemExit):
+            design_performance_test.main()
+    finally:
+        sys.argv = old_argv

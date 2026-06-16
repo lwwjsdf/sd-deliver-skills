@@ -22,7 +22,14 @@ status: active
 > 2. 选择测试场景（实时导入、批量导入、事件分析、漏斗分析、Canvas、邮件发送等）
 > 3. 设计每个场景的数据准备、测试步骤、预期指标
 > 4. 确认测试环境、工具、监控方案
-> 5. 输出 performance-test-plan.md
+> 5. **生成 Performance Test Plan 交付物（Word + Excel）**
+> 6. 用 validator 校验计划结构
+>
+> **最终交付物：**
+> - `references/performance-test-plan.docx` — 客户版 Performance Test Plan
+> - `references/performance-test-plan.xlsx` — 场景矩阵与环境信息表
+>
+> 不会只输出 Markdown。Markdown 仅作为内部草稿（可选）。
 >
 > 1/y = 确认执行
 > 0/n = 取消
@@ -76,9 +83,17 @@ status: active
 - 监控工具（Grafana）
 - SFTP / KMS / 邮件服务依赖
 
-### Step 5：输出 Performance Test Plan
+### Step 5：输出 Performance Test Plan（Word + Excel）
 
-输出到 `references/performance-test-plan.md`，并生成同名的 Word/Excel：
+**本 command 的最终交付物是 `.docx` 和 `.xlsx`，不是 Markdown。**
+
+如果项目虚拟环境未就绪，先安装依赖：
+
+```bash
+./venv/bin/pip install -r <skill-repo>/requirements.txt
+```
+
+然后直接生成 Word/Excel：
 
 ```bash
 ./venv/bin/python <skill-repo>/sd-infra/scripts/design_performance_test.py \
@@ -87,7 +102,27 @@ status: active
   --retention-days 365 \
   --cloud AWS \
   --region ap-southeast-1 \
+  --include-cdp \
+  --include-ma \
   --output-word ./references/performance-test-plan.docx \
+  --output-excel ./references/performance-test-plan.xlsx
+```
+
+如果只需要 Word：
+
+```bash
+./venv/bin/python <skill-repo>/sd-infra/scripts/design_performance_test.py \
+  --dau 1000000 \
+  --daily-events 5000000 \
+  --output-word ./references/performance-test-plan.docx
+```
+
+如果只需要 Excel：
+
+```bash
+./venv/bin/python <skill-repo>/sd-infra/scripts/design_performance_test.py \
+  --dau 1000000 \
+  --daily-events 5000000 \
   --output-excel ./references/performance-test-plan.xlsx
 ```
 
@@ -102,6 +137,15 @@ status: active
   --format excel \
   --input ./references/performance-test-plan.xlsx
 ```
+
+### Step 6：人工补充客户特定信息
+
+脚本生成的是标准模板，必须人工填写：
+- 客户名称、项目版本
+- 具体环境地址和 IP
+- 组件实际版本号
+- 测试时间表和负责人
+- 客户特定的风险假设
 
 ## 完成建议
 
