@@ -55,6 +55,23 @@ status: draft
 
 ### Step 3：生成 uat-test-case.xlsx
 
+调用 `/sd-design-uat-cases` 从 Tracking Plan 自动生成 UAT Test Case Excel 初稿：
+
+```bash
+./venv/bin/python <skill-repo>/sd-quality/scripts/generate_test_cases.py \
+  --type uat \
+  --tracking-plan ./references/tracking-plan.xlsx \
+  --output ./references/uat-test-case.xlsx
+```
+
+生成后校验结构：
+
+```bash
+./venv/bin/python <skill-repo>/sd-quality/scripts/validate_test_cases.py \
+  --type uat \
+  --input ./references/uat-test-case.xlsx
+```
+
 输出文件包含以下 sheets：
 
 **Scenarios sheet** — 场景清单
@@ -117,7 +134,7 @@ status: draft
 ### Step 7：等待确认
 
 输出：
-- `references/uat-test-case.xlsx`（给业务分析师 review）
+- `references/uat-test-case.xlsx`（由 `/sd-design-uat-cases` 生成，给业务分析师 review）
 - `references/uat_test_logic.yaml`（草稿，待确认）
 - 标记需要手动确认的项
 
@@ -127,6 +144,6 @@ status: draft
 
 ## 完成建议
 
-- "UAT Test Case 已确认？→ 执行 `/sd-validate-data` 进行校验"
-- "需要执行 UAT？→ `/sd-run-uat`"
-- "需要设计 SIT Plan？→ `/sd-design-sit`"
+- "UAT Test Case 初稿已生成？→ 用 `/sd-design-uat-cases` 自动生成 Excel"
+- "UAT Test Case 已确认？→ 执行 `/sd-run-uat`"
+- "需要 SIT Test Case？→ `/sd-design-sit-cases`"

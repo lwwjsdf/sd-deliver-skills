@@ -340,8 +340,10 @@ SIT、UAT、数据验证。
 
 | Command | 说明 |
 |---------|------|
-| `/run-sit` | 范围确认 → 用例设计 → 执行 → 报告 |
+| `/run-sit` | 范围确认 → 用例执行 → 报告 |
 | `/run-uat` | 验收确认 → 用例执行 → 缺陷跟踪 → 上线建议 |
+| `/sd-design-sit-cases` | 从 Tracking Plan 自动生成 SIT Test Case Excel 初稿 |
+| `/sd-design-uat-cases` | 从 Tracking Plan 自动生成 UAT Test Case Excel 初稿 |
 
 **使用示例：**
 

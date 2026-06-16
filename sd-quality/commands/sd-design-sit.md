@@ -40,7 +40,17 @@ status: draft
 
 ### Step 2：测试用例设计
 
-每个业务场景拆解为若干测试用例（TC-001, TC-002...）：
+调用 `/sd-design-sit-cases` 从 Tracking Plan 自动生成 SIT Test Case Excel 初稿：
+
+```bash
+./venv/bin/python <skill-repo>/sd-quality/scripts/generate_test_cases.py \
+  --type sit \
+  --tracking-plan ./references/tracking-plan.xlsx \
+  --output ./references/sit-test-case.xlsx
+```
+
+然后人工按场景补充和 review：
+- 业务场景
 - 前置条件
 - 测试步骤
 - 期望结果
@@ -83,5 +93,6 @@ status: draft
 
 ## 完成建议
 
+- "SIT Test Case 初稿已生成？→ 用 `/sd-design-sit-cases` 自动生成 Excel"
 - "SIT Plan 设计完成？→ 执行 `/sd-run-sit`"
-- "需要设计 UAT Test Case？→ `/sd-design-uat`"
+- "需要设计 UAT Test Case？→ `/sd-design-uat-cases`"
