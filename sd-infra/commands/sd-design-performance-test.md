@@ -2,7 +2,7 @@
 name: sd-design-performance-test
 description: 设计 CDP/MAE 性能测试方案：目标 → 场景 → 环境 → 指标 → 计划
 argument-hint: ""
-status: draft
+status: active
 ---
 
 # /sd-design-performance-test — 性能测试方案设计

@@ -1,9 +1,8 @@
 ---
 name: sd-generate-test-cases
 description: 从埋点方案/业务规则生成 SIT 或 UAT Test Case Excel
-description: 从埋点方案/业务规则生成 SIT 或 UAT Test Case Excel
 argument-hint: "[--type sit|uat] [--tracking-plan path] [--output path]"
-status: draft
+status: active
 ---
 
 # /sd-generate-test-cases — 生成 SIT/UAT Test Case Excel
