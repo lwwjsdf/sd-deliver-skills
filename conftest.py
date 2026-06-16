@@ -24,6 +24,16 @@ def pytest_configure(config):
                 if str(subdir) not in sys.path:
                     sys.path.insert(0, str(subdir))
 
+    # Shared review protocol used by sd-infra/scripts/review
+    shared_review = REPO_ROOT / "shared" / "review"
+    if shared_review.is_dir() and str(shared_review) not in sys.path:
+        sys.path.insert(0, str(shared_review))
+
+    # Shared OpenAPI client used by sd-quality/scripts/fetch_data.py
+    shared_postman = REPO_ROOT / "shared" / "postman"
+    if shared_postman.is_dir() and str(shared_postman) not in sys.path:
+        sys.path.insert(0, str(shared_postman))
+
 
 @pytest.fixture(scope="session")
 def repo_root():
