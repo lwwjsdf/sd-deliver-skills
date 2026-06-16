@@ -26,6 +26,7 @@ import sys
 import time
 from datetime import datetime, timedelta
 from pathlib import Path
+from typing import Dict, Any, List
 
 # ── Dependency check & auto-install ───────────────────────────────────────────
 
@@ -69,6 +70,7 @@ try:
     from constraint_validator import ConstraintValidator
     from report_generator import ReportGenerator
     from config_helper import get_config
+    from event_sequencer import PropertyEnumResolver
 
     _RULES_MODE_AVAILABLE = True
 except ImportError:
@@ -452,6 +454,75 @@ def build_profile_record(
 
 
 
+class ProfileGenerator:
+    """Generate profile_set records from Tracking Plan User Attributes."""
+
+    def __init__(self, tracking_plan: TrackingPlan, rule_engine: RuleEngine):
+        self.tracking_plan = tracking_plan
+        self.rule_engine = rule_engine
+        self._prop_resolver = PropertyEnumResolver(rule_engine.get_property_enums())
+
+    def generate_profile_record(
+        self, user: User, project: str, identity_defs: list, timestamp_ms: int = 0
+    ) -> dict:
+        """Build a profile_set record for one user."""
+        attrs = self.tracking_plan.get_user_attributes()
+        if not attrs:
+            return {}
+
+        props: Dict[str, Any] = {}
+        # Start with any profile values already accumulated during event generation
+        props.update(user.profile)
+
+        for attr in attrs:
+            if attr.name in props:
+                continue
+            resolved = self._prop_resolver.resolve(attr.name)
+            if resolved is not None:
+                props[attr.name] = resolved
+            else:
+                props[attr.name] = self.tracking_plan.generate_value(attr)
+
+        distinct_id = user.identities.get("crm_master_id") or next(
+            iter(user.identities.values()), user.user_id
+        )
+
+        return {
+            "distinct_id": distinct_id,
+            "login_id": distinct_id,
+            "type": "profile_set",
+            "time": timestamp_ms or int(time.time() * 1000),
+            "time_free": True,
+            "$is_login_id": True,
+            "project": project,
+            "identities": self._build_identities(user, identity_defs),
+            "properties": props,
+        }
+
+    @staticmethod
+    def _build_identities(user: User, identity_defs: list) -> Dict[str, str]:
+        identities: Dict[str, str] = {}
+        for idef in identity_defs:
+            val = user.identities.get(idef.name)
+            if val:
+                identities[idef.sa_key] = val
+        return identities
+
+    def generate_all_profiles(
+        self, users: List[User], project: str, identity_defs: list
+    ) -> List[dict]:
+        """Generate one profile_set record per user."""
+        records = []
+        base_ts = int(time.time() * 1000)
+        for i, user in enumerate(users):
+            record = self.generate_profile_record(
+                user, project, identity_defs, timestamp_ms=base_ts - i * 1000
+            )
+            if record:
+                records.append(record)
+        return records
+
+
 class _JSONEncoder(json.JSONEncoder):
     def default(self, obj):
         if isinstance(obj, datetime):
@@ -581,7 +652,11 @@ def run_rules_mode(args):
         for event in events:
             all_records.append(event.to_track_record(prefix, identity_defs))
 
-    # 6. 验证
+    # 6. 生成用户属性（profile_set）
+    profile_gen = ProfileGenerator(plan, engine)
+    profile_records = profile_gen.generate_all_profiles(users, prefix, identity_defs)
+
+    # 7. 验证
     validator = ConstraintValidator()
     violations_by_user = {
         u.user_id: validator.validate_all(u, events_by_user[u.user_id]) for u in users
@@ -591,7 +666,7 @@ def run_rules_mode(args):
         id_violations
     )
 
-    # 7. 输出
+    # 8. 输出
     output_dir = args.output or str(Path(__file__).parent.parent / "mock_data")
     os.makedirs(output_dir, exist_ok=True)
 
@@ -602,8 +677,15 @@ def run_rules_mode(args):
         record["properties"]["$import_timestamp"] = int(
             datetime.now().timestamp() * 1000
         )
+    for record in profile_records:
+        record["properties"]["$batch_id"] = batch_id
+        record["properties"]["$import_timestamp"] = int(
+            datetime.now().timestamp() * 1000
+        )
 
-    jsonl_path, sample_path = write_outputs(all_records, output_dir, prefix)
+    # Merge track + profile records, profiles first for import ordering
+    merged_records = profile_records + all_records
+    jsonl_path, sample_path = write_outputs(merged_records, output_dir, prefix)
 
     # ID Mapping CSV
     identity_names = [idef.sa_key for idef in identity_defs]
@@ -623,14 +705,14 @@ def run_rules_mode(args):
         users, events_by_user, violations_by_user, id_violations
     )
 
-    # 8. 打印摘要
+    # 9. 打印摘要
     mode_label = f"batch ({args.users} 用户)" if args.users else "fixed-accounts"
     print(f"\n=== 规则驱动模式 ({mode_label}) ===")
     print(f"规则文件: {args.rules}")
     print(f"埋点方案: {xlsx_path}")
     print(f"时间窗口: 最近 {days} 天  每日 session 数: {args.sessions_per_day}")
     print(
-        f"用户数: {len(users)}  事件数: {len(all_records)}  违规数: {total_violations}"
+        f"用户数: {len(users)}  事件数: {len(all_records)}  属性记录数: {len(profile_records)}  违规数: {total_violations}"
     )
     print(f"\n输出文件:")
     print(f"  JSONL:        {jsonl_path}")
