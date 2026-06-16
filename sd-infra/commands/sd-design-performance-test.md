@@ -18,12 +18,14 @@ status: active
 > - 已确认 UAT/性能测试环境配置
 >
 > **执行步骤概览：**
-> 1. 确认测试目标与业务规模（用户数、事件量、并发指标）
-> 2. 选择测试场景（实时导入、批量导入、事件分析、漏斗分析、Canvas、邮件发送等）
-> 3. 设计每个场景的数据准备、测试步骤、预期指标
-> 4. 确认测试环境、工具、监控方案
-> 5. **生成 Performance Test Plan 交付物（Word + Excel）**
-> 6. 用 validator 校验计划结构
+> 1. 读取 `PROJECT_CONTEXT.yaml`，自动填充已确认的业务规模和环境信息
+> 2. 只询问缺失的关键信息（如有）
+> 3. 将新确认的事实写回 `PROJECT_CONTEXT.yaml`
+> 4. 选择测试场景（实时导入、批量导入、事件分析、漏斗分析、Canvas、邮件发送等）
+> 5. 设计每个场景的数据准备、测试步骤、预期指标
+> 6. 确认测试环境、工具、监控方案
+> 7. **生成 Performance Test Plan 交付物（Word + Excel）**
+> 8. 用 validator 校验计划结构
 >
 > **最终交付物：**
 > - `references/performance-test-plan.docx` — 客户版 Performance Test Plan
@@ -39,9 +41,41 @@ status: active
 
 ## 工作流
 
+### Step 0：读取项目上下文
+
+执行前先检查 `PROJECT_CONTEXT.yaml` 中已确认的事实：
+
+```bash
+./venv/bin/python <skill-repo>/sd-core/scripts/project_context.py check \
+  --skill sd-design-performance-test
+```
+
+如果已存在以下 key，直接复用，不再询问：
+- `business.dau`
+- `business.daily_events`
+- `business.retention_days`
+- `infra.cloud`
+- `infra.region`
+- `infra.include_cdp`
+- `infra.include_ma`
+- `sla.realtime_import_qps`
+- `sla.batch_import_records_per_hour`
+- `sla.analytics_query_p95_seconds`
+- `sla.email_send_per_minute`
+- `env.cdp_url`
+- `env.has_pii_encryption`
+
+如果缺失，向用户确认后写入：
+
+```bash
+./venv/bin/python <skill-repo>/sd-core/scripts/project_context.py set \
+  business.dau 1000000 \
+  --source sd-design-performance-test
+```
+
 ### Step 1：确认测试目标
 
-与客户/PM 确认：
+基于 PROJECT_CONTEXT 中的事实，与用户确认：
 - 生产规模：基线用户数、历史事件总量、日增事件量
 - 核心 SLA：
   - 实时导入 QPS
@@ -93,17 +127,15 @@ status: active
 ./venv/bin/pip install -r <skill-repo>/requirements.txt
 ```
 
-然后直接生成 Word/Excel：
+然后直接生成 Word/Excel（参数优先从 PROJECT_CONTEXT 读取）：
 
 ```bash
 ./venv/bin/python <skill-repo>/sd-infra/scripts/design_performance_test.py \
-  --dau 1000000 \
-  --daily-events 5000000 \
-  --retention-days 365 \
-  --cloud AWS \
-  --region ap-southeast-1 \
-  --include-cdp \
-  --include-ma \
+  --dau $(./venv/bin/python <skill-repo>/sd-core/scripts/project_context.py get business.dau) \
+  --daily-events $(./venv/bin/python <skill-repo>/sd-core/scripts/project_context.py get business.daily_events) \
+  --retention-days $(./venv/bin/python <skill-repo>/sd-core/scripts/project_context.py get business.retention_days) \
+  --cloud $(./venv/bin/python <skill-repo>/sd-core/scripts/project_context.py get infra.cloud) \
+  --region $(./venv/bin/python <skill-repo>/sd-core/scripts/project_context.py get infra.region) \
   --output-word ./references/performance-test-plan.docx \
   --output-excel ./references/performance-test-plan.xlsx
 ```
@@ -146,6 +178,28 @@ status: active
 - 组件实际版本号
 - 测试时间表和负责人
 - 客户特定的风险假设
+
+## Required Context
+
+`/sd-design-performance-test` 依赖以下 `PROJECT_CONTEXT.yaml` keys：
+
+| Key | 用途 | 是否必填 |
+|-----|------|---------|
+| `business.dau` | 日活跃用户 | required |
+| `business.daily_events` | 日增事件量 | required |
+| `business.retention_days` | 历史数据保留天数 | required |
+| `infra.cloud` | 云厂商 | required |
+| `infra.region` | 云 Region | required |
+| `business.mau` | 月活跃用户 | optional |
+| `business.peak_qps` | 峰值 QPS | optional |
+| `infra.include_cdp` | 是否包含 CDP | optional |
+| `infra.include_ma` | 是否包含 MA | optional |
+| `sla.realtime_import_qps` | 实时导入目标 QPS | optional |
+| `sla.batch_import_records_per_hour` | 批量导入目标 | optional |
+| `sla.analytics_query_p95_seconds` | 分析查询 P95 | optional |
+| `sla.email_send_per_minute` | 邮件发送吞吐 | optional |
+| `env.cdp_url` | CDP 地址 | optional |
+| `env.has_pii_encryption` | 是否 PII 加密 | optional |
 
 ## 完成建议
 

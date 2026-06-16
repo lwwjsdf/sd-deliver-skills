@@ -149,6 +149,121 @@ Any file consumed by a script must have a declared, versioned schema and a valid
 4. **New format versions are skill changes.** If a client provides a file in a new format, record it via `/sd-feedback` and extend the official parser/validator in the skill repo.
 5. **Templates are the contract.** Before asking a client for a document, point them to the corresponding template in `sd-*/references/`.
 
+## Project Context Memory
+
+To avoid asking the same questions every session, every command must read from and write to a **project-level context file**.
+
+### Files
+
+| File | Purpose |
+|------|---------|
+| `PROJECT_CONTEXT.yaml` | Structured, confirmed facts about the project (business scale, environment, SLA, etc.). |
+| `CLARIFICATION.md` | Human-readable tracking of open questions and confirmations. |
+
+`PROJECT_CONTEXT.yaml` is the **single source of truth** for confirmed facts. `CLARIFICATION.md` is for narrative and pending items.
+
+### Location
+
+`PROJECT_CONTEXT.yaml` lives at the project root, next to `.env`:
+
+```
+~/projects/westk/
+├── .env
+├── PROJECT.md
+├── PROJECT_CONTEXT.yaml
+├── CLARIFICATION.md
+├── references/
+└── ...
+```
+
+### Schema
+
+`PROJECT_CONTEXT.yaml` is a flat key/value map grouped by topic. Example:
+
+```yaml
+version: "1.0"
+last_updated: "2026-06-16T10:00:00Z"
+facts:
+  business.dau: 1000000
+  business.daily_events: 5000000
+  business.retention_days: 365
+  business.peak_qps: 3000
+  infra.cloud: AWS
+  infra.region: ap-southeast-1
+  infra.include_cdp: true
+  infra.include_ma: true
+  sla.realtime_import_qps: 1000
+  sla.batch_import_records_per_hour: 1000000
+  sla.analytics_query_p95_seconds: 5
+  sla.email_send_per_minute: 1000
+  env.cdp_url: "https://..."
+  env.has_pii_encryption: true
+```
+
+Key rules:
+- Use dot-namespaced keys: `<topic>.<subtopic>.<name>`.
+- Values must be JSON-compatible (string, number, boolean, list, dict).
+- Every key must have a `source` command/skill recorded in `CLARIFICATION.md`.
+
+### Command workflow
+
+Every command that needs project facts must follow this pattern:
+
+1. **Read context** — Run `project_context.py check --skill <skill-name>` to list known and missing keys.
+2. **Use known facts** — Fill in answers from `PROJECT_CONTEXT.yaml` automatically.
+3. **Ask only for missing facts** — Ask the user only for keys marked `missing`.
+4. **Remember answers** — After the user confirms a fact, run `project_context.py set <key> <value> --source <command-name>`.
+5. **Update CLARIFICATION.md** — Mark the item as confirmed.
+
+Example for `/sd-design-performance-test`:
+
+```bash
+# 1. Check what is missing
+./venv/bin/python <skill-repo>/sd-core/scripts/project_context.py check \
+  --skill sd-design-performance-test
+
+# 2. Set a confirmed fact
+./venv/bin/python <skill-repo>/sd-core/scripts/project_context.py set \
+  business.dau 1000000 \
+  --source sd-design-performance-test
+```
+
+### Skill context schemas
+
+Each skill or command declares its required context keys in its documentation. Example:
+
+```yaml
+# sd-design-performance-test required context
+required:
+  - business.dau
+  - business.daily_events
+  - business.retention_days
+  - infra.cloud
+  - infra.region
+optional:
+  - sla.realtime_import_qps
+  - sla.batch_import_records_per_hour
+  - env.has_pii_encryption
+```
+
+If a required key is missing, the command must ask for it before executing.
+
+### Cross-project knowledge沉淀
+
+Confirmed facts that are likely reusable across projects can be promoted to the delivery knowledge base:
+
+1. Capture the pattern in `/sd-feedback`.
+2. Periodically review feedback and add concise entries to `sd-knowledge/skills/delivery-faq/SKILL.md`.
+3. Link back to the source project only if needed.
+
+### Agent rules
+
+1. **Never guess project facts.** If a fact is not in `PROJECT_CONTEXT.yaml`, treat it as unknown.
+2. **Prefer reading context over asking.** Always check context before asking the user.
+3. **Write back immediately.** After receiving an answer, update `PROJECT_CONTEXT.yaml` in the same turn.
+4. **Keep keys stable.** Do not rename keys lightly; skills depend on them.
+5. **Sensitive values.** Do not store API keys, passwords, or tokens in `PROJECT_CONTEXT.yaml`; keep those in `.env`.
+
 ## Key Design Rules
 
 - **Skills = nouns/concepts.** Frameworks and knowledge that AI auto-loads when the topic matches (`tracking-plan-design`, `server-sizing`, `data-pipeline`).
